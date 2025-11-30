@@ -475,7 +475,7 @@
 .table-container {
   background: white;
   border-radius: 20px;
-  overflow: hidden;
+  overflow-x: auto;
   box-shadow: var(--card-shadow);
   animation: fadeInUp 0.5s ease 0.3s both;
   width: 100%;
@@ -489,27 +489,42 @@
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto;
+  min-width: max-content;
 }
 
 .data-table th {
   background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  padding: 18px 20px;
+  padding: 16px 14px;
   text-align: left;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11px;
   color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .data-table td {
-  padding: 18px 20px;
+  padding: 14px;
   border-bottom: 1px solid #f1f5f9;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-dark);
   transition: var(--transition-smooth);
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.data-table td:hover {
+  overflow: visible;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .data-table tbody tr {
@@ -518,7 +533,6 @@
 
 .data-table tbody tr:hover {
   background: #f8fafc;
-  transform: scale(1.01);
 }
 
 .data-table tbody tr:hover td {
@@ -671,11 +685,11 @@
 }
 
 .btn-icon {
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   border: none;
   border-radius: 10px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -683,25 +697,18 @@
   background: #f3f4f6;
   color: var(--text-dark);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  font-size: 20px;
+  line-height: 1;
 }
 
-.btn-icon::after {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
-  transform: scale(0);
-  transition: transform 0.3s;
-}
-
-.btn-icon:hover::after {
-  transform: scale(2);
-}
-
-.btn-icon:hover {
-  transform: translateY(-3px) scale(1.1);
+.btn-icon > svg {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px;
+  min-height: 20px;
+  display: block !important;
+  flex-shrink: 0;
 }
 
 .btn-icon.btn-edit {
@@ -709,8 +716,8 @@
   color: #0284c7;
 }
 
-.btn-icon.btn-edit:hover {
-  box-shadow: 0 8px 20px rgba(2, 132, 199, 0.3);
+.btn-icon.btn-edit > svg {
+  color: #0284c7;
 }
 
 .btn-icon.btn-delete {
@@ -718,13 +725,29 @@
   color: #dc2626;
 }
 
-.btn-icon.btn-delete:hover {
-  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);
+.btn-icon.btn-delete > svg {
+  color: #dc2626;
 }
 
 .btn-icon.btn-success {
   background: #d1fae5;
   color: #059669;
+}
+
+.btn-icon.btn-success > svg {
+  color: #059669;
+}
+
+.btn-icon:hover {
+  transform: translateY(-3px) scale(1.1);
+}
+
+.btn-icon.btn-edit:hover {
+  box-shadow: 0 8px 20px rgba(2, 132, 199, 0.3);
+}
+
+.btn-icon.btn-delete:hover {
+  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);
 }
 
 .btn-icon.btn-success:hover {

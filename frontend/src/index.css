@@ -52,3 +52,9 @@ button {
   cursor: pointer;
   transition: all 0.25s;
 }
+
+/* Ensure SVG icons are always visible */
+svg {
+  display: inline-block;
+  vertical-align: middle;
+}
