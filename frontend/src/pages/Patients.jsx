@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail } from 'react-icons/fi';
+import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail, FiUsers, FiUser } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
 import '../styles/Pages.css';
@@ -155,16 +155,31 @@ const Patients = () => {
 
         <div className="stats-summary">
           <div className="stat-item">
-            <span className="stat-number">{patients.length}</span>
-            <span className="stat-label">Total Patients</span>
+            <div className="stat-icon">
+              <FiUsers />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number">{patients.length}</span>
+              <span className="stat-label">Total Patients</span>
+            </div>
           </div>
           <div className="stat-item">
-            <span className="stat-number">{patients.filter(p => p.gender === 'Male').length}</span>
-            <span className="stat-label">Male</span>
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', color: '#2563eb' }}>
+              <FiUser />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{patients.filter(p => p.gender === 'Male').length}</span>
+              <span className="stat-label">Male</span>
+            </div>
           </div>
           <div className="stat-item">
-            <span className="stat-number">{patients.filter(p => p.gender === 'Female').length}</span>
-            <span className="stat-label">Female</span>
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)', color: '#db2777' }}>
+              <FiUser />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #db2777 0%, #ec4899 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{patients.filter(p => p.gender === 'Female').length}</span>
+              <span className="stat-label">Female</span>
+            </div>
           </div>
         </div>
 

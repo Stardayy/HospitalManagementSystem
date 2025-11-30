@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiDollarSign, FiCreditCard, FiCheckCircle } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
+import CustomSelect from '../component/CustomSelect';
 import '../styles/Pages.css';
 
 const Payments = () => {
@@ -202,38 +203,57 @@ const Payments = () => {
 
         <div className="stats-summary payment-stats">
           <div className="stat-item revenue">
-            <FiDollarSign size={24} />
-            <div>
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', color: '#059669' }}>
+              <FiDollarSign size={24} />
+            </div>
+            <div className="stat-content">
               <span className="stat-number">${totalRevenue.toFixed(2)}</span>
               <span className="stat-label">Total Revenue</span>
             </div>
           </div>
           <div className="stat-item pending">
-            <FiCreditCard size={24} />
-            <div>
-              <span className="stat-number">${pendingAmount.toFixed(2)}</span>
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', color: '#d97706' }}>
+              <FiCreditCard size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>${pendingAmount.toFixed(2)}</span>
               <span className="stat-label">Pending Amount</span>
             </div>
           </div>
           <div className="stat-item">
-            <span className="stat-number">{bills.length}</span>
-            <span className="stat-label">Total Bills</span>
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)', color: '#4f46e5' }}>
+              <FiCheckCircle size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{bills.length}</span>
+              <span className="stat-label">Total Bills</span>
+            </div>
           </div>
           <div className="stat-item">
-            <span className="stat-number">{bills.filter(b => b.paymentStatus === 'PAID').length}</span>
-            <span className="stat-label">Paid Bills</span>
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', color: '#059669' }}>
+              <FiCheckCircle size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number">{bills.filter(b => b.paymentStatus === 'PAID').length}</span>
+              <span className="stat-label">Paid Bills</span>
+            </div>
           </div>
         </div>
 
         <div className="filter-bar">
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="ALL">All Status</option>
-            <option value="PENDING">Pending</option>
-            <option value="PAID">Paid</option>
-            <option value="PARTIAL">Partial</option>
-            <option value="CANCELLED">Cancelled</option>
-            <option value="REFUNDED">Refunded</option>
-          </select>
+          <CustomSelect
+            options={[
+              { value: 'ALL', label: 'All Status' },
+              { value: 'PENDING', label: 'Pending' },
+              { value: 'PAID', label: 'Paid' },
+              { value: 'PARTIAL', label: 'Partial' },
+              { value: 'CANCELLED', label: 'Cancelled' },
+              { value: 'REFUNDED', label: 'Refunded' }
+            ]}
+            value={filterStatus}
+            onChange={setFilterStatus}
+            placeholder="Filter by status"
+          />
         </div>
 
         {loading ? (

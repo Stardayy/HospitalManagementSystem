@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiMapPin, FiPhone, FiUsers } from 'react-icons/fi';
+import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiMapPin, FiPhone, FiUsers, FiGrid } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
 import '../styles/Pages.css';
@@ -125,14 +125,24 @@ const Departments = () => {
 
         <div className="stats-summary">
           <div className="stat-item">
-            <span className="stat-number">{departments.length}</span>
-            <span className="stat-label">Total Departments</span>
+            <div className="stat-icon">
+              <FiGrid size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number">{departments.length}</span>
+              <span className="stat-label">Total Departments</span>
+            </div>
           </div>
           <div className="stat-item">
-            <span className="stat-number">
-              {departments.reduce((sum, d) => sum + (d.doctors?.length || 0), 0)}
-            </span>
-            <span className="stat-label">Total Doctors</span>
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', color: '#2563eb' }}>
+              <FiUsers size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                {departments.reduce((sum, d) => sum + (d.doctors?.length || 0), 0)}
+              </span>
+              <span className="stat-label">Total Doctors</span>
+            </div>
           </div>
         </div>
 

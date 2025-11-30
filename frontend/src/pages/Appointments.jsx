@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiClock } from 'react-icons/fi';
+import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiClock, FiCalendar, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
+import CustomSelect from '../component/CustomSelect';
 import '../styles/Pages.css';
 
 const Appointments = () => {
@@ -190,15 +191,68 @@ const Appointments = () => {
           </button>
         </div>
 
+        <div className="stats-summary">
+          <div className="stat-item">
+            <div className="stat-icon">
+              <FiCalendar size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number">{appointments.length}</span>
+              <span className="stat-label">Total</span>
+            </div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', color: '#d97706' }}>
+              <FiClock size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{appointments.filter(a => a.status === 'SCHEDULED').length}</span>
+              <span className="stat-label">Scheduled</span>
+            </div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', color: '#2563eb' }}>
+              <FiCheckCircle size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{appointments.filter(a => a.status === 'CONFIRMED').length}</span>
+              <span className="stat-label">Confirmed</span>
+            </div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', color: '#059669' }}>
+              <FiCheck size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number">{appointments.filter(a => a.status === 'COMPLETED').length}</span>
+              <span className="stat-label">Completed</span>
+            </div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)', color: '#dc2626' }}>
+              <FiXCircle size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{appointments.filter(a => a.status === 'CANCELLED').length}</span>
+              <span className="stat-label">Cancelled</span>
+            </div>
+          </div>
+        </div>
+
         <div className="filter-bar">
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-            <option value="ALL">All Status</option>
-            <option value="SCHEDULED">Scheduled</option>
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CANCELLED">Cancelled</option>
-            <option value="NO_SHOW">No Show</option>
-          </select>
+          <CustomSelect
+            options={[
+              { value: 'ALL', label: 'All Status' },
+              { value: 'SCHEDULED', label: 'Scheduled' },
+              { value: 'CONFIRMED', label: 'Confirmed' },
+              { value: 'COMPLETED', label: 'Completed' },
+              { value: 'CANCELLED', label: 'Cancelled' },
+              { value: 'NO_SHOW', label: 'No Show' }
+            ]}
+            value={filterStatus}
+            onChange={setFilterStatus}
+            placeholder="Filter by status"
+          />
         </div>
 
         {loading ? (

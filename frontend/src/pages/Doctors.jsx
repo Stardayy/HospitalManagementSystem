@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail, FiAward } from 'react-icons/fi';
+import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail, FiAward, FiUsers, FiGrid, FiDollarSign } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
+import CustomSelect from '../component/CustomSelect';
 import '../styles/Pages.css';
 
 const Doctors = () => {
@@ -170,13 +171,55 @@ const Doctors = () => {
           </button>
         </div>
 
+        <div className="stats-summary">
+          <div className="stat-item">
+            <div className="stat-icon">
+              <FiUsers size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number">{doctors.length}</span>
+              <span className="stat-label">Total Doctors</span>
+            </div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)', color: '#4f46e5' }}>
+              <FiGrid size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{departments.length}</span>
+              <span className="stat-label">Departments</span>
+            </div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', color: '#2563eb' }}>
+              <FiAward size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{doctors.length > 0 ? Math.round(doctors.reduce((sum, d) => sum + (d.yearsOfExperience || 0), 0) / doctors.length) : 0}</span>
+              <span className="stat-label">Avg. Experience</span>
+            </div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', color: '#059669' }}>
+              <FiDollarSign size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number">${doctors.length > 0 ? Math.round(doctors.reduce((sum, d) => sum + (d.consultationFee || 0), 0) / doctors.length) : 0}</span>
+              <span className="stat-label">Avg. Fee</span>
+            </div>
+          </div>
+        </div>
+
         <div className="filter-bar">
-          <select value={filterDepartment} onChange={(e) => setFilterDepartment(e.target.value)}>
-            <option value="ALL">All Departments</option>
-            {departments.map(dept => (
-              <option key={dept.id} value={dept.id}>{dept.name}</option>
-            ))}
-          </select>
+          <CustomSelect
+            options={[
+              { value: 'ALL', label: 'All Departments' },
+              ...departments.map(dept => ({ value: dept.id.toString(), label: dept.name }))
+            ]}
+            value={filterDepartment}
+            onChange={setFilterDepartment}
+            placeholder="Filter by department"
+          />
         </div>
 
         {loading ? (

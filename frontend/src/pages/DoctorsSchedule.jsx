@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiSearch, FiSettings, FiBell, FiChevronLeft, FiChevronRight, FiClock } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
+import CustomSelect from '../component/CustomSelect';
 import '../styles/Pages.css';
 
 const DoctorsSchedule = () => {
@@ -108,16 +109,15 @@ const DoctorsSchedule = () => {
         <div className="page-header">
           <h1>Doctors' Schedule</h1>
           <div className="schedule-controls">
-            <select 
-              value={selectedDoctor} 
-              onChange={(e) => setSelectedDoctor(e.target.value)}
-              className="doctor-filter"
-            >
-              <option value="ALL">All Doctors</option>
-              {doctors.map(d => (
-                <option key={d.id} value={d.id}>Dr. {d.firstName} {d.lastName}</option>
-              ))}
-            </select>
+            <CustomSelect
+              options={[
+                { value: 'ALL', label: 'All Doctors' },
+                ...doctors.map(d => ({ value: d.id.toString(), label: `Dr. ${d.firstName} ${d.lastName}` }))
+              ]}
+              value={selectedDoctor}
+              onChange={setSelectedDoctor}
+              placeholder="Select Doctor"
+            />
           </div>
         </div>
 

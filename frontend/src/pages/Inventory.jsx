@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiAlertTriangle, FiPackage, FiCalendar } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
+import CustomSelect from '../component/CustomSelect';
 import '../styles/Pages.css';
 
 const Inventory = () => {
@@ -193,42 +194,55 @@ const Inventory = () => {
 
         <div className="stats-summary inventory-stats">
           <div className="stat-item">
-            <FiPackage size={24} />
-            <div>
+            <div className="stat-icon">
+              <FiPackage size={24} />
+            </div>
+            <div className="stat-content">
               <span className="stat-number">{medicines.length}</span>
               <span className="stat-label">Total Items</span>
             </div>
           </div>
           <div className="stat-item warning" onClick={() => setFilterType('LOW_STOCK')}>
-            <FiAlertTriangle size={24} />
-            <div>
-              <span className="stat-number">{lowStockCount}</span>
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', color: '#d97706' }}>
+              <FiAlertTriangle size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{lowStockCount}</span>
               <span className="stat-label">Low Stock</span>
             </div>
           </div>
           <div className="stat-item alert" onClick={() => setFilterType('EXPIRING')}>
-            <FiCalendar size={24} />
-            <div>
-              <span className="stat-number">{expiringCount}</span>
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%)', color: '#ea580c' }}>
+              <FiCalendar size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{expiringCount}</span>
               <span className="stat-label">Expiring Soon</span>
             </div>
           </div>
           <div className="stat-item danger" onClick={() => setFilterType('EXPIRED')}>
-            <FiAlertTriangle size={24} />
-            <div>
-              <span className="stat-number">{expiredCount}</span>
+            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)', color: '#dc2626' }}>
+              <FiAlertTriangle size={24} />
+            </div>
+            <div className="stat-content">
+              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{expiredCount}</span>
               <span className="stat-label">Expired</span>
             </div>
           </div>
         </div>
 
         <div className="filter-bar">
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-            <option value="ALL">All Medicines</option>
-            <option value="LOW_STOCK">Low Stock</option>
-            <option value="EXPIRING">Expiring Soon</option>
-            <option value="EXPIRED">Expired</option>
-          </select>
+          <CustomSelect
+            options={[
+              { value: 'ALL', label: 'All Medicines' },
+              { value: 'LOW_STOCK', label: 'Low Stock' },
+              { value: 'EXPIRING', label: 'Expiring Soon' },
+              { value: 'EXPIRED', label: 'Expired' }
+            ]}
+            value={filterType}
+            onChange={setFilterType}
+            placeholder="Filter by type"
+          />
         </div>
 
         {loading ? (
