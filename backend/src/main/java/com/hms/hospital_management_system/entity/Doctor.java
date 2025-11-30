@@ -3,6 +3,8 @@ package com.hms.hospital_management_system.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,6 +29,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Doctor {
 
     @Id
@@ -53,6 +56,7 @@ public class Doctor {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
+    @JsonIgnoreProperties({"doctors", "hibernateLazyInitializer", "handler"})
     private Department department;
 
     @Column(name = "consultation_fee")
@@ -62,6 +66,7 @@ public class Doctor {
     private Integer yearsOfExperience;
 
     @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties({"doctor", "patient", "hibernateLazyInitializer", "handler"})
     private List<Appointment> appointments;
 
     @Column(name = "created_at")
