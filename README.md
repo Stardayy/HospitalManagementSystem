@@ -1,55 +1,171 @@
-# 🏥 Hospital Management System (WellNest)
+# 🏥 Hospital Management System
 
-Một hệ thống quản lý bệnh viện Full-stack hoàn chỉnh, bao gồm quản lý hồ sơ bệnh nhân, lịch trình bác sĩ, cuộc hẹn và báo cáo tài chính. Dự án sử dụng kiến trúc tách biệt Frontend (React) và Backend (Spring Boot).
+A complete full‑stack hospital management system, including patient records, doctor schedules, appointments, and financial reports. The project uses a separated architecture with **React (Frontend)** and **Spring Boot (Backend)**.
 
 ![Status](https://img.shields.io/badge/status-active-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 ---
 
-## 🏗 Cấu Trúc Dự Án (Project Structure)
+## 🏗 Project Structure
 
-Dự án được tổ chức theo mô hình Monorepo (2 project con nằm chung 1 thư mục cha):
+The project follows a **Monorepo** architecture containing both Frontend and Backend:
 
-```text
+```
 Hospital-Management-System/
-├── backend/                  # Spring Boot Application (Server)
-│   ├── src/main/java/com/hms # Mã nguồn Java
-│   │   ├── config/           # Cấu hình (CORS, Security)
+├── backend/                  # Spring Boot Application
+│   ├── src/main/java/com/hms 
+│   │   ├── config/           # Configurations (CORS, Security)
 │   │   ├── controller/       # API Endpoints
-│   │   ├── model/            # Data Models (Entities)
-│   │   └── repository/       # Database Interaction
-│   ├── src/main/resources    # Cấu hình Database (application.properties)
-│   └── pom.xml               # Quản lý thư viện Maven
+│   │   ├── model/            # Entities
+│   │   └── repository/       # Database Access
+│   ├── src/main/resources    # application.properties
+│   └── pom.xml               # Maven configuration
 │
-├── frontend/                 # React Application (Client)
+├── frontend/                 # React + Vite Application
 │   ├── src/
-│   │   ├── api/              # Cấu hình gọi API (Axios/Fetch)
-│   │   ├── components/       # Các thành phần UI (Sidebar, Card...)
-│   │   ├── pages/            # Các trang chính (Dashboard...)
-│   │   └── styles/           # CSS Styling
-│   ├── package.json          # Quản lý thư viện NPM
-│   └── vite.config.js        # Cấu hình Vite
+│   │   ├── api/              # API integration
+│   │   ├── components/       # UI Components
+│   │   ├── pages/            # Main pages
+│   │   └── styles/           # CSS assets
+│   ├── package.json
+│   └── vite.config.js
 │
-└── README.md                 # Tài liệu hướng dẫn này
-🛠 Công Nghệ Sử Dụng (Tech Stack)FrontendFramework: React 19 + ViteNgôn ngữ: JavaScript (ES6+) / JSXThư viện chính:recharts: Vẽ biểu đồ thống kê.react-calendar: Lịch làm việc.react-icons: Bộ icon nhẹ.fetch API: Kết nối Backend.BackendFramework: Spring Boot 3.5.8Ngôn ngữ: Java 17Database: MySQLBuild Tool: MavenKiến trúc: RESTful API⚙️ Yêu Cầu Cài Đặt (Prerequisites)Trước khi chạy, hãy đảm bảo máy bạn đã cài:Node.js (v18 trở lên) & npm.Java JDK (v17 trở lên).MySQL Server (đang chạy ở cổng 3306).🚀 Hướng Dẫn Cài Đặt & Chạy (Setup Guide)Bước 1: Cấu hình Database (MySQL)Mở MySQL Workbench hoặc Terminal và chạy lệnh sau để tạo Database:SQLCREATE DATABASE hospital_management_system;
-Lưu ý: Backend đang được cấu hình mặc định với user root và password 1234. Nếu máy bạn khác, hãy sửa file backend/src/main/resources/application.properties.Bước 2: Chạy Backend (Spring Boot)Backend sẽ chạy tại http://localhost:8080.Mở Terminal (Dòng lệnh) tại thư mục backend.Chạy lệnh khởi động:Bash# Windows
-./mvnw.cmd spring-boot:run
+└── README.md
+```
 
-# Mac/Linux
-./mvnw spring-boot:run
-🔑 Cấu hình quan trọng trong BackendFile CorsConfig.java đã được thiết lập để cho phép React truy cập:Java// Đường dẫn: backend/src/main/java/com/hms/hospital_management_system/config/CorsConfig.java
+---
+
+## 🛠 Tech Stack
+
+### **Frontend**
+
+* **React 19** + Vite
+* JavaScript ES6+ / JSX
+* Key libraries:
+
+  * `recharts` 
+  * `react-calendar`
+  * `react-icons`
+  * `fetch API` for calling backend
+  * `react-router-dom`
+
+### **Backend**
+
+* **Spring Boot 3.5.8**
+* Java 17
+* **MySQL** Database
+* **Maven** build tool
+* RESTful API architecture
+
+---
+
+## ⚙️ Prerequisites
+
+Ensure your system has:
+
+* Node.js v18+
+* Java JDK 17+
+* MySQL Server (default port 3306)
+
+---
+
+## 🚀 Setup Guide
+
+### **Step 1: Create MySQL Database**
+
+Run in MySQL Workbench or terminal:
+
+```sql
+CREATE DATABASE hospital_management_system;
+```
+
+Backend default database settings:
+
+* user: `root`
+* password: `1234`
+
+You can edit these here:
+
+```
+backend/src/main/resources/application.properties
+```
+
+---
+
+### **Step 2: Run Backend (Spring Boot)**
+
+Backend runs at: **[http://localhost:8080](http://localhost:8080)**
+
+In terminal:
+
+```bash
+./mvnw mvn spring-boot:run
+```
+
+**Important CORS Config:**
+
+```java
 registry.addMapping("/**")
-        .allowedOrigins("http://localhost:5173") // Cho phép Frontend
+        .allowedOrigins("http://localhost:5173")
         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
         .allowCredentials(true);
-Bước 3: Chạy Frontend (React)Frontend sẽ chạy tại http://localhost:5173.Mở một Terminal mới (giữ Terminal backend đang chạy).Di chuyển vào thư mục frontend: cd frontend.Cài đặt thư viện (chỉ làm lần đầu):Bashnpm install
-Chạy dự án:Bashnpm run dev
-🔌 Cấu hình kết nối APIFile api.js giúp Frontend nói chuyện với Backend:JavaScript// Đường dẫn: frontend/src/api/api.js
-const API_BASE_URL = 'http://localhost:8080/api';
+```
 
-export const api = {
-  get: (endpoint) => fetchApi(endpoint, { method: 'GET' }),
-  // ... các hàm post, put, delete
-};
-🧪 Kiểm Tra Kết Nối (Testing)Mở trình duyệt truy cập: http://localhost:5173.Nếu Dashboard hiện ra với các biểu đồ -> Frontend chạy tốt.Nếu dữ liệu trên Dashboard là dữ liệu thật từ Database (không phải MockData) -> Kết nối Full-stack thành công.Để test riêng API Backend, truy cập: http://localhost:8080/api/hello (nếu đã tạo TestController).🐛 Khắc phục lỗi thường gặp (Troubleshooting)LỗiNguyên nhân & Cách sửaCORS Error (trên browser console)Backend chưa cho phép cổng 5173 truy cập. Kiểm tra lại file CorsConfig.java trong Backend.Connection RefusedBackend chưa chạy hoặc MySQL chưa bật. Hãy đảm bảo chạy Backend trước.npm run dev lỗiChưa cài node_modules. Chạy lại lệnh npm install trong thư mục frontend.Recharts / React-icons not foundThiếu thư viện Frontend. Chạy: npm install recharts react-icons react-calendar.🤝 Đóng Góp (Contributing)Fork dự án.Tạo nhánh tính năng (git checkout -b feature/NewFeature).Commit thay đổi (git commit -m 'Add new feature').Push lên nhánh (git push origin feature/NewFeature).Tạo Pull Request.© 2025 WellNest Hospital Management System
+---
+
+### **Step 3: Run Frontend (React)**
+
+Frontend runs at **[http://localhost:5173](http://localhost:5173)**
+
+**Change directory**
+
+```bash
+cd frontend
+```
+
+**Installation**
+```
+npm install
+```
+
+**Development**
+```
+npm run dev
+```
+
+**API Configuration:**
+
+```js
+const API_BASE_URL = 'http://localhost:8080/api';
+```
+
+---
+
+## 🧪 Testing System Connectivity
+
+* Visit **[http://localhost:5173](http://localhost:5173)**
+
+  * Dashboard renders → Frontend OK
+  * Real database data shows → Full-stack connection OK
+
+Test backend endpoint:
+
+```
+http://localhost:8080/api/hello
+```
+
+---
+
+## 🐛 Common Issues & Fixes
+
+| Issue                  | Cause                                 | Solution                                          |
+| ---------------------- | ------------------------------------- | ------------------------------------------------- |
+| **CORS Error**         | Backend doesn't allow frontend origin | Check `CorsConfig.java`                           |
+| **Connection Refused** | Backend or MySQL not running          | Restart backend & database                        |
+| **npm run dev error**  | Missing node_modules                  | Run `npm install`                                 |
+| **Library not found**  | Missing packages                      | `npm install recharts react-icons react-calendar react-router-dom` |
+
+---
+
+© 2025 Hospital Management System
