@@ -65,6 +65,7 @@
   
   .nav-links li svg {
     margin-right: 15px;
+    margin-left: 15px;
   }
   
   .nav-links li.active {
@@ -86,7 +87,8 @@
   .main-content {
     margin-left: var(--sidebar-width);
     flex: 1;
-    padding: 20px 30px;
+    padding: 20px 70px;
+
   }
   
   /* Header */

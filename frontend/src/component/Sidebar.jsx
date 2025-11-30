@@ -5,7 +5,7 @@ const Sidebar = () => (
   <div className="sidebar">
     <div className="logo">
       <div className="logo-icon">+</div>
-      <h2>WellNest</h2>
+      <h2>Hospital Management System</h2>
     </div>
     <ul className="nav-links">
       <li className="active"><FiGrid /> Dashboard</li>

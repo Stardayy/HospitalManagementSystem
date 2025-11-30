@@ -7,17 +7,70 @@ import { FiSearch, FiSettings, FiBell, FiMoreHorizontal, FiGrid } from 'react-ic
 
 // Import Components
 import Sidebar from '../component/Sidebar';
-import StatCard from '../component/StatCard';
+import StatCard from '../component/Statcard';
 import DoctorRow from '../component/DoctorRow';
 import RightPanel from '../component/RightPanel';
 
 // Import Data
 import { dataStats, dataPatientOverview, dataRevenue, dataDepartment } from '../data/mockdata';
 
+//Import API services
+//import { api } from '../services/api';
+
 // Import CSS
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
+  //Declare states to store data from backend
+  // const [stats, setStats] = useState([]);
+  // const [patientOverview, setPatientOverview] = useState([]);
+  // const [revenueData, setRevenueData] = useState([]);
+  // const [deptData, setDeptData] = useState([]);
+  // const [doctors, setDoctors] = useState([]);
+  // const [loading, setLoading] = useState(true);
+
+  // useEffect(() => {
+  //   const fetchDashboardData = async () => {
+  //     try {
+  //       setLoading(true);
+        
+  //       // Gọi song song nhiều API cùng lúc để tiết kiệm thời gian
+  //       // Lưu ý: Bạn cần tạo các Endpoint này bên Spring Boot Controller tương ứng
+  //       const [statsRes, patientRes, revenueRes, deptRes, doctorsRes] = await Promise.all([
+  //         api.get('/dashboard/stats'),           // Ví dụ endpoint thống kê
+  //         api.get('/dashboard/patient-overview'),// Ví dụ endpoint biểu đồ cột
+  //         api.get('/dashboard/revenue'),         // Ví dụ endpoint biểu đồ miền
+  //         api.get('/dashboard/departments'),     // Ví dụ endpoint biểu đồ tròn
+  //         api.get('/doctors/available')          // Ví dụ endpoint danh sách bác sĩ
+  //       ]);
+
+  //       // Cập nhật dữ liệu vào State
+  //       // (Nếu API chưa có, bạn có thể comment lại và dùng dữ liệu rỗng [] tạm thời)
+  //       setStats(statsRes || []);
+  //       setPatientOverview(patientRes || []);
+  //       setRevenueData(revenueRes || []);
+  //       setDeptData(deptRes || []);
+  //       setDoctors(doctorsRes || []);
+
+  //     } catch (error) {
+  //       console.error("Lỗi khi tải dữ liệu Dashboard:", error);
+  //     } finally {
+  //       setLoading(false); // Tắt trạng thái loading dù thành công hay thất bại
+  //     }
+  //   };
+
+  //   fetchDashboardData();
+  // }, []);
+
+  // // 3. Hiển thị màn hình chờ nếu đang tải
+  // if (loading) {
+  //   return (
+  //     <div className="dashboard-container" style={{justifyContent: 'center', alignItems: 'center'}}>
+  //       <h2>Loading Dashboard data...</h2>
+  //     </div>
+  //   );
+  // }
+
   return (
     <div className="dashboard-container">
       <Sidebar />
