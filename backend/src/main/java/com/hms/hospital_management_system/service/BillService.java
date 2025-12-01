@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -112,5 +113,38 @@ public class BillService {
     public Double getTotalPendingAmount() {
         Double pending = billRepository.getTotalPendingAmount();
         return pending != null ? pending : 0.0;
+    }
+
+    public List<Bill> filterBills(PaymentStatus status, PaymentMethod paymentMethod, String sortBy, String sortOrder) {
+        List<Bill> bills = billRepository.findAll();
+        
+        List<Bill> filtered = bills.stream()
+            .filter(b -> status == null || b.getPaymentStatus() == status)
+            .filter(b -> paymentMethod == null || b.getPaymentMethod() == paymentMethod)
+            .toList();
+
+        if (sortBy != null && !sortBy.isEmpty()) {
+            Comparator<Bill> comparator = getBillComparator(sortBy);
+            if (comparator != null) {
+                if ("desc".equalsIgnoreCase(sortOrder)) {
+                    comparator = comparator.reversed();
+                }
+                filtered = filtered.stream().sorted(comparator).toList();
+            }
+        }
+        
+        return filtered;
+    }
+
+    private Comparator<Bill> getBillComparator(String sortBy) {
+        return switch (sortBy) {
+            case "billDate" -> Comparator.comparing(Bill::getBillDate, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "patient" -> Comparator.comparing(b -> b.getPatient() != null ? b.getPatient().getFirstName() : "", Comparator.nullsLast(Comparator.naturalOrder()));
+            case "totalAmount" -> Comparator.comparing(Bill::getTotalAmount, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "netAmount" -> Comparator.comparing(Bill::getNetAmount, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "paymentStatus" -> Comparator.comparing(b -> b.getPaymentStatus() != null ? b.getPaymentStatus().name() : "", Comparator.nullsLast(Comparator.naturalOrder()));
+            case "paymentDate" -> Comparator.comparing(Bill::getPaymentDate, Comparator.nullsLast(Comparator.naturalOrder()));
+            default -> null;
+        };
     }
 }

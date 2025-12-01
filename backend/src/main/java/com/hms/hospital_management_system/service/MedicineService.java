@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -89,5 +90,60 @@ public class MedicineService {
         LocalDate today = LocalDate.now();
         LocalDate endDate = today.plusDays(days);
         return medicineRepository.findMedicinesExpiringBetween(today, endDate);
+    }
+
+    public List<Medicine> filterMedicines(String dosageForm, Boolean lowStock, Boolean expired, 
+            Boolean expiringSoon, String sortBy, String sortOrder) {
+        List<Medicine> medicines = medicineRepository.findAll();
+        LocalDate today = LocalDate.now();
+        
+        List<Medicine> filtered = medicines.stream()
+            .filter(m -> dosageForm == null || dosageForm.isEmpty() || dosageForm.equals(m.getDosageForm()))
+            .filter(m -> {
+                if (lowStock != null && lowStock) {
+                    return m.getStockQuantity() <= (m.getReorderLevel() != null ? m.getReorderLevel() : 10);
+                }
+                return true;
+            })
+            .filter(m -> {
+                if (expired != null && expired) {
+                    return m.getExpiryDate() != null && m.getExpiryDate().isBefore(today);
+                }
+                return true;
+            })
+            .filter(m -> {
+                if (expiringSoon != null && expiringSoon) {
+                    return m.getExpiryDate() != null && 
+                           m.getExpiryDate().isAfter(today) && 
+                           m.getExpiryDate().isBefore(today.plusDays(30));
+                }
+                return true;
+            })
+            .toList();
+
+        if (sortBy != null && !sortBy.isEmpty()) {
+            Comparator<Medicine> comparator = getMedicineComparator(sortBy);
+            if (comparator != null) {
+                if ("desc".equalsIgnoreCase(sortOrder)) {
+                    comparator = comparator.reversed();
+                }
+                filtered = filtered.stream().sorted(comparator).toList();
+            }
+        }
+        
+        return filtered;
+    }
+
+    private Comparator<Medicine> getMedicineComparator(String sortBy) {
+        return switch (sortBy) {
+            case "name" -> Comparator.comparing(Medicine::getName, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "genericName" -> Comparator.comparing(Medicine::getGenericName, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "manufacturer" -> Comparator.comparing(Medicine::getManufacturer, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "price" -> Comparator.comparing(Medicine::getPrice, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "stock" -> Comparator.comparing(Medicine::getStockQuantity, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "expiryDate" -> Comparator.comparing(Medicine::getExpiryDate, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "dosageForm" -> Comparator.comparing(Medicine::getDosageForm, Comparator.nullsLast(Comparator.naturalOrder()));
+            default -> null;
+        };
     }
 }

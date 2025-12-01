@@ -1,0 +1,231 @@
+/* Sort Dropdown Styles */
+.sort-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.btn-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.btn-sort:hover {
+  border-color: #6ee7b7;
+  background: #f0fdf4;
+  box-shadow: 0 4px 12px rgba(110, 231, 183, 0.2);
+}
+
+.btn-sort.active {
+  border-color: #6ee7b7;
+  background: #f0fdf4;
+  color: #065f46;
+}
+
+.btn-sort svg {
+  font-size: 16px;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.btn-sort:hover svg {
+  color: #059669;
+}
+
+.btn-sort .sort-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #6ee7b7;
+  color: #065f46;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 2px;
+}
+
+.btn-sort .chevron {
+  transition: transform 0.2s ease;
+  margin-left: 2px;
+  font-size: 14px;
+}
+
+.btn-sort .chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.sort-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 260px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  z-index: 1000;
+  overflow: hidden;
+  animation: dropdownSlide 0.2s ease;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sort-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sort-dropdown-header span {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-clear-sort {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.btn-clear-sort:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* Sort Options List */
+.sort-options-list {
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.sort-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 14px;
+  color: #334155;
+}
+
+.sort-option:hover {
+  background: #f8fafc;
+}
+
+.sort-option.selected {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.sort-option .check-icon {
+  color: #3b82f6;
+  font-size: 16px;
+}
+
+/* Sort Direction Section */
+.sort-direction-section {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-top: 1px solid #e2e8f0;
+}
+
+.direction-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.direction-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.direction-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.direction-btn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.direction-btn.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-color: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.direction-btn svg {
+  font-size: 14px;
+}
+
+/* Scrollbar styling */
+.sort-options-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sort-options-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.sort-options-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.sort-options-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

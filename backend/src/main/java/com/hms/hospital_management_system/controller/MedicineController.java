@@ -22,6 +22,17 @@ public class MedicineController {
         return ResponseEntity.ok(medicineService.getAllMedicines());
     }
 
+    @GetMapping("/filter")
+    public ResponseEntity<List<Medicine>> filterMedicines(
+            @RequestParam(required = false) String dosageForm,
+            @RequestParam(required = false) Boolean lowStock,
+            @RequestParam(required = false) Boolean expired,
+            @RequestParam(required = false) Boolean expiringSoon,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder) {
+        return ResponseEntity.ok(medicineService.filterMedicines(dosageForm, lowStock, expired, expiringSoon, sortBy, sortOrder));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Medicine> getMedicineById(@PathVariable Long id) {
         return medicineService.getMedicineById(id)

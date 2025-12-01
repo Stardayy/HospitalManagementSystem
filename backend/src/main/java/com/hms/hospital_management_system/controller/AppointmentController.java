@@ -25,6 +25,18 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getAllAppointments());
     }
 
+    @GetMapping("/filter")
+    public ResponseEntity<List<Appointment>> filterAppointments(
+            @RequestParam(required = false) AppointmentStatus status,
+            @RequestParam(required = false) Long doctorId,
+            @RequestParam(required = false) Long patientId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder) {
+        return ResponseEntity.ok(appointmentService.filterAppointments(status, doctorId, patientId, startDate, endDate, sortBy, sortOrder));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Appointment> getAppointmentById(@PathVariable Long id) {
         return appointmentService.getAppointmentById(id)

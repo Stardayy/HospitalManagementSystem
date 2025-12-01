@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiClock, FiCalendar, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiClock, FiCalendar, FiCheckCircle, FiXCircle, FiFilter } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
-import CustomSelect from '../component/CustomSelect';
+import FilterModal from '../component/FilterModal';
+import SortDropdown from '../component/SortDropdown';
 import '../styles/Pages.css';
+import '../styles/FilterModal.css';
+import '../styles/SortDropdown.css';
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -11,9 +14,11 @@ const Appointments = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [activeFilters, setActiveFilters] = useState({});
+  const [currentSort, setCurrentSort] = useState({ sortBy: '', sortDirection: 'asc' });
   const [formData, setFormData] = useState({
     patientId: '',
     doctorId: '',
@@ -149,14 +154,105 @@ const Appointments = () => {
     }
   };
 
+  const fetchFilteredAppointments = async (filters, sort = currentSort) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (filters.status) params.append('status', filters.status);
+      if (filters.doctorId) params.append('doctorId', filters.doctorId);
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      if (sort.sortBy) params.append('sortBy', sort.sortBy);
+      if (sort.sortDirection) params.append('sortDirection', sort.sortDirection);
+      
+      const data = await api.get(`/appointments/filter?${params.toString()}`);
+      setAppointments(data);
+      setActiveFilters(filters);
+    } catch (error) {
+      console.error('Error filtering appointments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApplyFilters = (filters) => {
+    const hasFilters = Object.values(filters).some(v => v !== '' && v !== false);
+    if (hasFilters) {
+      fetchFilteredAppointments(filters);
+    } else {
+      fetchAppointments();
+      setActiveFilters({});
+    }
+    setShowFilterModal(false);
+  };
+
+  const clearFilters = () => {
+    setActiveFilters({});
+    if (currentSort.sortBy) {
+      fetchFilteredAppointments({}, currentSort);
+    } else {
+      fetchAppointments();
+    }
+  };
+
+  const handleSort = (sort) => {
+    setCurrentSort(sort);
+    if (sort.sortBy || Object.keys(activeFilters).length > 0) {
+      fetchFilteredAppointments(activeFilters, sort);
+    } else {
+      fetchAppointments();
+    }
+  };
+
+  const filterConfig = [
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'SCHEDULED', label: 'Scheduled' },
+        { value: 'CONFIRMED', label: 'Confirmed' },
+        { value: 'COMPLETED', label: 'Completed' },
+        { value: 'CANCELLED', label: 'Cancelled' },
+        { value: 'NO_SHOW', label: 'No Show' }
+      ]
+    },
+    {
+      key: 'doctorId',
+      label: 'Doctor',
+      type: 'select',
+      options: doctors.map(d => ({ value: d.id.toString(), label: `Dr. ${d.firstName} ${d.lastName}` }))
+    },
+    {
+      key: 'startDate',
+      label: 'Start Date',
+      type: 'date'
+    },
+    {
+      key: 'endDate',
+      label: 'End Date',
+      type: 'date'
+    }
+  ];
+
+  const sortOptions = [
+    { value: 'date', label: 'Appointment Date' },
+    { value: 'time', label: 'Appointment Time' },
+    { value: 'patient', label: 'Patient Name' },
+    { value: 'doctor', label: 'Doctor Name' },
+    { value: 'status', label: 'Status' },
+    { value: 'createdAt', label: 'Created Date' }
+  ];
+
+  const activeFilterCount = Object.values(activeFilters).filter(v => v !== '' && v !== false && v !== undefined).length;
+
   const filteredAppointments = appointments.filter(apt => {
     const matchesSearch = 
       apt.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       apt.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       apt.doctor?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       apt.doctor?.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'ALL' || apt.status === filterStatus;
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 
   return (
@@ -240,20 +336,29 @@ const Appointments = () => {
         </div>
 
         <div className="filter-bar">
-          <CustomSelect
-            options={[
-              { value: 'ALL', label: 'All Status' },
-              { value: 'SCHEDULED', label: 'Scheduled' },
-              { value: 'CONFIRMED', label: 'Confirmed' },
-              { value: 'COMPLETED', label: 'Completed' },
-              { value: 'CANCELLED', label: 'Cancelled' },
-              { value: 'NO_SHOW', label: 'No Show' }
-            ]}
-            value={filterStatus}
-            onChange={setFilterStatus}
-            placeholder="Filter by status"
+          <button className="btn-filter" onClick={() => setShowFilterModal(true)}>
+            <FiFilter /> Filter
+            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
+          </button>
+          <SortDropdown
+            sortOptions={sortOptions}
+            onSort={handleSort}
+            currentSort={currentSort}
           />
+          {activeFilterCount > 0 && (
+            <button className="btn-clear-filter" onClick={clearFilters}>
+              <FiX /> Clear Filters
+            </button>
+          )}
         </div>
+
+        <FilterModal
+          isOpen={showFilterModal}
+          onClose={() => setShowFilterModal(false)}
+          onApply={handleApplyFilters}
+          filterConfig={filterConfig}
+          title="Filter Appointments"
+        />
 
         {loading ? (
           <div className="loading">Loading...</div>

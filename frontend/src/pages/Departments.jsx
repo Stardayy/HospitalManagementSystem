@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiMapPin, FiPhone, FiUsers, FiGrid } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
+import CustomSelect from '../component/CustomSelect';
 import '../styles/Pages.css';
 
 const Departments = () => {
@@ -10,6 +11,7 @@ const Departments = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterLocation, setFilterLocation] = useState('ALL');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -84,10 +86,16 @@ const Departments = () => {
     setEditingDepartment(null);
   };
 
-  const filteredDepartments = departments.filter(dept =>
-    dept.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    dept.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Get unique locations for filter
+  const locations = [...new Set(departments.map(d => d.location).filter(Boolean))];
+
+  const filteredDepartments = departments.filter(dept => {
+    const matchesSearch = 
+      dept.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      dept.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesLocation = filterLocation === 'ALL' || dept.location === filterLocation;
+    return matchesSearch && matchesLocation;
+  });
 
   const departmentColors = ['#6ee7b7', '#93c5fd', '#fca5a5', '#fcd34d', '#c4b5fd', '#f9a8d4'];
 
@@ -144,6 +152,18 @@ const Departments = () => {
               <span className="stat-label">Total Doctors</span>
             </div>
           </div>
+        </div>
+
+        <div className="filter-bar">
+          <CustomSelect
+            options={[
+              { value: 'ALL', label: 'All Locations' },
+              ...locations.map(loc => ({ value: loc, label: loc }))
+            ]}
+            value={filterLocation}
+            onChange={setFilterLocation}
+            placeholder="Filter by location"
+          />
         </div>
 
         {loading ? (

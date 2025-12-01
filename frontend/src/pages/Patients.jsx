@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail, FiUsers, FiUser } from 'react-icons/fi';
+import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail, FiUsers, FiUser, FiFilter } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
+import FilterModal from '../component/FilterModal';
+import SortDropdown from '../component/SortDropdown';
 import '../styles/Pages.css';
+import '../styles/FilterModal.css';
+import '../styles/SortDropdown.css';
 
 const Patients = () => {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilters, setActiveFilters] = useState({});
+  const [currentSort, setCurrentSort] = useState({ sortBy: '', sortDirection: 'asc' });
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -102,12 +109,101 @@ const Patients = () => {
     setEditingPatient(null);
   };
 
-  const filteredPatients = patients.filter(patient =>
-    patient.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone?.includes(searchTerm)
-  );
+  const fetchFilteredPatients = async (filters, sort = currentSort) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (filters.gender) params.append('gender', filters.gender);
+      if (filters.bloodType) params.append('bloodType', filters.bloodType);
+      if (sort.sortBy) params.append('sortBy', sort.sortBy);
+      if (sort.sortDirection) params.append('sortDirection', sort.sortDirection);
+      
+      const data = await api.get(`/patients/filter?${params.toString()}`);
+      setPatients(data);
+      setActiveFilters(filters);
+    } catch (error) {
+      console.error('Error filtering patients:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApplyFilters = (filters) => {
+    const hasFilters = Object.values(filters).some(v => v !== '' && v !== false);
+    if (hasFilters) {
+      fetchFilteredPatients(filters);
+    } else {
+      fetchPatients();
+      setActiveFilters({});
+    }
+    setShowFilterModal(false);
+  };
+
+  const clearFilters = () => {
+    setActiveFilters({});
+    if (currentSort.sortBy) {
+      fetchFilteredPatients({}, currentSort);
+    } else {
+      fetchPatients();
+    }
+  };
+
+  const handleSort = (sort) => {
+    setCurrentSort(sort);
+    if (sort.sortBy || Object.keys(activeFilters).length > 0) {
+      fetchFilteredPatients(activeFilters, sort);
+    } else {
+      fetchPatients();
+    }
+  };
+
+  const filterConfig = [
+    {
+      key: 'gender',
+      label: 'Gender',
+      type: 'select',
+      options: [
+        { value: 'Male', label: 'Male' },
+        { value: 'Female', label: 'Female' },
+        { value: 'Other', label: 'Other' }
+      ]
+    },
+    {
+      key: 'bloodType',
+      label: 'Blood Type',
+      type: 'select',
+      options: [
+        { value: 'A+', label: 'A+' },
+        { value: 'A-', label: 'A-' },
+        { value: 'B+', label: 'B+' },
+        { value: 'B-', label: 'B-' },
+        { value: 'AB+', label: 'AB+' },
+        { value: 'AB-', label: 'AB-' },
+        { value: 'O+', label: 'O+' },
+        { value: 'O-', label: 'O-' }
+      ]
+    }
+  ];
+
+  const sortOptions = [
+    { value: 'firstName', label: 'First Name' },
+    { value: 'lastName', label: 'Last Name' },
+    { value: 'dateOfBirth', label: 'Date of Birth' },
+    { value: 'gender', label: 'Gender' },
+    { value: 'bloodType', label: 'Blood Type' },
+    { value: 'id', label: 'ID' }
+  ];
+
+  const activeFilterCount = Object.values(activeFilters).filter(v => v !== '' && v !== false && v !== undefined).length;
+
+  const filteredPatients = patients.filter(patient => {
+    const matchesSearch = 
+      patient.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.phone?.includes(searchTerm);
+    return matchesSearch;
+  });
 
   const calculateAge = (dateOfBirth) => {
     if (!dateOfBirth) return '-';
@@ -182,6 +278,31 @@ const Patients = () => {
             </div>
           </div>
         </div>
+
+        <div className="filter-bar">
+          <button className="btn-filter" onClick={() => setShowFilterModal(true)}>
+            <FiFilter /> Filter
+            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
+          </button>
+          <SortDropdown
+            sortOptions={sortOptions}
+            onSort={handleSort}
+            currentSort={currentSort}
+          />
+          {activeFilterCount > 0 && (
+            <button className="btn-clear-filter" onClick={clearFilters}>
+              <FiX /> Clear Filters
+            </button>
+          )}
+        </div>
+
+        <FilterModal
+          isOpen={showFilterModal}
+          onClose={() => setShowFilterModal(false)}
+          onApply={handleApplyFilters}
+          filterConfig={filterConfig}
+          title="Filter Patients"
+        />
 
         {loading ? (
           <div className="loading">Loading...</div>

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiDollarSign, FiCreditCard, FiCheckCircle } from 'react-icons/fi';
+import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiDollarSign, FiCreditCard, FiCheckCircle, FiFilter } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
-import CustomSelect from '../component/CustomSelect';
+import FilterModal from '../component/FilterModal';
+import SortDropdown from '../component/SortDropdown';
 import '../styles/Pages.css';
+import '../styles/FilterModal.css';
+import '../styles/SortDropdown.css';
 
 const Payments = () => {
   const [bills, setBills] = useState([]);
@@ -11,10 +14,12 @@ const Payments = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showPayModal, setShowPayModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [editingBill, setEditingBill] = useState(null);
   const [selectedBill, setSelectedBill] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [activeFilters, setActiveFilters] = useState({});
+  const [currentSort, setCurrentSort] = useState({ sortBy: '', sortDirection: 'asc' });
   const [formData, setFormData] = useState({
     patientId: '',
     billDate: '',
@@ -158,12 +163,97 @@ const Payments = () => {
     }
   };
 
+  const fetchFilteredBills = async (filters, sort = currentSort) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (filters.status) params.append('status', filters.status);
+      if (filters.paymentMethod) params.append('paymentMethod', filters.paymentMethod);
+      if (sort.sortBy) params.append('sortBy', sort.sortBy);
+      if (sort.sortDirection) params.append('sortDirection', sort.sortDirection);
+      
+      const data = await api.get(`/bills/filter?${params.toString()}`);
+      setBills(data);
+      setActiveFilters(filters);
+    } catch (error) {
+      console.error('Error filtering bills:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApplyFilters = (filters) => {
+    const hasFilters = Object.values(filters).some(v => v !== '' && v !== false);
+    if (hasFilters) {
+      fetchFilteredBills(filters);
+    } else {
+      fetchBills();
+      setActiveFilters({});
+    }
+    setShowFilterModal(false);
+  };
+
+  const clearFilters = () => {
+    setActiveFilters({});
+    if (currentSort.sortBy) {
+      fetchFilteredBills({}, currentSort);
+    } else {
+      fetchBills();
+    }
+  };
+
+  const handleSort = (sort) => {
+    setCurrentSort(sort);
+    if (sort.sortBy || Object.keys(activeFilters).length > 0) {
+      fetchFilteredBills(activeFilters, sort);
+    } else {
+      fetchBills();
+    }
+  };
+
+  const filterConfig = [
+    {
+      key: 'status',
+      label: 'Payment Status',
+      type: 'select',
+      options: [
+        { value: 'PENDING', label: 'Pending' },
+        { value: 'PAID', label: 'Paid' },
+        { value: 'PARTIAL', label: 'Partial' },
+        { value: 'CANCELLED', label: 'Cancelled' },
+        { value: 'REFUNDED', label: 'Refunded' }
+      ]
+    },
+    {
+      key: 'paymentMethod',
+      label: 'Payment Method',
+      type: 'select',
+      options: [
+        { value: 'CASH', label: 'Cash' },
+        { value: 'CREDIT_CARD', label: 'Credit Card' },
+        { value: 'DEBIT_CARD', label: 'Debit Card' },
+        { value: 'INSURANCE', label: 'Insurance' },
+        { value: 'BANK_TRANSFER', label: 'Bank Transfer' }
+      ]
+    }
+  ];
+
+  const sortOptions = [
+    { value: 'billDate', label: 'Bill Date' },
+    { value: 'netAmount', label: 'Net Amount' },
+    { value: 'totalAmount', label: 'Total Amount' },
+    { value: 'paymentStatus', label: 'Payment Status' },
+    { value: 'paymentDate', label: 'Payment Date' },
+    { value: 'id', label: 'Bill ID' }
+  ];
+
+  const activeFilterCount = Object.values(activeFilters).filter(v => v !== '' && v !== false && v !== undefined).length;
+
   const filteredBills = bills.filter(bill => {
     const matchesSearch = 
       bill.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       bill.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'ALL' || bill.paymentStatus === filterStatus;
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 
   const totalRevenue = bills.filter(b => b.paymentStatus === 'PAID').reduce((sum, b) => sum + (b.netAmount || 0), 0);
@@ -241,20 +331,29 @@ const Payments = () => {
         </div>
 
         <div className="filter-bar">
-          <CustomSelect
-            options={[
-              { value: 'ALL', label: 'All Status' },
-              { value: 'PENDING', label: 'Pending' },
-              { value: 'PAID', label: 'Paid' },
-              { value: 'PARTIAL', label: 'Partial' },
-              { value: 'CANCELLED', label: 'Cancelled' },
-              { value: 'REFUNDED', label: 'Refunded' }
-            ]}
-            value={filterStatus}
-            onChange={setFilterStatus}
-            placeholder="Filter by status"
+          <button className="btn-filter" onClick={() => setShowFilterModal(true)}>
+            <FiFilter /> Filter
+            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
+          </button>
+          <SortDropdown
+            sortOptions={sortOptions}
+            onSort={handleSort}
+            currentSort={currentSort}
           />
+          {activeFilterCount > 0 && (
+            <button className="btn-clear-filter" onClick={clearFilters}>
+              <FiX /> Clear Filters
+            </button>
+          )}
         </div>
+
+        <FilterModal
+          isOpen={showFilterModal}
+          onClose={() => setShowFilterModal(false)}
+          onApply={handleApplyFilters}
+          filterConfig={filterConfig}
+          title="Filter Payments"
+        />
 
         {loading ? (
           <div className="loading">Loading...</div>

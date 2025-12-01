@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -93,5 +94,38 @@ public class DoctorService {
 
     public List<Doctor> searchDoctorsByName(String name) {
         return doctorRepository.searchByName(name);
+    }
+
+    public List<Doctor> filterDoctors(Long departmentId, String specialization, String sortBy, String sortOrder) {
+        List<Doctor> doctors = doctorRepository.findAll();
+        
+        List<Doctor> filtered = doctors.stream()
+            .filter(d -> departmentId == null || (d.getDepartment() != null && d.getDepartment().getId().equals(departmentId)))
+            .filter(d -> specialization == null || specialization.isEmpty() || specialization.equals(d.getSpecialization()))
+            .toList();
+
+        if (sortBy != null && !sortBy.isEmpty()) {
+            Comparator<Doctor> comparator = getDoctorComparator(sortBy);
+            if (comparator != null) {
+                if ("desc".equalsIgnoreCase(sortOrder)) {
+                    comparator = comparator.reversed();
+                }
+                filtered = filtered.stream().sorted(comparator).toList();
+            }
+        }
+        
+        return filtered;
+    }
+
+    private Comparator<Doctor> getDoctorComparator(String sortBy) {
+        return switch (sortBy) {
+            case "name" -> Comparator.comparing(Doctor::getFirstName, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "specialization" -> Comparator.comparing(Doctor::getSpecialization, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "department" -> Comparator.comparing(d -> d.getDepartment() != null ? d.getDepartment().getName() : "", Comparator.nullsLast(Comparator.naturalOrder()));
+            case "experience" -> Comparator.comparing(Doctor::getYearsOfExperience, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "fee" -> Comparator.comparing(Doctor::getConsultationFee, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "email" -> Comparator.comparing(Doctor::getEmail, Comparator.nullsLast(Comparator.naturalOrder()));
+            default -> null;
+        };
     }
 }
