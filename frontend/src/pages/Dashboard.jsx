@@ -3,10 +3,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   AreaChart, Area, PieChart, Pie, Cell 
 } from 'recharts';
-import { FiSearch, FiSettings, FiBell, FiMoreHorizontal, FiGrid } from 'react-icons/fi';
+import { FiMoreHorizontal, FiGrid } from 'react-icons/fi';
+import { FiSettings } from 'react-icons/fi';
 
 // Import Components
 import Sidebar from '../component/Sidebar';
+import Header from '../component/Header';
 import StatCard from '../component/StatCard';
 import DoctorRow from '../component/DoctorRow';
 import RightPanel from '../component/RightPanel';
@@ -24,20 +26,7 @@ const Dashboard = () => {
       
       <main className="main-content">
         {/* Header Section */}
-        <header className="top-bar">
-          <div className="search-bar">
-            <FiSearch />
-            <input type="text" placeholder="Search anything" />
-          </div>
-          <div className="user-tools">
-            <FiSettings />
-            <FiBell />
-            <div className="user-profile">
-              <img src="https://via.placeholder.com/30" alt="User" />
-              <span>Alfredo Westervelt</span>
-            </div>
-          </div>
-        </header>
+        <Header placeholder="Search anything" />
 
         <div className="content-grid-wrapper">
           <div className="center-panel">

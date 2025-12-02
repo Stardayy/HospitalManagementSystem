@@ -144,3 +144,4 @@ INSERT INTO medical_record (patient_id, doctor_id, record_date, diagnosis, sympt
 (5, 5, '2025-11-28', 'Acute Anxiety Attack', 'Chest pain, shortness of breath, palpitations', 'Ruled out cardiac cause, referred to psychiatry', 'Sertraline 50mg daily', '2025-12-05', 'ECG normal, recommend counseling', NOW(), NOW()),
 (6, 6, '2025-11-29', 'Contact Dermatitis', 'Itchy red rash on arms, blistering', 'Topical treatment, allergen avoidance', 'Prednisone cream 1%, antihistamine', '2025-12-10', 'Possible nickel allergy - patch test recommended', NOW(), NOW()),
 (3, 3, '2025-11-27', 'ACL Sprain Grade II', 'Knee pain, swelling, instability', 'RICE protocol, physical therapy', 'Ibuprofen 400mg TID, knee brace', '2026-01-15', 'Surgery may be needed if no improvement', NOW(), NOW());
+

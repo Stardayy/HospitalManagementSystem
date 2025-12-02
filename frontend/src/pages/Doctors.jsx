@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail, FiAward, FiUsers, FiGrid, FiDollarSign, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail, FiAward, FiUsers, FiGrid, FiDollarSign, FiFilter } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
+import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
 import SortDropdown from '../component/SortDropdown';
 import '../styles/Pages.css';
@@ -224,25 +225,7 @@ const Doctors = () => {
       <Sidebar />
       
       <main className="main-content">
-        <header className="top-bar">
-          <div className="search-bar">
-            <FiSearch />
-            <input 
-              type="text" 
-              placeholder="Search doctors..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="user-tools">
-            <FiSettings />
-            <FiBell />
-            <div className="user-profile">
-              <img src="https://via.placeholder.com/30" alt="User" />
-              <span>Alfredo Westervelt</span>
-            </div>
-          </div>
-        </header>
+        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Search doctors..." />
 
         <div className="page-header">
           <h1>Doctors</h1>

@@ -246,6 +246,19 @@
   border: 2px solid var(--teal);
 }
 
+.header-avatar {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 12px;
+}
+
 /* Page Header */
 .page-header {
   display: flex;

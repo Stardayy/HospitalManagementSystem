@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { FiSearch, FiSettings, FiBell, FiSend, FiPaperclip, FiSmile, FiMoreVertical, FiPhone, FiVideo } from 'react-icons/fi';
+import { FiSearch, FiSend, FiPaperclip, FiSmile, FiMoreVertical, FiPhone, FiVideo } from 'react-icons/fi';
 import Sidebar from '../component/Sidebar';
+import Header from '../component/Header';
 import '../styles/Pages.css';
 
 const Messages = () => {
@@ -119,20 +120,7 @@ const Messages = () => {
       <Sidebar />
       
       <main className="main-content">
-        <header className="top-bar">
-          <div className="search-bar">
-            <FiSearch />
-            <input type="text" placeholder="Search messages..." />
-          </div>
-          <div className="user-tools">
-            <FiSettings />
-            <FiBell />
-            <div className="user-profile">
-              <img src="https://via.placeholder.com/30" alt="User" />
-              <span>Alfredo Westervelt</span>
-            </div>
-          </div>
-        </header>
+        <Header placeholder="Search messages..." />
 
         <div className="page-header">
           <h1>Messages</h1>
