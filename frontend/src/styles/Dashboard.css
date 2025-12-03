@@ -171,77 +171,27 @@
     background: #cbd5e1;
   }
   
-.nav-links li {
-  display: flex;
-  align-items: center;
-  margin-bottom: 6px;
-  border-radius: 12px;
-}
-
-.nav-links li a {
-  display: flex;
-  align-items: center;
-  padding: 14px 18px;
-  color: #64748b;
-  cursor: pointer;
-  border-radius: 12px;
-  text-decoration: none;
-  width: 100%;
-  transition: var(--transition-smooth);
-  font-weight: 500;
-  font-size: 15px;
-  position: relative;
-  overflow: hidden;
-}
-
-.nav-links li a::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--teal);
-  transform: scaleY(0);
-  transition: transform 0.3s ease;
-  border-radius: 0 4px 4px 0;
-}
-
-.nav-links li a svg {
-  margin-right: 14px;
-  font-size: 18px;
-  transition: var(--transition-smooth);
-}
-
-.nav-links li a:hover {
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  color: #1e293b;
-  transform: translateX(5px);
-}
-
-.nav-links li a:hover::before {
-  transform: scaleY(1);
-}
-
-.nav-links li a:hover svg {
-  color: #10b981;
-}
-
-.nav-links li a.active {
-  background: var(--teal);
-  color: var(--text-dark);
-  font-weight: 600;
-  box-shadow: 0 8px 25px rgba(110, 231, 183, 0.45);
-}
-
-.nav-links li a.active::before {
-  display: none;
-}
-
-.nav-links li a.active svg {
-  color: var(--text-dark);
-}
-
+  .nav-links li {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    color: var(--text-light);
+    cursor: pointer;
+    margin-bottom: 5px;
+    border-radius: 8px;
+  }
+  
+  .nav-links li svg {
+    margin-right: 15px;
+    margin-left: 15px;
+  }
+  
+  .nav-links li.active {
+    background-color: var(--teal);
+    color: var(--text-dark);
+    font-weight: 600;
+  }
+  
   .badge {
     background: linear-gradient(135deg, #ef4444, #f87171);
     color: white;
