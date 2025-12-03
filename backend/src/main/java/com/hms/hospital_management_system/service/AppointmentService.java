@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -98,5 +99,42 @@ public class AppointmentService {
 
     public List<Appointment> getTodaysAppointments() {
         return appointmentRepository.findByAppointmentDate(LocalDate.now());
+    }
+
+    public List<Appointment> filterAppointments(AppointmentStatus status, Long doctorId, Long patientId, 
+            LocalDate startDate, LocalDate endDate, String sortBy, String sortOrder) {
+        List<Appointment> appointments = appointmentRepository.findAll();
+        
+        List<Appointment> filtered = appointments.stream()
+            .filter(a -> status == null || a.getStatus() == status)
+            .filter(a -> doctorId == null || (a.getDoctor() != null && a.getDoctor().getId().equals(doctorId)))
+            .filter(a -> patientId == null || (a.getPatient() != null && a.getPatient().getId().equals(patientId)))
+            .filter(a -> startDate == null || (a.getAppointmentDate() != null && !a.getAppointmentDate().isBefore(startDate)))
+            .filter(a -> endDate == null || (a.getAppointmentDate() != null && !a.getAppointmentDate().isAfter(endDate)))
+            .toList();
+
+        if (sortBy != null && !sortBy.isEmpty()) {
+            Comparator<Appointment> comparator = getAppointmentComparator(sortBy);
+            if (comparator != null) {
+                if ("desc".equalsIgnoreCase(sortOrder)) {
+                    comparator = comparator.reversed();
+                }
+                filtered = filtered.stream().sorted(comparator).toList();
+            }
+        }
+        
+        return filtered;
+    }
+
+    private Comparator<Appointment> getAppointmentComparator(String sortBy) {
+        return switch (sortBy) {
+            case "date" -> Comparator.comparing(Appointment::getAppointmentDate, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "time" -> Comparator.comparing(Appointment::getAppointmentTime, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "patient" -> Comparator.comparing(a -> a.getPatient() != null ? a.getPatient().getFirstName() : "", Comparator.nullsLast(Comparator.naturalOrder()));
+            case "doctor" -> Comparator.comparing(a -> a.getDoctor() != null ? a.getDoctor().getFirstName() : "", Comparator.nullsLast(Comparator.naturalOrder()));
+            case "status" -> Comparator.comparing(a -> a.getStatus() != null ? a.getStatus().name() : "", Comparator.nullsLast(Comparator.naturalOrder()));
+            case "createdAt" -> Comparator.comparing(Appointment::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
+            default -> null;
+        };
     }
 }

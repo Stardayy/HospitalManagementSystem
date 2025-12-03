@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail, FiAward, FiUsers, FiGrid, FiDollarSign } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail, FiAward, FiUsers, FiGrid, FiDollarSign, FiFilter } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
-import CustomSelect from '../component/CustomSelect';
+import Header from '../component/Header';
+import FilterModal from '../component/FilterModal';
+import SortDropdown from '../component/SortDropdown';
 import '../styles/Pages.css';
+import '../styles/FilterModal.css';
+import '../styles/SortDropdown.css';
 
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDepartment, setFilterDepartment] = useState('ALL');
+  const [activeFilters, setActiveFilters] = useState({});
+  const [currentSort, setCurrentSort] = useState({ sortBy: '', sortDirection: 'asc' });
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -129,14 +135,89 @@ const Doctors = () => {
     setEditingDoctor(null);
   };
 
+  // Get unique specializations for filter
+  const specializations = [...new Set(doctors.map(d => d.specialization).filter(Boolean))];
+
+  const fetchFilteredDoctors = async (filters, sort = currentSort) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (filters.departmentId) params.append('departmentId', filters.departmentId);
+      if (filters.specialization) params.append('specialization', filters.specialization);
+      if (sort.sortBy) params.append('sortBy', sort.sortBy);
+      if (sort.sortDirection) params.append('sortDirection', sort.sortDirection);
+      
+      const data = await api.get(`/doctors/filter?${params.toString()}`);
+      setDoctors(data);
+      setActiveFilters(filters);
+    } catch (error) {
+      console.error('Error filtering doctors:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApplyFilters = (filters) => {
+    const hasFilters = Object.values(filters).some(v => v !== '' && v !== false);
+    if (hasFilters) {
+      fetchFilteredDoctors(filters);
+    } else {
+      fetchDoctors();
+      setActiveFilters({});
+    }
+    setShowFilterModal(false);
+  };
+
+  const clearFilters = () => {
+    setActiveFilters({});
+    if (currentSort.sortBy) {
+      fetchFilteredDoctors({}, currentSort);
+    } else {
+      fetchDoctors();
+    }
+  };
+
+  const handleSort = (sort) => {
+    setCurrentSort(sort);
+    if (sort.sortBy || Object.keys(activeFilters).length > 0) {
+      fetchFilteredDoctors(activeFilters, sort);
+    } else {
+      fetchDoctors();
+    }
+  };
+
+  const filterConfig = [
+    {
+      key: 'departmentId',
+      label: 'Department',
+      type: 'select',
+      options: departments.map(dept => ({ value: dept.id.toString(), label: dept.name }))
+    },
+    {
+      key: 'specialization',
+      label: 'Specialization',
+      type: 'select',
+      options: specializations.map(spec => ({ value: spec, label: spec }))
+    }
+  ];
+
+  const sortOptions = [
+    { value: 'firstName', label: 'First Name' },
+    { value: 'lastName', label: 'Last Name' },
+    { value: 'specialization', label: 'Specialization' },
+    { value: 'yearsOfExperience', label: 'Years of Experience' },
+    { value: 'consultationFee', label: 'Consultation Fee' },
+    { value: 'id', label: 'ID' }
+  ];
+
+  const activeFilterCount = Object.values(activeFilters).filter(v => v !== '' && v !== false && v !== undefined).length;
+
   const filteredDoctors = doctors.filter(doctor => {
     const matchesSearch = 
       doctor.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doctor.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doctor.specialization?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDepartment = filterDepartment === 'ALL' || 
-      doctor.department?.id?.toString() === filterDepartment;
-    return matchesSearch && matchesDepartment;
+    return matchesSearch;
   });
 
   return (
@@ -144,25 +225,7 @@ const Doctors = () => {
       <Sidebar />
       
       <main className="main-content">
-        <header className="top-bar">
-          <div className="search-bar">
-            <FiSearch />
-            <input 
-              type="text" 
-              placeholder="Search doctors..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="user-tools">
-            <FiSettings />
-            <FiBell />
-            <div className="user-profile">
-              <img src="https://via.placeholder.com/30" alt="User" />
-              <span>Alfredo Westervelt</span>
-            </div>
-          </div>
-        </header>
+        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Search doctors..." />
 
         <div className="page-header">
           <h1>Doctors</h1>
@@ -211,16 +274,29 @@ const Doctors = () => {
         </div>
 
         <div className="filter-bar">
-          <CustomSelect
-            options={[
-              { value: 'ALL', label: 'All Departments' },
-              ...departments.map(dept => ({ value: dept.id.toString(), label: dept.name }))
-            ]}
-            value={filterDepartment}
-            onChange={setFilterDepartment}
-            placeholder="Filter by department"
+          <button className="btn-filter" onClick={() => setShowFilterModal(true)}>
+            <FiFilter /> Filter
+            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
+          </button>
+          <SortDropdown
+            sortOptions={sortOptions}
+            onSort={handleSort}
+            currentSort={currentSort}
           />
+          {activeFilterCount > 0 && (
+            <button className="btn-clear-filter" onClick={clearFilters}>
+              <FiX /> Clear Filters
+            </button>
+          )}
         </div>
+
+        <FilterModal
+          isOpen={showFilterModal}
+          onClose={() => setShowFilterModal(false)}
+          onApply={handleApplyFilters}
+          filterConfig={filterConfig}
+          title="Filter Doctors"
+        />
 
         {loading ? (
           <div className="loading">Loading...</div>

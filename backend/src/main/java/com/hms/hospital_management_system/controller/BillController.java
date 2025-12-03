@@ -28,6 +28,15 @@ public class BillController {
         return ResponseEntity.ok(billService.getAllBills());
     }
 
+    @GetMapping("/filter")
+    public ResponseEntity<List<Bill>> filterBills(
+            @RequestParam(required = false) PaymentStatus status,
+            @RequestParam(required = false) PaymentMethod paymentMethod,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder) {
+        return ResponseEntity.ok(billService.filterBills(status, paymentMethod, sortBy, sortOrder));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Bill> getBillById(@PathVariable Long id) {
         return billService.getBillById(id)

@@ -22,6 +22,15 @@ public class DoctorController {
         return ResponseEntity.ok(doctorService.getAllDoctors());
     }
 
+    @GetMapping("/filter")
+    public ResponseEntity<List<Doctor>> filterDoctors(
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) String specialization,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder) {
+        return ResponseEntity.ok(doctorService.filterDoctors(departmentId, specialization, sortBy, sortOrder));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Doctor> getDoctorById(@PathVariable Long id) {
         return doctorService.getDoctorById(id)

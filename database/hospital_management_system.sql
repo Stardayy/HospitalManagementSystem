@@ -215,6 +215,33 @@ CREATE TABLE medical_record (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================
+-- TABLE: users (for authentication)
+-- =============================================
+CREATE TABLE users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    role ENUM('ADMIN', 'DOCTOR', 'PATIENT') NOT NULL,
+    doctor_id BIGINT,
+    patient_id BIGINT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_users_email (email),
+    INDEX idx_users_role (role),
+    
+    CONSTRAINT fk_users_doctor 
+        FOREIGN KEY (doctor_id) REFERENCES doctor(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_users_patient 
+        FOREIGN KEY (patient_id) REFERENCES patient(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
 -- INSERT SAMPLE DATA: Departments
 -- =============================================
 INSERT INTO department (name, description, location, phone) VALUES
@@ -381,6 +408,16 @@ INSERT INTO medical_record (patient_id, doctor_id, record_date, diagnosis, sympt
 (15, 15, '2025-11-29', 'Minor Laceration', 'Cut on forearm from accident', 'Wound cleaned and sutured', 'Antibiotics for 5 days, tetanus booster given', '2025-12-06', '5 sutures placed, remove in 7 days');
 
 -- =============================================
+-- INSERT SAMPLE DATA: Users (Authentication)
+-- Note: Passwords are BCrypt encoded
+-- admin123, doctor123, patient123
+-- =============================================
+INSERT INTO users (email, password, first_name, last_name, role, doctor_id, patient_id, is_active) VALUES
+('admin@hospital.com', '$2a$10$N9qo8uLOickgx2ZMRZoMye.MJ.kLOhJJrGxw3VLa1LJwqb7qbXBTO', 'Admin', 'Khôi', 'ADMIN', NULL, NULL, TRUE),
+('doctor@hospital.com', '$2a$10$N9qo8uLOickgx2ZMRZoMye.MJ.kLOhJJrGxw3VLa1LJwqb7qbXBTO', 'William', 'Chen', 'DOCTOR', 1, NULL, TRUE),
+('patient@hospital.com', '$2a$10$N9qo8uLOickgx2ZMRZoMye.MJ.kLOhJJrGxw3VLa1LJwqb7qbXBTO', 'John', 'Smith', 'PATIENT', NULL, 1, TRUE);
+
+-- =============================================
 -- VERIFICATION QUERIES
 -- =============================================
 SELECT '========================================' AS '';
@@ -395,7 +432,8 @@ UNION ALL SELECT CONCAT('  Appointments:    ', LPAD(COUNT(*), 3, ' ')) FROM appo
 UNION ALL SELECT CONCAT('  Bills:           ', LPAD(COUNT(*), 3, ' ')) FROM bill
 UNION ALL SELECT CONCAT('  Medicines:       ', LPAD(COUNT(*), 3, ' ')) FROM medicine
 UNION ALL SELECT CONCAT('  Rooms:           ', LPAD(COUNT(*), 3, ' ')) FROM room
-UNION ALL SELECT CONCAT('  Medical Records: ', LPAD(COUNT(*), 3, ' ')) FROM medical_record;
+UNION ALL SELECT CONCAT('  Medical Records: ', LPAD(COUNT(*), 3, ' ')) FROM medical_record
+UNION ALL SELECT CONCAT('  Users:           ', LPAD(COUNT(*), 3, ' ')) FROM users;
 
 SELECT '========================================' AS '';
 SELECT 'Connection Info:' AS '';

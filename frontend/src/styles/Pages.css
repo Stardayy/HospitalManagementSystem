@@ -246,6 +246,19 @@
   border: 2px solid var(--teal);
 }
 
+.header-avatar {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 12px;
+}
+
 /* Page Header */
 .page-header {
   display: flex;
@@ -349,6 +362,74 @@
   width: 100%;
   position: relative;
   z-index: 100;
+  align-items: center;
+}
+
+/* Filter Button */
+.btn-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1e293b;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+
+.btn-filter:hover {
+  border-color: var(--teal);
+  background: #f0fdf4;
+  box-shadow: 0 4px 12px rgba(110, 231, 183, 0.2);
+}
+
+.btn-filter svg {
+  font-size: 16px;
+  color: #64748b;
+  transition: var(--transition-smooth);
+}
+
+.btn-filter:hover svg {
+  color: var(--teal-dark);
+}
+
+.filter-count {
+  background: var(--teal);
+  color: var(--text-dark);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  margin-left: 4px;
+}
+
+.btn-clear-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: #fee2e2;
+  border: 2px solid #fecaca;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #dc2626;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.btn-clear-filter:hover {
+  background: #fecaca;
+  border-color: #fca5a5;
+  transform: translateY(-2px);
 }
 
 @keyframes fadeInUp {

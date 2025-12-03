@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiSettings, FiBell, FiPlus, FiEdit2, FiTrash2, FiX, FiAlertTriangle, FiPackage, FiCalendar } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiAlertTriangle, FiPackage, FiCalendar, FiFilter } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
-import CustomSelect from '../component/CustomSelect';
+import Header from '../component/Header';
+import FilterModal from '../component/FilterModal';
+import SortDropdown from '../component/SortDropdown';
 import '../styles/Pages.css';
+import '../styles/FilterModal.css';
+import '../styles/SortDropdown.css';
 
 const Inventory = () => {
   const [medicines, setMedicines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('ALL');
+  const [activeFilters, setActiveFilters] = useState({});
+  const [currentSort, setCurrentSort] = useState({ sortBy: '', sortDirection: 'asc' });
   const [formData, setFormData] = useState({
     name: '',
     genericName: '',
@@ -143,16 +149,108 @@ const Inventory = () => {
     return new Date(medicine.expiryDate) < new Date();
   };
 
+  // Get unique dosage forms for filter
+  const dosageForms = [...new Set(medicines.map(m => m.dosageForm).filter(Boolean))];
+
+  const fetchFilteredMedicines = async (filters, sort = currentSort) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (filters.dosageForm) params.append('dosageForm', filters.dosageForm);
+      if (filters.lowStock) params.append('lowStock', 'true');
+      if (filters.expired) params.append('expired', 'true');
+      if (filters.expiringSoon) params.append('expiringSoon', 'true');
+      if (sort.sortBy) params.append('sortBy', sort.sortBy);
+      if (sort.sortDirection) params.append('sortDirection', sort.sortDirection);
+      
+      const data = await api.get(`/medicines/filter?${params.toString()}`);
+      setMedicines(data);
+      setActiveFilters(filters);
+    } catch (error) {
+      console.error('Error filtering medicines:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApplyFilters = (filters) => {
+    const hasFilters = Object.values(filters).some(v => v !== '' && v !== false);
+    if (hasFilters) {
+      fetchFilteredMedicines(filters);
+    } else {
+      fetchMedicines();
+      setActiveFilters({});
+    }
+    setShowFilterModal(false);
+  };
+
+  const clearFilters = () => {
+    setActiveFilters({});
+    if (currentSort.sortBy) {
+      fetchFilteredMedicines({}, currentSort);
+    } else {
+      fetchMedicines();
+    }
+  };
+
+  const handleSort = (sort) => {
+    setCurrentSort(sort);
+    if (sort.sortBy || Object.keys(activeFilters).length > 0) {
+      fetchFilteredMedicines(activeFilters, sort);
+    } else {
+      fetchMedicines();
+    }
+  };
+
+  const filterConfig = [
+    {
+      key: 'dosageForm',
+      label: 'Dosage Form',
+      type: 'select',
+      options: [
+        { value: 'Tablet', label: 'Tablet' },
+        { value: 'Capsule', label: 'Capsule' },
+        { value: 'Syrup', label: 'Syrup' },
+        { value: 'Injection', label: 'Injection' },
+        { value: 'Cream', label: 'Cream' },
+        { value: 'Ointment', label: 'Ointment' },
+        { value: 'Drops', label: 'Drops' }
+      ]
+    },
+    {
+      key: 'lowStock',
+      label: 'Low Stock Only',
+      type: 'checkbox'
+    },
+    {
+      key: 'expired',
+      label: 'Expired Only',
+      type: 'checkbox'
+    },
+    {
+      key: 'expiringSoon',
+      label: 'Expiring Soon (30 days)',
+      type: 'checkbox'
+    }
+  ];
+
+  const sortOptions = [
+    { value: 'name', label: 'Medicine Name' },
+    { value: 'genericName', label: 'Generic Name' },
+    { value: 'manufacturer', label: 'Manufacturer' },
+    { value: 'price', label: 'Price' },
+    { value: 'stockQuantity', label: 'Stock Quantity' },
+    { value: 'expiryDate', label: 'Expiry Date' },
+    { value: 'id', label: 'ID' }
+  ];
+
+  const activeFilterCount = Object.values(activeFilters).filter(v => v !== '' && v !== false && v !== undefined).length;
+
   const filteredMedicines = medicines.filter(medicine => {
     const matchesSearch = 
       medicine.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       medicine.genericName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       medicine.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    if (filterType === 'ALL') return matchesSearch;
-    if (filterType === 'LOW_STOCK') return matchesSearch && isLowStock(medicine);
-    if (filterType === 'EXPIRING') return matchesSearch && isExpiringSoon(medicine);
-    if (filterType === 'EXPIRED') return matchesSearch && isExpired(medicine);
     return matchesSearch;
   });
 
@@ -165,25 +263,7 @@ const Inventory = () => {
       <Sidebar />
       
       <main className="main-content">
-        <header className="top-bar">
-          <div className="search-bar">
-            <FiSearch />
-            <input 
-              type="text" 
-              placeholder="Search medicines..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="user-tools">
-            <FiSettings />
-            <FiBell />
-            <div className="user-profile">
-              <img src="https://via.placeholder.com/30" alt="User" />
-              <span>Alfredo Westervelt</span>
-            </div>
-          </div>
-        </header>
+        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Search medicines..." />
 
         <div className="page-header">
           <h1>Inventory</h1>
@@ -232,18 +312,29 @@ const Inventory = () => {
         </div>
 
         <div className="filter-bar">
-          <CustomSelect
-            options={[
-              { value: 'ALL', label: 'All Medicines' },
-              { value: 'LOW_STOCK', label: 'Low Stock' },
-              { value: 'EXPIRING', label: 'Expiring Soon' },
-              { value: 'EXPIRED', label: 'Expired' }
-            ]}
-            value={filterType}
-            onChange={setFilterType}
-            placeholder="Filter by type"
+          <button className="btn-filter" onClick={() => setShowFilterModal(true)}>
+            <FiFilter /> Filter
+            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
+          </button>
+          <SortDropdown
+            sortOptions={sortOptions}
+            onSort={handleSort}
+            currentSort={currentSort}
           />
+          {activeFilterCount > 0 && (
+            <button className="btn-clear-filter" onClick={clearFilters}>
+              <FiX /> Clear Filters
+            </button>
+          )}
         </div>
+
+        <FilterModal
+          isOpen={showFilterModal}
+          onClose={() => setShowFilterModal(false)}
+          onApply={handleApplyFilters}
+          filterConfig={filterConfig}
+          title="Filter Inventory"
+        />
 
         {loading ? (
           <div className="loading">Loading...</div>

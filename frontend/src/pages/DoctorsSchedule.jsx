@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiSettings, FiBell, FiChevronLeft, FiChevronRight, FiClock } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiClock } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
+import Header from '../component/Header';
 import CustomSelect from '../component/CustomSelect';
 import '../styles/Pages.css';
 
@@ -91,20 +92,7 @@ const DoctorsSchedule = () => {
       <Sidebar />
       
       <main className="main-content">
-        <header className="top-bar">
-          <div className="search-bar">
-            <FiSearch />
-            <input type="text" placeholder="Search schedule..." />
-          </div>
-          <div className="user-tools">
-            <FiSettings />
-            <FiBell />
-            <div className="user-profile">
-              <img src="https://via.placeholder.com/30" alt="User" />
-              <span>Alfredo Westervelt</span>
-            </div>
-          </div>
-        </header>
+        <Header placeholder="Search schedule..." />
 
         <div className="page-header">
           <h1>Doctors' Schedule</h1>

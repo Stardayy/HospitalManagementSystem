@@ -33,6 +33,15 @@ public class PatientController {
         return ResponseEntity.ok(patientService.getAllPatients());
     }
 
+    @GetMapping("/filter")
+    public ResponseEntity<List<Patient>> filterPatients(
+            @RequestParam(required = false) String gender,
+            @RequestParam(required = false) String bloodType,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder) {
+        return ResponseEntity.ok(patientService.filterPatients(gender, bloodType, sortBy, sortOrder));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Patient> getPatientById(@PathVariable Long id) {
         return patientService.getPatientById(id)
