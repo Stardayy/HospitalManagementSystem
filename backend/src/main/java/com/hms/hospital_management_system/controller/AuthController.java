@@ -16,6 +16,7 @@ import com.hms.hospital_management_system.entity.User;
 import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.AuthService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -26,12 +27,12 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 

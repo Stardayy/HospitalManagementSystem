@@ -60,6 +60,7 @@ com\hms\hospital_management_system\controller\MedicalRecordController.class
 com\hms\hospital_management_system\entity\User$UserBuilder.class
 com\hms\hospital_management_system\repository\AppointmentRepository.class
 com\hms\hospital_management_system\service\PatientService.class
+com\hms\hospital_management_system\config\GlobalExceptionHandler.class
 com\hms\hospital_management_system\entity\Appointment$AppointmentBuilder.class
 com\hms\hospital_management_system\dto\LoginRequest$LoginRequestBuilder.class
 com\hms\hospital_management_system\entity\MedicalRecord.class
