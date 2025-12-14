@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,9 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
+    
+    // Default appointment duration in minutes
+    private static final int APPOINTMENT_DURATION_MINUTES = 30;
 
     public List<Appointment> getAllAppointments() {
         return appointmentRepository.findAll();
@@ -39,6 +43,10 @@ public class AppointmentService {
         Doctor doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + doctorId));
 
+        // Check for appointment conflicts
+        validateNoConflict(doctorId, appointment.getAppointmentDate(), 
+                appointment.getAppointmentTime(), null);
+
         appointment.setPatient(patient);
         appointment.setDoctor(doctor);
         
@@ -49,6 +57,14 @@ public class AppointmentService {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Appointment not found with id: " + id));
 
+        // Check for conflicts only if date/time or doctor changed
+        if (appointmentDetails.getAppointmentDate() != null && 
+            appointmentDetails.getAppointmentTime() != null) {
+            Long doctorId = appointment.getDoctor().getId();
+            validateNoConflict(doctorId, appointmentDetails.getAppointmentDate(), 
+                    appointmentDetails.getAppointmentTime(), id);
+        }
+
         appointment.setAppointmentDate(appointmentDetails.getAppointmentDate());
         appointment.setAppointmentTime(appointmentDetails.getAppointmentTime());
         appointment.setStatus(appointmentDetails.getStatus());
@@ -56,6 +72,72 @@ public class AppointmentService {
         appointment.setNotes(appointmentDetails.getNotes());
 
         return appointmentRepository.save(appointment);
+    }
+    
+    /**
+     * Validates that there is no conflicting appointment for the doctor at the given date/time.
+     * An appointment conflicts if it's within the appointment duration window.
+     * 
+     * @param doctorId The doctor's ID
+     * @param date The appointment date
+     * @param time The appointment time
+     * @param excludeAppointmentId Optional appointment ID to exclude (for updates)
+     * @throws RuntimeException if a conflict is found
+     */
+    private void validateNoConflict(Long doctorId, LocalDate date, LocalTime time, Long excludeAppointmentId) {
+        LocalTime startTime = time.minusMinutes(APPOINTMENT_DURATION_MINUTES);
+        LocalTime endTime = time.plusMinutes(APPOINTMENT_DURATION_MINUTES);
+        
+        List<Appointment> conflicts;
+        if (excludeAppointmentId != null) {
+            conflicts = appointmentRepository.findConflictingAppointmentsExcluding(
+                    doctorId, date, startTime, endTime, excludeAppointmentId);
+        } else {
+            conflicts = appointmentRepository.findConflictingAppointments(
+                    doctorId, date, startTime, endTime);
+        }
+        
+        if (!conflicts.isEmpty()) {
+            Appointment conflict = conflicts.get(0);
+            throw new RuntimeException(String.format(
+                    "Appointment conflict: Doctor already has an appointment at %s on %s. " +
+                    "Please choose a different time slot.",
+                    conflict.getAppointmentTime(), conflict.getAppointmentDate()));
+        }
+    }
+    
+    /**
+     * Check if a time slot is available for a doctor
+     */
+    public boolean isTimeSlotAvailable(Long doctorId, LocalDate date, LocalTime time) {
+        LocalTime startTime = time.minusMinutes(APPOINTMENT_DURATION_MINUTES);
+        LocalTime endTime = time.plusMinutes(APPOINTMENT_DURATION_MINUTES);
+        
+        List<Appointment> conflicts = appointmentRepository.findConflictingAppointments(
+                doctorId, date, startTime, endTime);
+        
+        return conflicts.isEmpty();
+    }
+    
+    /**
+     * Get available time slots for a doctor on a specific date
+     */
+    public List<LocalTime> getAvailableTimeSlots(Long doctorId, LocalDate date) {
+        // Define working hours (9 AM to 5 PM with 30-minute slots)
+        List<LocalTime> allSlots = List.of(
+            LocalTime.of(9, 0), LocalTime.of(9, 30),
+            LocalTime.of(10, 0), LocalTime.of(10, 30),
+            LocalTime.of(11, 0), LocalTime.of(11, 30),
+            LocalTime.of(12, 0), LocalTime.of(12, 30),
+            LocalTime.of(13, 0), LocalTime.of(13, 30),
+            LocalTime.of(14, 0), LocalTime.of(14, 30),
+            LocalTime.of(15, 0), LocalTime.of(15, 30),
+            LocalTime.of(16, 0), LocalTime.of(16, 30)
+        );
+        
+        return allSlots.stream()
+                .filter(slot -> isTimeSlotAvailable(doctorId, date, slot))
+                .toList();
     }
 
     public Appointment updateAppointmentStatus(Long id, AppointmentStatus status) {

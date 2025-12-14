@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.hms.hospital_management_system.entity.Doctor;
@@ -15,6 +16,9 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     Optional<Doctor> findByEmail(String email);
     
     Optional<Doctor> findByLicenseNumber(String licenseNumber);
+    
+    @Query("SELECT d FROM Doctor d WHERE d.id = (SELECT u.doctorId FROM User u WHERE u.id = :userId)")
+    Optional<Doctor> findByUserId(@Param("userId") Long userId);
     
     List<Doctor> findByDepartmentId(Long departmentId);
     

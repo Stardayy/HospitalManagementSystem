@@ -1,11 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FiGrid, FiCalendar, FiUsers, FiActivity, FiMessageSquare, FiDollarSign, FiPackage, FiClock, FiLayers, FiLogOut } from 'react-icons/fi';
+import { FiGrid, FiCalendar, FiUsers, FiActivity, FiMessageSquare, FiDollarSign, FiPackage, FiClock, FiLayers, FiLogOut, FiFileText, FiHome } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
+import api from '../api/api';
 
 const Sidebar = () => {
   const { user, logout, isAdmin, isDoctor } = useAuth();
   const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const data = await api.get('/messages/unread/count');
+        setUnreadCount(data.count || data || 0);
+      } catch (error) {
+        console.error('Error fetching unread count:', error);
+      }
+    };
+
+    if (user) {
+      fetchUnreadCount();
+      // Poll for unread messages every 30 seconds
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -37,6 +57,13 @@ const Sidebar = () => {
             </NavLink>
           </li>
         )}
+        {(isAdmin() || isDoctor()) && (
+          <li>
+            <NavLink to="/medical-records" className={({ isActive }) => isActive ? 'active' : ''}>
+              <FiFileText /> Medical Records
+            </NavLink>
+          </li>
+        )}
         {isAdmin() && (
           <li>
             <NavLink to="/doctors" className={({ isActive }) => isActive ? 'active' : ''}>
@@ -48,6 +75,13 @@ const Sidebar = () => {
           <li>
             <NavLink to="/departments" className={({ isActive }) => isActive ? 'active' : ''}>
               <FiLayers /> Departments
+            </NavLink>
+          </li>
+        )}
+        {isAdmin() && (
+          <li>
+            <NavLink to="/rooms" className={({ isActive }) => isActive ? 'active' : ''}>
+              <FiHome /> Rooms
             </NavLink>
           </li>
         )}
@@ -74,7 +108,7 @@ const Sidebar = () => {
         )}
         <li>
           <NavLink to="/messages" className={({ isActive }) => isActive ? 'active' : ''}>
-            <FiMessageSquare /> Messages <span className="badge">7</span>
+            <FiMessageSquare /> Messages {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
           </NavLink>
         </li>
       </ul>

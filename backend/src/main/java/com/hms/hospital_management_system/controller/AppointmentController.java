@@ -10,7 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/appointments")
@@ -82,6 +84,22 @@ public class AppointmentController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         return ResponseEntity.ok(appointmentService.getAppointmentsByDateRange(startDate, endDate));
+    }
+    
+    @GetMapping("/available-slots")
+    public ResponseEntity<List<LocalTime>> getAvailableTimeSlots(
+            @RequestParam Long doctorId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(appointmentService.getAvailableTimeSlots(doctorId, date));
+    }
+    
+    @GetMapping("/check-availability")
+    public ResponseEntity<Map<String, Boolean>> checkTimeSlotAvailability(
+            @RequestParam Long doctorId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time) {
+        boolean available = appointmentService.isTimeSlotAvailable(doctorId, date, time);
+        return ResponseEntity.ok(Map.of("available", available));
     }
 
     @PostMapping

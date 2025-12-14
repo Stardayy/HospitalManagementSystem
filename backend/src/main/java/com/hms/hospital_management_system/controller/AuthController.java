@@ -11,10 +11,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hms.hospital_management_system.dto.AuthResponse;
 import com.hms.hospital_management_system.dto.LoginRequest;
+import com.hms.hospital_management_system.dto.PasswordDTO.ForgotPasswordRequest;
+import com.hms.hospital_management_system.dto.PasswordDTO.PasswordResetResponse;
+import com.hms.hospital_management_system.dto.PasswordDTO.ResetPasswordRequest;
 import com.hms.hospital_management_system.dto.RegisterRequest;
 import com.hms.hospital_management_system.entity.User;
 import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.AuthService;
+import com.hms.hospital_management_system.service.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final AuthService authService;
+    private final UserService userService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -34,6 +39,18 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<PasswordResetResponse> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        return ResponseEntity.ok(userService.forgotPassword(request));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<PasswordResetResponse> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        return ResponseEntity.ok(userService.resetPassword(request));
     }
 
     @GetMapping("/me")

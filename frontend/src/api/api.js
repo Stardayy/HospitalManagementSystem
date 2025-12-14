@@ -97,7 +97,14 @@ export const api = {
   put: (endpoint, data) =>
     fetchApi(endpoint, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: data ? JSON.stringify(data) : undefined,
+    }),
+
+  // PATCH request
+  patch: (endpoint, data) =>
+    fetchApi(endpoint, {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
     }),
 
   // DELETE request

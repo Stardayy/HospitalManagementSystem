@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './component/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
@@ -11,6 +13,8 @@ import DoctorsSchedule from './pages/DoctorsSchedule';
 import Payments from './pages/Payments';
 import Inventory from './pages/Inventory';
 import Messages from './pages/Messages';
+import MedicalRecords from './pages/MedicalRecords';
+import Rooms from './pages/Rooms';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Unauthorized from './pages/Unauthorized';
@@ -19,6 +23,18 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
@@ -48,6 +64,11 @@ function App() {
               <Patients />
             </ProtectedRoute>
           } />
+          <Route path="/medical-records" element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
+              <MedicalRecords />
+            </ProtectedRoute>
+          } />
           <Route path="/doctors" element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <Doctors />
@@ -56,6 +77,11 @@ function App() {
           <Route path="/departments" element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <Departments />
+            </ProtectedRoute>
+          } />
+          <Route path="/rooms" element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <Rooms />
             </ProtectedRoute>
           } />
           <Route path="/schedule" element={
