@@ -229,9 +229,6 @@ const Doctors = () => {
 
         <div className="page-header">
           <h1>Doctors</h1>
-          <button className="btn-primary" onClick={() => openModal()}>
-            <FiPlus /> Add Doctor
-          </button>
         </div>
 
         <div className="stats-summary">
@@ -288,6 +285,9 @@ const Doctors = () => {
               <FiX /> Clear Filters
             </button>
           )}
+          <button className="btn-primary" onClick={() => openModal()}>
+            <FiPlus /> Add Doctor
+          </button>
         </div>
 
         <FilterModal

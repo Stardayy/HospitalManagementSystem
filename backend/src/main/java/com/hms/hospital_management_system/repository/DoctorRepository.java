@@ -30,4 +30,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     boolean existsByEmail(String email);
     
     boolean existsByLicenseNumber(String licenseNumber);
+    
+    @Query("SELECT DISTINCT d FROM Doctor d WHERE d.id IN (SELECT a.doctor.id FROM Appointment a WHERE a.patient.id = :patientId)")
+    List<Doctor> findByPatientId(@Param("patientId") Long patientId);
 }

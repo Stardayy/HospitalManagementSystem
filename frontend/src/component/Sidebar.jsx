@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/api';
 
 const Sidebar = () => {
-  const { user, logout, isAdmin, isDoctor } = useAuth();
+  const { user, logout, isAdmin, isDoctor, isPatient } = useAuth();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -57,17 +57,17 @@ const Sidebar = () => {
             </NavLink>
           </li>
         )}
-        {(isAdmin() || isDoctor()) && (
+        {(isAdmin() || isDoctor() || isPatient()) && (
           <li>
             <NavLink to="/medical-records" className={({ isActive }) => isActive ? 'active' : ''}>
               <FiFileText /> Medical Records
             </NavLink>
           </li>
         )}
-        {isAdmin() && (
+        {(isAdmin() || isPatient()) && (
           <li>
             <NavLink to="/doctors" className={({ isActive }) => isActive ? 'active' : ''}>
-              <FiActivity /> Doctors
+              <FiActivity /> {isPatient() ? 'My Doctors' : 'Doctors'}
             </NavLink>
           </li>
         )}
@@ -85,17 +85,17 @@ const Sidebar = () => {
             </NavLink>
           </li>
         )}
-        {(isAdmin() || isDoctor()) && (
+        {(isAdmin() || isDoctor() || isPatient()) && (
           <li>
             <NavLink to="/schedule" className={({ isActive }) => isActive ? 'active' : ''}>
-              <FiClock /> Doctors' Schedule
+              <FiClock /> {isPatient() ? 'My Schedule' : "Doctors' Schedule"}
             </NavLink>
           </li>
         )}
-        {isAdmin() && (
+        {(isAdmin() || isPatient()) && (
           <li>
             <NavLink to="/payments" className={({ isActive }) => isActive ? 'active' : ''}>
-              <FiDollarSign /> Payments
+              <FiDollarSign /> {isPatient() ? 'My Payments' : 'Payments'}
             </NavLink>
           </li>
         )}

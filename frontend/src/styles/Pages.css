@@ -365,6 +365,11 @@
   align-items: center;
 }
 
+/* Push Add button to the right in filter-bar */
+.filter-bar .btn-primary {
+  margin-left: auto;
+}
+
 /* Filter Button */
 .btn-filter {
   display: flex;
@@ -2591,6 +2596,1073 @@
    MEDICAL RECORDS PAGE
    ======================== */
 
+/* View Record Modal */
+.view-record-modal {
+  max-width: 800px !important;
+  width: 95% !important;
+  max-height: 90vh;
+  border-radius: 24px !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.view-record-header {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  padding: 20px 24px !important;
+  border-bottom: none !important;
+  flex-shrink: 0;
+}
+
+.view-record-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.view-record-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.view-record-header h2 {
+  color: white !important;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.view-record-header .record-id {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 3px 10px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.view-record-header .btn-close {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border: none;
+  backdrop-filter: blur(10px);
+}
+
+.view-record-header .btn-close:hover {
+  background: rgba(255, 255, 255, 0.35) !important;
+  transform: rotate(90deg);
+}
+
+.record-details-content {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  background: #f8fafc;
+}
+
+.record-info-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.record-info-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.record-info-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-color: transparent;
+}
+
+.info-card-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.info-card-icon.date-icon {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #2563eb;
+}
+
+.info-card-icon.patient-icon {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #059669;
+}
+
+.info-card-icon.doctor-icon {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  color: #4f46e5;
+}
+
+.info-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.info-card-content .info-label {
+  font-size: 10px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+}
+
+.info-card-content .info-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.record-sections {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.record-section {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+  display: flex;
+  flex-direction: column;
+}
+
+.record-section:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Make diagnosis and notes full width */
+.record-section.diagnosis-section,
+.record-section.notes-section {
+  grid-column: 1 / -1;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.section-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-content {
+  padding: 16px;
+  background: white;
+  flex: 1;
+}
+
+.section-content p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #475569;
+  word-wrap: break-word;
+}
+
+/* Section color variations */
+.diagnosis-section .section-header {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-bottom-color: #fcd34d;
+}
+
+.diagnosis-section .section-header h3 {
+  color: #92400e;
+}
+
+.treatment-section .section-header {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-bottom-color: #93c5fd;
+}
+
+.treatment-section .section-header h3 {
+  color: #1e40af;
+}
+
+.prescription-section .section-header {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-bottom-color: #6ee7b7;
+}
+
+.prescription-section .section-header h3 {
+  color: #065f46;
+}
+
+.notes-section .section-header {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  border-bottom-color: #a5b4fc;
+}
+
+.notes-section .section-header h3 {
+  color: #3730a3;
+}
+
+.view-record-actions {
+  padding: 16px 24px !important;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.view-record-actions .btn-secondary,
+.view-record-actions .btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.view-record-actions .btn-secondary:hover {
+  background: #f1f5f9;
+}
+
+.view-record-actions .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Responsive Design for Medical Record Modal */
+@media (max-width: 768px) {
+  .view-record-modal {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0 !important;
+    margin: 0;
+  }
+
+  .view-record-header {
+    padding: 16px 20px !important;
+  }
+
+  .view-record-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .view-record-header h2 {
+    font-size: 18px;
+  }
+
+  .record-details-content {
+    padding: 16px;
+  }
+
+  .record-info-cards {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .record-sections {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .record-section.diagnosis-section,
+  .record-section.notes-section {
+    grid-column: 1;
+  }
+
+  .view-record-actions {
+    padding: 12px 16px !important;
+    flex-direction: column;
+  }
+
+  .view-record-actions .btn-secondary,
+  .view-record-actions .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .record-info-card {
+    padding: 12px;
+  }
+
+  .info-card-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .info-card-content .info-value {
+    font-size: 12px;
+  }
+
+  .section-content {
+    padding: 12px;
+  }
+
+  .section-content p {
+    font-size: 13px;
+  }
+}
+
+.view-record-actions .btn-secondary {
+  gap: 8px;
+}
+
+.view-record-actions .btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ========================
+   EDIT MEDICAL RECORD MODAL
+   ======================== */
+
+.edit-record-modal {
+  max-width: 850px !important;
+  width: 95% !important;
+  max-height: 90vh;
+  border-radius: 24px !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-record-header {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  padding: 20px 24px !important;
+  border-bottom: none !important;
+  flex-shrink: 0;
+}
+
+.edit-record-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.edit-record-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.edit-record-header h2 {
+  color: white !important;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.edit-record-subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 3px 10px;
+  border-radius: 20px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.edit-record-header .btn-close {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border: none;
+  backdrop-filter: blur(10px);
+}
+
+.edit-record-header .btn-close:hover {
+  background: rgba(255, 255, 255, 0.35) !important;
+  transform: rotate(90deg);
+}
+
+.edit-record-form {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+}
+
+/* Edit Modal uses same record-details-content from View Modal */
+.edit-record-form .record-details-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Edit Info Cards - styled inputs in info cards */
+.edit-info-cards .record-info-card {
+  align-items: flex-start;
+  padding: 12px 14px;
+}
+
+.edit-info-cards .info-card-icon {
+  margin-top: 2px;
+}
+
+.edit-info-cards .info-card-content {
+  gap: 6px;
+}
+
+.edit-info-cards .info-label {
+  font-size: 10px !important;
+  margin-bottom: 2px;
+}
+
+.edit-info-cards .info-label .required {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.info-card-select,
+.info-card-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.info-card-select:focus,
+.info-card-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.info-card-select:hover,
+.info-card-input:hover {
+  border-color: #94a3b8;
+}
+
+/* Edit section content with inputs */
+.edit-section-content {
+  padding: 16px;
+}
+
+.section-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.section-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.section-input::placeholder {
+  color: #94a3b8;
+}
+
+textarea.section-input {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Required indicator in section headers */
+.section-header h3 .required {
+  color: #ef4444;
+  font-weight: 700;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.form-section {
+  background: white;
+  border-radius: 14px;
+  margin: 0 20px 16px 20px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.form-section:first-child {
+  margin-top: 20px;
+}
+
+.form-section:hover {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+.form-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.form-section-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.form-section-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Section header color variations */
+.form-section-header.diagnosis-header {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-bottom-color: #fcd34d;
+}
+
+.form-section-header.diagnosis-header h3 {
+  color: #92400e;
+}
+
+.form-section-header.treatment-header {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-bottom-color: #93c5fd;
+}
+
+.form-section-header.treatment-header h3 {
+  color: #1e40af;
+}
+
+.form-section-header.prescription-header {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-bottom-color: #6ee7b7;
+}
+
+.form-section-header.prescription-header h3 {
+  color: #065f46;
+}
+
+.form-section-header.notes-header {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  border-bottom-color: #a5b4fc;
+}
+
+.form-section-header.notes-header h3 {
+  color: #3730a3;
+}
+
+.form-section-content {
+  padding: 16px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 0 20px 16px 20px;
+}
+
+.form-row-2 .form-section {
+  margin: 0;
+  min-width: 0;
+}
+
+.edit-record-form .form-group {
+  margin-bottom: 0;
+}
+
+.edit-record-form .form-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.edit-record-form .form-group label svg {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.edit-record-form .form-group label .required {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.edit-record-form .form-group input,
+.edit-record-form .form-group select,
+.edit-record-form .form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+.edit-record-form .form-group input:focus,
+.edit-record-form .form-group select:focus,
+.edit-record-form .form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.edit-record-form .form-group input::placeholder,
+.edit-record-form .form-group textarea::placeholder {
+  color: #94a3b8;
+}
+
+.edit-record-form .form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.edit-record-actions {
+  padding: 16px 24px !important;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+.edit-record-actions .btn-secondary,
+.edit-record-actions .btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.edit-record-actions .btn-secondary:hover {
+  background: #f1f5f9;
+}
+
+.edit-record-actions .btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.edit-record-actions .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+/* Responsive Design for Edit Medical Record Modal */
+@media (max-width: 768px) {
+  .edit-record-modal {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0 !important;
+    margin: 0;
+  }
+
+  .edit-record-header {
+    padding: 16px 20px !important;
+  }
+
+  .edit-record-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .edit-record-header h2 {
+    font-size: 18px;
+  }
+
+  .edit-record-subtitle {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+
+  /* Edit modal uses same record-details-content responsive styles */
+  .edit-record-form .record-details-content {
+    padding: 16px;
+  }
+
+  .edit-info-cards.record-info-cards {
+    gap: 10px;
+  }
+
+  .edit-info-cards .record-info-card {
+    padding: 10px 12px;
+  }
+
+  .edit-info-cards .info-card-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .info-card-select,
+  .info-card-input {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  .section-input {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .form-section {
+    margin: 0 12px 12px 12px;
+    border-radius: 12px;
+  }
+
+  .form-section:first-child {
+    margin-top: 12px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row-2 {
+    grid-template-columns: 1fr;
+    margin: 0 12px 12px 12px;
+    gap: 12px;
+  }
+
+  .edit-record-actions {
+    padding: 12px 16px !important;
+    flex-direction: column;
+  }
+
+  .edit-record-actions .btn-secondary,
+  .edit-record-actions .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Medium screens - 2 column layout for form-row */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .form-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .form-row .form-group:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  .edit-record-modal {
+    max-width: 90% !important;
+  }
+}
+
+/* Large screens */
+@media (min-width: 1025px) {
+  .form-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .form-section-content {
+    padding: 12px;
+  }
+
+  .edit-record-form .form-group input,
+  .edit-record-form .form-group select,
+  .edit-record-form .form-group textarea {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .form-section-header {
+    padding: 10px 12px;
+  }
+
+  .form-section-header h3 {
+    font-size: 12px;
+  }
+
+  .edit-record-title {
+    gap: 10px;
+  }
+
+  .edit-record-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+}
+
+/* ===== NEW FLEXIBLE EDIT FORM STYLES ===== */
+
+/* Form body container - scrollable */
+.edit-form-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #f8fafc;
+}
+
+/* Individual form section */
+.edit-form-section {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.edit-form-section:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Section labels with icons */
+.edit-section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.edit-section-label span {
+  font-size: 16px;
+}
+
+.edit-section-label .required {
+  color: #ef4444;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* Section label color variations */
+.edit-section-label.diagnosis-label {
+  color: #92400e;
+  border-bottom-color: #fcd34d;
+}
+
+.edit-section-label.treatment-label {
+  color: #1e40af;
+  border-bottom-color: #93c5fd;
+}
+
+.edit-section-label.prescription-label {
+  color: #065f46;
+  border-bottom-color: #6ee7b7;
+}
+
+.edit-section-label.notes-label {
+  color: #3730a3;
+  border-bottom-color: #a5b4fc;
+}
+
+/* Flexible grid layouts */
+.edit-form-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.edit-form-grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.edit-form-grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* Form field container */
+.edit-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-form-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.edit-form-field label .required {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+/* Form inputs styling */
+.edit-form-field input,
+.edit-form-field select,
+.edit-form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.edit-form-field input:focus,
+.edit-form-field select:focus,
+.edit-form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.edit-form-field input::placeholder,
+.edit-form-input::placeholder {
+  color: #94a3b8;
+}
+
+textarea.edit-form-input {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Nested sections in grid */
+.edit-form-grid-2 > .edit-form-section {
+  margin: 0;
+}
+
+/* Responsive adjustments for new form styles */
+@media (max-width: 768px) {
+  .edit-form-body {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .edit-form-section {
+    padding: 14px;
+  }
+
+  .edit-form-grid-3,
+  .edit-form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-section-label {
+    font-size: 12px;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .edit-form-body {
+    padding: 12px;
+  }
+
+  .edit-form-section {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .edit-form-field input,
+  .edit-form-field select,
+  .edit-form-input {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+/* ===== END NEW FLEXIBLE EDIT FORM STYLES ===== */
+
+/* Legacy styles kept for backwards compatibility */
 .record-details {
   padding: 20px 0;
 }

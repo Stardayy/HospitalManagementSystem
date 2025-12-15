@@ -269,9 +269,6 @@ const Payments = () => {
 
         <div className="page-header">
           <h1>Payments</h1>
-          <button className="btn-primary" onClick={() => openModal()}>
-            <FiPlus /> Create Bill
-          </button>
         </div>
 
         <div className="stats-summary payment-stats">
@@ -328,6 +325,9 @@ const Payments = () => {
               <FiX /> Clear Filters
             </button>
           )}
+          <button className="btn-primary" onClick={() => openModal()}>
+            <FiPlus /> Create Bill
+          </button>
         </div>
 
         <FilterModal

@@ -109,9 +109,6 @@ const Departments = () => {
 
         <div className="page-header">
           <h1>Departments</h1>
-          <button className="btn-primary" onClick={() => openModal()}>
-            <FiPlus /> Add Department
-          </button>
         </div>
 
         <div className="stats-summary">
@@ -147,6 +144,9 @@ const Departments = () => {
             onChange={setFilterLocation}
             placeholder="Filter by location"
           />
+          <button className="btn-primary" onClick={() => openModal()}>
+            <FiPlus /> Add Department
+          </button>
         </div>
 
         {loading ? (

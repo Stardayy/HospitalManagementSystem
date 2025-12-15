@@ -1,11 +1,15 @@
 package com.hms.hospital_management_system.controller;
 
 import com.hms.hospital_management_system.entity.MedicalRecord;
+import com.hms.hospital_management_system.entity.User;
+import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.MedicalRecordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -19,8 +23,25 @@ public class MedicalRecordController {
 
     private final MedicalRecordService medicalRecordService;
 
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
+            return ((CustomUserDetails) auth.getPrincipal()).getUser();
+        }
+        return null;
+    }
+
     @GetMapping
     public ResponseEntity<List<MedicalRecord>> getAllMedicalRecords() {
+        User currentUser = getCurrentUser();
+        // If user is a doctor, only return their medical records
+        if (currentUser != null && currentUser.getRole() == User.Role.DOCTOR && currentUser.getDoctorId() != null) {
+            return ResponseEntity.ok(medicalRecordService.getMedicalRecordsByDoctor(currentUser.getDoctorId()));
+        }
+        // If user is a patient, only return their medical records
+        if (currentUser != null && currentUser.getRole() == User.Role.PATIENT && currentUser.getPatientId() != null) {
+            return ResponseEntity.ok(medicalRecordService.getMedicalRecordsByPatient(currentUser.getPatientId()));
+        }
         return ResponseEntity.ok(medicalRecordService.getAllMedicalRecords());
     }
 

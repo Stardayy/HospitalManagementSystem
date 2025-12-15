@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiEye, FiX, FiFileText, FiCalendar, FiUser } from 'react-icons/fi';
-import Layout from '../component/Layout';
+import { FiPlus, FiEdit2, FiTrash2, FiEye, FiX, FiFileText, FiCalendar, FiUser, FiFilter } from 'react-icons/fi';
+import Sidebar from '../component/Sidebar';
+import Header from '../component/Header';
+import FilterModal from '../component/FilterModal';
+import SortDropdown from '../component/SortDropdown';
 import api from '../api/api';
 import '../styles/Pages.css';
+import '../styles/FilterModal.css';
+import '../styles/SortDropdown.css';
 
 const MedicalRecords = () => {
   const [records, setRecords] = useState([]);
@@ -13,6 +18,9 @@ const MedicalRecords = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
+  const [currentSort, setCurrentSort] = useState({});
   const [editingRecord, setEditingRecord] = useState(null);
   const [viewingRecord, setViewingRecord] = useState(null);
   const [formData, setFormData] = useState({
@@ -122,8 +130,95 @@ const MedicalRecords = () => {
     const doctorName = `${record.doctor?.firstName || ''} ${record.doctor?.lastName || ''}`.toLowerCase();
     const diagnosis = (record.diagnosis || '').toLowerCase();
     const term = searchTerm.toLowerCase();
-    return patientName.includes(term) || doctorName.includes(term) || diagnosis.includes(term);
+    
+    const matchesSearch = patientName.includes(term) || doctorName.includes(term) || diagnosis.includes(term);
+    
+    // Apply active filters
+    const matchesPatient = !activeFilters.patientId || record.patient?.id?.toString() === activeFilters.patientId;
+    const matchesDoctor = !activeFilters.doctorId || record.doctor?.id?.toString() === activeFilters.doctorId;
+    const matchesStartDate = !activeFilters.startDate || new Date(record.recordDate) >= new Date(activeFilters.startDate);
+    const matchesEndDate = !activeFilters.endDate || new Date(record.recordDate) <= new Date(activeFilters.endDate);
+    
+    return matchesSearch && matchesPatient && matchesDoctor && matchesStartDate && matchesEndDate;
   });
+
+  // Sort the filtered records
+  const sortedRecords = [...filteredRecords].sort((a, b) => {
+    if (!currentSort.sortBy) return 0;
+    
+    let aValue, bValue;
+    switch (currentSort.sortBy) {
+      case 'date':
+        aValue = new Date(a.recordDate);
+        bValue = new Date(b.recordDate);
+        break;
+      case 'patient':
+        aValue = `${a.patient?.firstName || ''} ${a.patient?.lastName || ''}`.toLowerCase();
+        bValue = `${b.patient?.firstName || ''} ${b.patient?.lastName || ''}`.toLowerCase();
+        break;
+      case 'doctor':
+        aValue = `${a.doctor?.firstName || ''} ${a.doctor?.lastName || ''}`.toLowerCase();
+        bValue = `${b.doctor?.firstName || ''} ${b.doctor?.lastName || ''}`.toLowerCase();
+        break;
+      case 'diagnosis':
+        aValue = (a.diagnosis || '').toLowerCase();
+        bValue = (b.diagnosis || '').toLowerCase();
+        break;
+      default:
+        return 0;
+    }
+    
+    if (aValue < bValue) return currentSort.sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return currentSort.sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const handleApplyFilters = (filters) => {
+    setActiveFilters(filters);
+    setShowFilterModal(false);
+  };
+
+  const clearFilters = () => {
+    setActiveFilters({});
+  };
+
+  const handleSort = (sort) => {
+    setCurrentSort(sort);
+  };
+
+  const filterConfig = [
+    {
+      key: 'patientId',
+      label: 'Patient',
+      type: 'select',
+      options: patients.map(p => ({ value: p.id.toString(), label: `${p.firstName} ${p.lastName}` }))
+    },
+    {
+      key: 'doctorId',
+      label: 'Doctor',
+      type: 'select',
+      options: doctors.map(d => ({ value: d.id.toString(), label: `Dr. ${d.firstName} ${d.lastName}` }))
+    },
+    {
+      key: 'startDate',
+      label: 'Start Date',
+      type: 'date'
+    },
+    {
+      key: 'endDate',
+      label: 'End Date',
+      type: 'date'
+    }
+  ];
+
+  const sortOptions = [
+    { value: 'date', label: 'Record Date' },
+    { value: 'patient', label: 'Patient Name' },
+    { value: 'doctor', label: 'Doctor Name' },
+    { value: 'diagnosis', label: 'Diagnosis' }
+  ];
+
+  const activeFilterCount = Object.values(activeFilters).filter(v => v !== '' && v !== false && v !== undefined).length;
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -135,25 +230,43 @@ const MedicalRecords = () => {
   };
 
   return (
-    <Layout>
-      <div className="page-container">
+    <div className="dashboard-container">
+      <Sidebar />
+      
+      <main className="main-content">
+        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Search records..." />
+
         <div className="page-header">
-          <h1><FiFileText /> Medical Records</h1>
-          <div className="header-actions">
-            <div className="search-box">
-              <FiSearch />
-              <input
-                type="text"
-                placeholder="Search records..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true); }}>
-              <FiPlus /> Add Record
-            </button>
-          </div>
+          <h1>Medical Records</h1>
         </div>
+
+        <div className="filter-bar">
+          <button className="btn-filter" onClick={() => setShowFilterModal(true)}>
+            <FiFilter /> Filter
+            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
+          </button>
+          <SortDropdown
+            sortOptions={sortOptions}
+            onSort={handleSort}
+            currentSort={currentSort}
+          />
+          {activeFilterCount > 0 && (
+            <button className="btn-clear-filter" onClick={clearFilters}>
+              <FiX /> Clear Filters
+            </button>
+          )}
+          <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true); }}>
+            <FiPlus /> Add Record
+          </button>
+        </div>
+
+        <FilterModal
+          isOpen={showFilterModal}
+          onClose={() => setShowFilterModal(false)}
+          onApply={handleApplyFilters}
+          filterConfig={filterConfig}
+          title="Filter Medical Records"
+        />
 
         {loading ? (
           <div className="loading-spinner">Loading...</div>
@@ -171,12 +284,12 @@ const MedicalRecords = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredRecords.length === 0 ? (
+                {sortedRecords.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="no-data">No medical records found</td>
                   </tr>
                 ) : (
-                  filteredRecords.map(record => (
+                  sortedRecords.map(record => (
                     <tr key={record.id}>
                       <td>{formatDate(record.recordDate)}</td>
                       <td>
@@ -210,106 +323,170 @@ const MedicalRecords = () => {
         {/* Add/Edit Modal */}
         {showModal && (
           <div className="modal-overlay">
-            <div className="modal-content modal-large">
-              <div className="modal-header">
-                <h2>{editingRecord ? 'Edit Medical Record' : 'Add Medical Record'}</h2>
+            <div className="modal-content edit-record-modal">
+              <div className="modal-header edit-record-header">
+                <div className="edit-record-title">
+                  <div className="edit-record-icon">
+                    {editingRecord ? <FiEdit2 /> : <FiPlus />}
+                  </div>
+                  <div>
+                    <h2>{editingRecord ? 'Edit Medical Record' : 'New Medical Record'}</h2>
+                    <span className="edit-record-subtitle">
+                      {editingRecord ? `Record #${editingRecord.id}` : 'Create a new patient medical record'}
+                    </span>
+                  </div>
+                </div>
                 <button className="btn-close" onClick={() => setShowModal(false)}>
                   <FiX />
                 </button>
               </div>
-              <form onSubmit={handleSubmit}>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Patient *</label>
-                    <select
-                      name="patientId"
-                      value={formData.patientId}
-                      onChange={handleInputChange}
-                      required
-                    >
-                      <option value="">Select Patient</option>
-                      {patients.map(patient => (
-                        <option key={patient.id} value={patient.id}>
-                          {patient.firstName} {patient.lastName}
-                        </option>
-                      ))}
-                    </select>
+              
+              <form onSubmit={handleSubmit} className="edit-record-form">
+                <div className="record-details-content">
+                  {/* Info Cards - Same as View Modal */}
+                  <div className="record-info-cards edit-info-cards">
+                    <div className="record-info-card">
+                      <div className="info-card-icon patient-icon">
+                        <FiUser />
+                      </div>
+                      <div className="info-card-content">
+                        <span className="info-label">Patient <span className="required">*</span></span>
+                        <select
+                          name="patientId"
+                          value={formData.patientId}
+                          onChange={handleInputChange}
+                          required
+                          className="info-card-select"
+                        >
+                          <option value="">Select Patient</option>
+                          {patients.map(patient => (
+                            <option key={patient.id} value={patient.id}>
+                              {patient.firstName} {patient.lastName}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="record-info-card">
+                      <div className="info-card-icon doctor-icon">
+                        <FiUser />
+                      </div>
+                      <div className="info-card-content">
+                        <span className="info-label">Doctor <span className="required">*</span></span>
+                        <select
+                          name="doctorId"
+                          value={formData.doctorId}
+                          onChange={handleInputChange}
+                          required
+                          className="info-card-select"
+                        >
+                          <option value="">Select Doctor</option>
+                          {doctors.map(doctor => (
+                            <option key={doctor.id} value={doctor.id}>
+                              Dr. {doctor.firstName} {doctor.lastName}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="record-info-card">
+                      <div className="info-card-icon date-icon">
+                        <FiCalendar />
+                      </div>
+                      <div className="info-card-content">
+                        <span className="info-label">Record Date <span className="required">*</span></span>
+                        <input
+                          type="date"
+                          name="recordDate"
+                          value={formData.recordDate}
+                          onChange={handleInputChange}
+                          required
+                          className="info-card-input"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label>Doctor *</label>
-                    <select
-                      name="doctorId"
-                      value={formData.doctorId}
-                      onChange={handleInputChange}
-                      required
-                    >
-                      <option value="">Select Doctor</option>
-                      {doctors.map(doctor => (
-                        <option key={doctor.id} value={doctor.id}>
-                          Dr. {doctor.firstName} {doctor.lastName} - {doctor.specialization}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Record Date *</label>
-                    <input
-                      type="date"
-                      name="recordDate"
-                      value={formData.recordDate}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group full-width">
-                    <label>Diagnosis *</label>
-                    <input
-                      type="text"
-                      name="diagnosis"
-                      value={formData.diagnosis}
-                      onChange={handleInputChange}
-                      placeholder="Enter diagnosis"
-                      required
-                    />
-                  </div>
-                  <div className="form-group full-width">
-                    <label>Treatment *</label>
-                    <textarea
-                      name="treatment"
-                      value={formData.treatment}
-                      onChange={handleInputChange}
-                      placeholder="Enter treatment details"
-                      rows="3"
-                      required
-                    />
-                  </div>
-                  <div className="form-group full-width">
-                    <label>Prescription</label>
-                    <textarea
-                      name="prescription"
-                      value={formData.prescription}
-                      onChange={handleInputChange}
-                      placeholder="Enter prescription details"
-                      rows="3"
-                    />
-                  </div>
-                  <div className="form-group full-width">
-                    <label>Notes</label>
-                    <textarea
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleInputChange}
-                      placeholder="Additional notes"
-                      rows="2"
-                    />
+
+                  {/* Sections - Same structure as View Modal */}
+                  <div className="record-sections">
+                    <div className="record-section diagnosis-section">
+                      <div className="section-header">
+                        <span className="section-icon">🩺</span>
+                        <h3>Diagnosis <span className="required">*</span></h3>
+                      </div>
+                      <div className="section-content edit-section-content">
+                        <input
+                          type="text"
+                          name="diagnosis"
+                          value={formData.diagnosis}
+                          onChange={handleInputChange}
+                          placeholder="Enter the patient's diagnosis..."
+                          required
+                          className="section-input"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="record-section treatment-section">
+                      <div className="section-header">
+                        <span className="section-icon">💊</span>
+                        <h3>Treatment Plan <span className="required">*</span></h3>
+                      </div>
+                      <div className="section-content edit-section-content">
+                        <textarea
+                          name="treatment"
+                          value={formData.treatment}
+                          onChange={handleInputChange}
+                          placeholder="Describe the treatment plan in detail..."
+                          rows="3"
+                          required
+                          className="section-input"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="record-section prescription-section">
+                      <div className="section-header">
+                        <span className="section-icon">📋</span>
+                        <h3>Prescription</h3>
+                      </div>
+                      <div className="section-content edit-section-content">
+                        <textarea
+                          name="prescription"
+                          value={formData.prescription}
+                          onChange={handleInputChange}
+                          placeholder="Enter medications and dosages..."
+                          rows="3"
+                          className="section-input"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="record-section notes-section">
+                      <div className="section-header">
+                        <span className="section-icon">📝</span>
+                        <h3>Additional Notes</h3>
+                      </div>
+                      <div className="section-content edit-section-content">
+                        <textarea
+                          name="notes"
+                          value={formData.notes}
+                          onChange={handleInputChange}
+                          placeholder="Any additional observations..."
+                          rows="3"
+                          className="section-input"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="modal-actions">
+
+                <div className="modal-actions edit-record-actions">
                   <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>
-                    Cancel
+                    <FiX /> Cancel
                   </button>
                   <button type="submit" className="btn-primary">
-                    {editingRecord ? 'Update Record' : 'Create Record'}
+                    {editingRecord ? <><FiEdit2 /> Update Record</> : <><FiPlus /> Create Record</>}
                   </button>
                 </div>
               </form>
@@ -320,55 +497,109 @@ const MedicalRecords = () => {
         {/* View Modal */}
         {showViewModal && viewingRecord && (
           <div className="modal-overlay">
-            <div className="modal-content modal-large">
-              <div className="modal-header">
-                <h2><FiFileText /> Medical Record Details</h2>
+            <div className="modal-content view-record-modal">
+              <div className="modal-header view-record-header">
+                <div className="view-record-title">
+                  <div className="view-record-icon">
+                    <FiFileText />
+                  </div>
+                  <div>
+                    <h2>Medical Record</h2>
+                    <span className="record-id">Record #{viewingRecord.id}</span>
+                  </div>
+                </div>
                 <button className="btn-close" onClick={() => setShowViewModal(false)}>
                   <FiX />
                 </button>
               </div>
-              <div className="record-details">
-                <div className="detail-row">
-                  <div className="detail-item">
-                    <label><FiCalendar /> Date</label>
-                    <span>{formatDate(viewingRecord.recordDate)}</span>
+              
+              <div className="record-details-content">
+                <div className="record-info-cards">
+                  <div className="record-info-card">
+                    <div className="info-card-icon date-icon">
+                      <FiCalendar />
+                    </div>
+                    <div className="info-card-content">
+                      <span className="info-label">Record Date</span>
+                      <span className="info-value">{formatDate(viewingRecord.recordDate)}</span>
+                    </div>
                   </div>
-                  <div className="detail-item">
-                    <label><FiUser /> Patient</label>
-                    <span>{viewingRecord.patient?.firstName} {viewingRecord.patient?.lastName}</span>
+                  <div className="record-info-card">
+                    <div className="info-card-icon patient-icon">
+                      <FiUser />
+                    </div>
+                    <div className="info-card-content">
+                      <span className="info-label">Patient</span>
+                      <span className="info-value">{viewingRecord.patient?.firstName} {viewingRecord.patient?.lastName}</span>
+                    </div>
                   </div>
-                  <div className="detail-item">
-                    <label><FiUser /> Doctor</label>
-                    <span>Dr. {viewingRecord.doctor?.firstName} {viewingRecord.doctor?.lastName}</span>
+                  <div className="record-info-card">
+                    <div className="info-card-icon doctor-icon">
+                      <FiUser />
+                    </div>
+                    <div className="info-card-content">
+                      <span className="info-label">Attending Doctor</span>
+                      <span className="info-value">Dr. {viewingRecord.doctor?.firstName} {viewingRecord.doctor?.lastName}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="detail-section">
-                  <label>Diagnosis</label>
-                  <p>{viewingRecord.diagnosis || 'N/A'}</p>
-                </div>
-                <div className="detail-section">
-                  <label>Treatment</label>
-                  <p>{viewingRecord.treatment || 'N/A'}</p>
-                </div>
-                <div className="detail-section">
-                  <label>Prescription</label>
-                  <p>{viewingRecord.prescription || 'N/A'}</p>
-                </div>
-                <div className="detail-section">
-                  <label>Notes</label>
-                  <p>{viewingRecord.notes || 'N/A'}</p>
+
+                <div className="record-sections">
+                  <div className="record-section diagnosis-section">
+                    <div className="section-header">
+                      <span className="section-icon diagnosis-icon">🩺</span>
+                      <h3>Diagnosis</h3>
+                    </div>
+                    <div className="section-content">
+                      <p>{viewingRecord.diagnosis || 'No diagnosis recorded'}</p>
+                    </div>
+                  </div>
+
+                  <div className="record-section treatment-section">
+                    <div className="section-header">
+                      <span className="section-icon treatment-icon">💊</span>
+                      <h3>Treatment Plan</h3>
+                    </div>
+                    <div className="section-content">
+                      <p>{viewingRecord.treatment || 'No treatment recorded'}</p>
+                    </div>
+                  </div>
+
+                  <div className="record-section prescription-section">
+                    <div className="section-header">
+                      <span className="section-icon prescription-icon">📋</span>
+                      <h3>Prescription</h3>
+                    </div>
+                    <div className="section-content">
+                      <p>{viewingRecord.prescription || 'No prescription recorded'}</p>
+                    </div>
+                  </div>
+
+                  <div className="record-section notes-section">
+                    <div className="section-header">
+                      <span className="section-icon notes-icon">📝</span>
+                      <h3>Additional Notes</h3>
+                    </div>
+                    <div className="section-content">
+                      <p>{viewingRecord.notes || 'No additional notes'}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="modal-actions">
+
+              <div className="modal-actions view-record-actions">
                 <button className="btn-secondary" onClick={() => setShowViewModal(false)}>
-                  Close
+                  <FiX /> Close
+                </button>
+                <button className="btn-primary" onClick={() => { setShowViewModal(false); handleEdit(viewingRecord); }}>
+                  <FiEdit2 /> Edit Record
                 </button>
               </div>
             </div>
           </div>
         )}
-      </div>
-    </Layout>
+      </main>
+    </div>
   );
 };
 

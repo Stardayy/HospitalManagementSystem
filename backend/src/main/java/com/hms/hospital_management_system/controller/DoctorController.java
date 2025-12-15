@@ -1,10 +1,14 @@
 package com.hms.hospital_management_system.controller;
 
 import com.hms.hospital_management_system.entity.Doctor;
+import com.hms.hospital_management_system.entity.User;
+import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.DoctorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,9 +21,34 @@ public class DoctorController {
 
     private final DoctorService doctorService;
 
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
+            return ((CustomUserDetails) auth.getPrincipal()).getUser();
+        }
+        return null;
+    }
+
     @GetMapping
     public ResponseEntity<List<Doctor>> getAllDoctors() {
+        User currentUser = getCurrentUser();
+        // Patients can only see doctors they have appointments with
+        if (currentUser != null && currentUser.getRole() == User.Role.PATIENT && currentUser.getPatientId() != null) {
+            return ResponseEntity.ok(doctorService.getDoctorsByPatient(currentUser.getPatientId()));
+        }
+        // Doctors and admins can see all doctors
         return ResponseEntity.ok(doctorService.getAllDoctors());
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<Doctor> getCurrentDoctor() {
+        User currentUser = getCurrentUser();
+        if (currentUser != null && currentUser.getDoctorId() != null) {
+            return doctorService.getDoctorById(currentUser.getDoctorId())
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/filter")

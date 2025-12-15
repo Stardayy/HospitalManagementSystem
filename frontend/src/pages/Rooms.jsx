@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiX, FiHome, FiCheckCircle, FiXCircle, FiTool } from 'react-icons/fi';
-import Layout from '../component/Layout';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiHome, FiCheckCircle, FiXCircle, FiTool, FiFilter } from 'react-icons/fi';
+import Sidebar from '../component/Sidebar';
+import Header from '../component/Header';
+import FilterModal from '../component/FilterModal';
+import SortDropdown from '../component/SortDropdown';
 import api from '../api/api';
 import '../styles/Pages.css';
+import '../styles/FilterModal.css';
+import '../styles/SortDropdown.css';
 
 const Rooms = () => {
   const [rooms, setRooms] = useState([]);
@@ -12,6 +17,9 @@ const Rooms = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showModal, setShowModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({});
+  const [currentSort, setCurrentSort] = useState({});
   const [editingRoom, setEditingRoom] = useState(null);
   const [formData, setFormData] = useState({
     roomNumber: '',
@@ -148,12 +156,92 @@ const Rooms = () => {
       room.roomType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       room.department?.name?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = 
-      filterStatus === 'all' ||
-      room.status?.toLowerCase() === filterStatus.toLowerCase();
+    // Apply active filters
+    const matchesStatus = !activeFilters.status || room.status === activeFilters.status;
+    const matchesType = !activeFilters.roomType || room.roomType === activeFilters.roomType;
+    const matchesDepartment = !activeFilters.departmentId || room.department?.id?.toString() === activeFilters.departmentId;
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesType && matchesDepartment;
   });
+
+  // Sort the filtered rooms
+  const sortedRooms = [...filteredRooms].sort((a, b) => {
+    if (!currentSort.sortBy) return 0;
+    
+    let aValue, bValue;
+    switch (currentSort.sortBy) {
+      case 'roomNumber':
+        aValue = a.roomNumber?.toLowerCase() || '';
+        bValue = b.roomNumber?.toLowerCase() || '';
+        break;
+      case 'roomType':
+        aValue = a.roomType?.toLowerCase() || '';
+        bValue = b.roomType?.toLowerCase() || '';
+        break;
+      case 'department':
+        aValue = a.department?.name?.toLowerCase() || '';
+        bValue = b.department?.name?.toLowerCase() || '';
+        break;
+      case 'bedCount':
+        aValue = a.bedCount || 0;
+        bValue = b.bedCount || 0;
+        break;
+      case 'dailyRate':
+        aValue = a.dailyRate || 0;
+        bValue = b.dailyRate || 0;
+        break;
+      default:
+        return 0;
+    }
+    
+    if (aValue < bValue) return currentSort.sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return currentSort.sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const handleApplyFilters = (filters) => {
+    setActiveFilters(filters);
+    setShowFilterModal(false);
+  };
+
+  const clearFilters = () => {
+    setActiveFilters({});
+  };
+
+  const handleSort = (sort) => {
+    setCurrentSort(sort);
+  };
+
+  const filterConfig = [
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: roomStatuses.map(s => ({ value: s, label: s.charAt(0) + s.slice(1).toLowerCase() }))
+    },
+    {
+      key: 'roomType',
+      label: 'Room Type',
+      type: 'select',
+      options: roomTypes.map(t => ({ value: t, label: t }))
+    },
+    {
+      key: 'departmentId',
+      label: 'Department',
+      type: 'select',
+      options: departments.map(d => ({ value: d.id.toString(), label: d.name }))
+    }
+  ];
+
+  const sortOptions = [
+    { value: 'roomNumber', label: 'Room Number' },
+    { value: 'roomType', label: 'Room Type' },
+    { value: 'department', label: 'Department' },
+    { value: 'bedCount', label: 'Bed Count' },
+    { value: 'dailyRate', label: 'Daily Rate' }
+  ];
+
+  const activeFilterCount = Object.values(activeFilters).filter(v => v !== '' && v !== false && v !== undefined).length;
 
   const getStatusBadge = (status) => {
     const statusConfig = {
@@ -191,36 +279,43 @@ const Rooms = () => {
   const totalBeds = rooms.reduce((sum, r) => sum + (r.bedCount || 0), 0);
 
   return (
-    <Layout>
-      <div className="page-container">
+    <div className="dashboard-container">
+      <Sidebar />
+      
+      <main className="main-content">
+        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Search rooms..." />
+
         <div className="page-header">
-          <h1><FiHome /> Room Management</h1>
-          <div className="header-actions">
-            <div className="search-box">
-              <FiSearch />
-              <input
-                type="text"
-                placeholder="Search rooms..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <select
-              className="filter-select"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="all">All Rooms</option>
-              <option value="available">Available</option>
-              <option value="occupied">Occupied</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="reserved">Reserved</option>
-            </select>
-            <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true); }}>
-              <FiPlus /> Add Room
-            </button>
-          </div>
+          <h1>Room Management</h1>
         </div>
+
+        <div className="filter-bar">
+          <button className="btn-filter" onClick={() => setShowFilterModal(true)}>
+            <FiFilter /> Filter
+            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
+          </button>
+          <SortDropdown
+            sortOptions={sortOptions}
+            onSort={handleSort}
+            currentSort={currentSort}
+          />
+          {activeFilterCount > 0 && (
+            <button className="btn-clear-filter" onClick={clearFilters}>
+              <FiX /> Clear Filters
+            </button>
+          )}
+          <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true); }}>
+            <FiPlus /> Add Room
+          </button>
+        </div>
+
+        <FilterModal
+          isOpen={showFilterModal}
+          onClose={() => setShowFilterModal(false)}
+          onApply={handleApplyFilters}
+          filterConfig={filterConfig}
+          title="Filter Rooms"
+        />
 
         {/* Room Stats */}
         <div className="stats-row">
@@ -246,10 +341,10 @@ const Rooms = () => {
           <div className="loading-spinner">Loading...</div>
         ) : (
           <div className="cards-grid">
-            {filteredRooms.length === 0 ? (
+            {sortedRooms.length === 0 ? (
               <div className="no-data-card">No rooms found</div>
             ) : (
-              filteredRooms.map(room => (
+              sortedRooms.map(room => (
                 <div key={room.id} className={`room-card ${room.status !== 'AVAILABLE' ? 'occupied' : ''}`}>
                   <div className="room-card-header">
                     <h3>Room {room.roomNumber}</h3>
@@ -418,8 +513,8 @@ const Rooms = () => {
             </div>
           </div>
         )}
-      </div>
-    </Layout>
+      </main>
+    </div>
   );
 };
 

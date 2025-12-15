@@ -26,4 +26,10 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
     List<Patient> searchByName(String name);
     
     boolean existsByEmail(String email);
+    
+    // Find patients who have appointments or medical records with a specific doctor
+    @Query("SELECT DISTINCT p FROM Patient p WHERE p.id IN " +
+           "(SELECT a.patient.id FROM Appointment a WHERE a.doctor.id = :doctorId) " +
+           "OR p.id IN (SELECT m.patient.id FROM MedicalRecord m WHERE m.doctor.id = :doctorId)")
+    List<Patient> findByDoctorId(@Param("doctorId") Long doctorId);
 }

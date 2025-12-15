@@ -263,4 +263,169 @@ public class DashboardService {
                 })
                 .collect(Collectors.toList());
     }
+
+    /**
+     * Get dashboard stats filtered for a specific doctor
+     */
+    public DashboardStats getDashboardStatsForDoctor(Long doctorId) {
+        LocalDate today = LocalDate.now();
+
+        // Get doctor's appointments
+        List<Appointment> doctorAppointments = appointmentRepository.findByDoctorId(doctorId);
+        List<Appointment> todayDoctorAppointments = appointmentRepository.findByDoctorIdAndAppointmentDate(doctorId, today);
+        
+        // Count unique patients for this doctor
+        long myPatients = doctorAppointments.stream()
+                .map(a -> a.getPatient().getId())
+                .distinct()
+                .count();
+        
+        long myTotalAppointments = doctorAppointments.size();
+        long myTodayAppointments = todayDoctorAppointments.size();
+
+        // Recent appointments for this doctor
+        List<RecentAppointment> recentAppointments = doctorAppointments.stream()
+                .sorted((a, b) -> {
+                    if (a.getCreatedAt() == null) return 1;
+                    if (b.getCreatedAt() == null) return -1;
+                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                })
+                .limit(5)
+                .map(a -> RecentAppointment.builder()
+                        .id(a.getId())
+                        .patientName(a.getPatient() != null ? 
+                                a.getPatient().getFirstName() + " " + a.getPatient().getLastName() : "N/A")
+                        .doctorName(a.getDoctor() != null ? 
+                                "Dr. " + a.getDoctor().getFirstName() + " " + a.getDoctor().getLastName() : "N/A")
+                        .date(a.getAppointmentDate() != null ? a.getAppointmentDate().toString() : "N/A")
+                        .time(a.getAppointmentTime() != null ? a.getAppointmentTime().toString() : "N/A")
+                        .status(a.getStatus() != null ? a.getStatus().name() : "N/A")
+                        .build())
+                .collect(Collectors.toList());
+
+        // Appointments by status for this doctor
+        List<AppointmentStatusData> appointmentsByStatus = doctorAppointments.stream()
+                .collect(Collectors.groupingBy(
+                        a -> a.getStatus() != null ? a.getStatus().name() : "UNKNOWN",
+                        Collectors.counting()
+                ))
+                .entrySet().stream()
+                .map(e -> AppointmentStatusData.builder()
+                        .status(e.getKey())
+                        .count(e.getValue())
+                        .build())
+                .collect(Collectors.toList());
+
+        // Doctor's own schedule info
+        Doctor doctor = doctorRepository.findById(doctorId).orElse(null);
+        List<DoctorScheduleInfo> doctorSchedules = new ArrayList<>();
+        if (doctor != null) {
+            doctorSchedules.add(DoctorScheduleInfo.builder()
+                    .id(doctor.getId())
+                    .name("Dr. " + doctor.getFirstName() + " " + doctor.getLastName())
+                    .specialization(doctor.getSpecialization())
+                    .status("Available")
+                    .appointmentsToday((long) todayDoctorAppointments.size())
+                    .build());
+        }
+
+        return DashboardStats.builder()
+                .totalPatients(myPatients)
+                .totalDoctors(1L) // Only showing this doctor
+                .totalAppointments(myTotalAppointments)
+                .todayAppointments(myTodayAppointments)
+                .pendingBills(0L)
+                .totalRevenue(0.0)
+                .availableRooms(0L)
+                .lowStockMedicines(0L)
+                .patientsTrend(0.0)
+                .appointmentsTrend(0.0)
+                .revenueTrend(0.0)
+                .patientOverview(new ArrayList<>())
+                .revenueData(new ArrayList<>())
+                .departmentDistribution(new ArrayList<>())
+                .appointmentsByStatus(appointmentsByStatus)
+                .recentAppointments(recentAppointments)
+                .doctorSchedules(doctorSchedules)
+                .build();
+    }
+
+    /**
+     * Get dashboard stats filtered for a specific patient
+     */
+    public DashboardStats getDashboardStatsForPatient(Long patientId) {
+        LocalDate today = LocalDate.now();
+
+        // Get patient's appointments
+        List<Appointment> patientAppointments = appointmentRepository.findByPatientId(patientId);
+        List<Appointment> todayPatientAppointments = patientAppointments.stream()
+                .filter(a -> a.getAppointmentDate() != null && a.getAppointmentDate().equals(today))
+                .collect(Collectors.toList());
+        
+        long myTotalAppointments = patientAppointments.size();
+        long myTodayAppointments = todayPatientAppointments.size();
+
+        // Count unique doctors this patient has seen
+        long myDoctors = patientAppointments.stream()
+                .filter(a -> a.getDoctor() != null)
+                .map(a -> a.getDoctor().getId())
+                .distinct()
+                .count();
+
+        // Get pending bills for this patient
+        long myPendingBills = billRepository.findByPatientIdAndPaymentStatus(patientId, Bill.PaymentStatus.PENDING).size();
+
+        // Recent appointments for this patient
+        List<RecentAppointment> recentAppointments = patientAppointments.stream()
+                .sorted((a, b) -> {
+                    if (a.getCreatedAt() == null) return 1;
+                    if (b.getCreatedAt() == null) return -1;
+                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                })
+                .limit(5)
+                .map(a -> RecentAppointment.builder()
+                        .id(a.getId())
+                        .patientName(a.getPatient() != null ? 
+                                a.getPatient().getFirstName() + " " + a.getPatient().getLastName() : "N/A")
+                        .doctorName(a.getDoctor() != null ? 
+                                "Dr. " + a.getDoctor().getFirstName() + " " + a.getDoctor().getLastName() : "N/A")
+                        .date(a.getAppointmentDate() != null ? a.getAppointmentDate().toString() : "N/A")
+                        .time(a.getAppointmentTime() != null ? a.getAppointmentTime().toString() : "N/A")
+                        .status(a.getStatus() != null ? a.getStatus().name() : "N/A")
+                        .build())
+                .collect(Collectors.toList());
+
+        // Appointments by status for this patient
+        List<AppointmentStatusData> appointmentsByStatus = patientAppointments.stream()
+                .collect(Collectors.groupingBy(
+                        a -> a.getStatus() != null ? a.getStatus().name() : "UNKNOWN",
+                        Collectors.counting()
+                ))
+                .entrySet().stream()
+                .map(e -> AppointmentStatusData.builder()
+                        .status(e.getKey())
+                        .count(e.getValue())
+                        .build())
+                .collect(Collectors.toList());
+
+        return DashboardStats.builder()
+                .totalPatients(1L) // Just this patient
+                .totalDoctors(myDoctors)
+                .totalAppointments(myTotalAppointments)
+                .todayAppointments(myTodayAppointments)
+                .pendingBills(myPendingBills)
+                .totalRevenue(0.0)
+                .availableRooms(0L)
+                .lowStockMedicines(0L)
+                .patientsTrend(0.0)
+                .appointmentsTrend(0.0)
+                .revenueTrend(0.0)
+                .patientOverview(new ArrayList<>())
+                .revenueData(new ArrayList<>())
+                .departmentDistribution(new ArrayList<>())
+                .appointmentsByStatus(appointmentsByStatus)
+                .recentAppointments(recentAppointments)
+                .doctorSchedules(new ArrayList<>())
+                .build();
+    }
 }

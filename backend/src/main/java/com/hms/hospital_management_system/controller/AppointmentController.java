@@ -2,11 +2,15 @@ package com.hms.hospital_management_system.controller;
 
 import com.hms.hospital_management_system.entity.Appointment;
 import com.hms.hospital_management_system.entity.Appointment.AppointmentStatus;
+import com.hms.hospital_management_system.entity.User;
+import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.AppointmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -22,8 +26,25 @@ public class AppointmentController {
 
     private final AppointmentService appointmentService;
 
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
+            return ((CustomUserDetails) auth.getPrincipal()).getUser();
+        }
+        return null;
+    }
+
     @GetMapping
     public ResponseEntity<List<Appointment>> getAllAppointments() {
+        User currentUser = getCurrentUser();
+        // If user is a doctor, only return their appointments
+        if (currentUser != null && currentUser.getRole() == User.Role.DOCTOR && currentUser.getDoctorId() != null) {
+            return ResponseEntity.ok(appointmentService.getAppointmentsByDoctor(currentUser.getDoctorId()));
+        }
+        // If user is a patient, only return their appointments
+        if (currentUser != null && currentUser.getRole() == User.Role.PATIENT && currentUser.getPatientId() != null) {
+            return ResponseEntity.ok(appointmentService.getAppointmentsByPatient(currentUser.getPatientId()));
+        }
         return ResponseEntity.ok(appointmentService.getAllAppointments());
     }
 
@@ -36,6 +57,15 @@ public class AppointmentController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortOrder) {
+        User currentUser = getCurrentUser();
+        // If user is a doctor, force filter to their appointments only
+        if (currentUser != null && currentUser.getRole() == User.Role.DOCTOR && currentUser.getDoctorId() != null) {
+            doctorId = currentUser.getDoctorId();
+        }
+        // If user is a patient, force filter to their appointments only
+        if (currentUser != null && currentUser.getRole() == User.Role.PATIENT && currentUser.getPatientId() != null) {
+            patientId = currentUser.getPatientId();
+        }
         return ResponseEntity.ok(appointmentService.filterAppointments(status, doctorId, patientId, startDate, endDate, sortBy, sortOrder));
     }
 

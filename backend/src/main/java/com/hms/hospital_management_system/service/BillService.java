@@ -136,6 +136,27 @@ public class BillService {
         return filtered;
     }
 
+    public List<Bill> filterBillsForPatient(Long patientId, PaymentStatus status, PaymentMethod paymentMethod, String sortBy, String sortOrder) {
+        List<Bill> bills = billRepository.findByPatientId(patientId);
+        
+        List<Bill> filtered = bills.stream()
+            .filter(b -> status == null || b.getPaymentStatus() == status)
+            .filter(b -> paymentMethod == null || b.getPaymentMethod() == paymentMethod)
+            .toList();
+
+        if (sortBy != null && !sortBy.isEmpty()) {
+            Comparator<Bill> comparator = getBillComparator(sortBy);
+            if (comparator != null) {
+                if ("desc".equalsIgnoreCase(sortOrder)) {
+                    comparator = comparator.reversed();
+                }
+                filtered = filtered.stream().sorted(comparator).toList();
+            }
+        }
+        
+        return filtered;
+    }
+
     private Comparator<Bill> getBillComparator(String sortBy) {
         return switch (sortBy) {
             case "billDate" -> Comparator.comparing(Bill::getBillDate, Comparator.nullsLast(Comparator.naturalOrder()));

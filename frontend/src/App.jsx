@@ -65,12 +65,12 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/medical-records" element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'PATIENT']}>
               <MedicalRecords />
             </ProtectedRoute>
           } />
           <Route path="/doctors" element={
-            <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'PATIENT']}>
               <Doctors />
             </ProtectedRoute>
           } />
@@ -85,12 +85,12 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/schedule" element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'PATIENT']}>
               <DoctorsSchedule />
             </ProtectedRoute>
           } />
           <Route path="/payments" element={
-            <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'PATIENT']}>
               <Payments />
             </ProtectedRoute>
           } />
