@@ -2,6 +2,9 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './component/ProtectedRoute';
+import Layout from './component/Layout';
+
+//Import pages
 import Dashboard from './pages/Dashboard';
 import Appointments from './pages/Appointments';
 import Patients from './pages/Patients';
@@ -26,53 +29,58 @@ function App() {
           <Route path="/unauthorized" element={<Unauthorized />} />
 
           {/* Protected routes - All authenticated users */}
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/appointments" element={
-            <ProtectedRoute>
-              <Appointments />
-            </ProtectedRoute>
-          } />
-          <Route path="/messages" element={
-            <ProtectedRoute>
-              <Messages />
-            </ProtectedRoute>
-          } />
+          {/*<Route element={<Layout />}>*/}
 
-          {/* Admin and Doctor routes */}
-          <Route path="/patients" element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
-              <Patients />
-            </ProtectedRoute>
-          } />
-          <Route path="/doctors" element={
-            <ProtectedRoute allowedRoles={['ADMIN']}>
-              <Doctors />
-            </ProtectedRoute>
-          } />
-          <Route path="/departments" element={
-            <ProtectedRoute allowedRoles={['ADMIN']}>
-              <Departments />
-            </ProtectedRoute>
-          } />
-          <Route path="/schedule" element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
-              <DoctorsSchedule />
-            </ProtectedRoute>
-          } />
-          <Route path="/payments" element={
-            <ProtectedRoute allowedRoles={['ADMIN']}>
-              <Payments />
-            </ProtectedRoute>
-          } />
-          <Route path="/inventory" element={
-            <ProtectedRoute allowedRoles={['ADMIN']}>
-              <Inventory />
-            </ProtectedRoute>
-          } />
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/appointments" element={
+              <ProtectedRoute>
+                <Appointments />
+              </ProtectedRoute>
+            } />
+            <Route path="/messages" element={
+              <ProtectedRoute>
+                <Messages />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin and Doctor routes */}
+            <Route path="/patients" element={
+              <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
+                <Patients />
+              </ProtectedRoute>
+            } />
+            <Route path="/doctors" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <Doctors />
+              </ProtectedRoute>
+            } />
+            <Route path="/departments" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <Departments />
+              </ProtectedRoute>
+            } />
+            <Route path="/schedule" element={
+              <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
+                <DoctorsSchedule />
+              </ProtectedRoute>
+            } />
+            <Route path="/payments" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <Payments />
+              </ProtectedRoute>
+            } />
+            <Route path="/inventory" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <Inventory />
+              </ProtectedRoute>
+            } />
+            
+          {/*</Route>*/}
+
         </Routes>
       </Router>
     </AuthProvider>
