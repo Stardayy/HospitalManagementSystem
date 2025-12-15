@@ -15,6 +15,11 @@ import Inventory from './pages/Inventory';
 import Messages from './pages/Messages';
 import MedicalRecords from './pages/MedicalRecords';
 import Rooms from './pages/Rooms';
+import Lab from './pages/Lab';
+import VitalSigns from './pages/VitalSigns';
+import Admissions from './pages/Admissions';
+import Documents from './pages/Documents';
+import Notifications from './pages/Notifications';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Unauthorized from './pages/Unauthorized';
@@ -97,6 +102,31 @@ function App() {
           <Route path="/inventory" element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <Inventory />
+            </ProtectedRoute>
+          } />
+          <Route path="/lab" element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
+              <Lab />
+            </ProtectedRoute>
+          } />
+          <Route path="/vitals" element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'PATIENT']}>
+              <VitalSigns />
+            </ProtectedRoute>
+          } />
+          <Route path="/admissions" element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
+              <Admissions />
+            </ProtectedRoute>
+          } />
+          <Route path="/documents" element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'PATIENT']}>
+              <Documents />
+            </ProtectedRoute>
+          } />
+          <Route path="/notifications" element={
+            <ProtectedRoute>
+              <Notifications />
             </ProtectedRoute>
           } />
         </Routes>
