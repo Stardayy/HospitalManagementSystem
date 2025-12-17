@@ -118,14 +118,28 @@ const Documents = () => {
       const response = await fetch(`http://localhost:8080/api/documents/${doc.id}/download`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to download document');
+      }
+      
       const blob = await response.blob();
+      
+      // Check if the blob is valid
+      if (blob.size === 0) {
+        throw new Error('File not found or empty');
+      }
+      
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = doc.originalFileName || doc.fileName;
       a.click();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading document:', error);
+      alert('Cannot download this document. The file may not exist on the server. Only uploaded documents can be downloaded.');
     }
   };
 

@@ -441,6 +441,359 @@ CREATE TABLE IF NOT EXISTS message (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================
+-- TABLE: vital_signs
+-- =============================================
+CREATE TABLE vital_signs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    patient_id BIGINT NOT NULL,
+    recorded_by_id BIGINT,
+    recorded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    temperature DECIMAL(4, 1),
+    blood_pressure_systolic INT,
+    blood_pressure_diastolic INT,
+    heart_rate INT,
+    respiratory_rate INT,
+    oxygen_saturation DECIMAL(4, 1),
+    weight DECIMAL(5, 2),
+    height DECIMAL(5, 2),
+    bmi DECIMAL(4, 1),
+    pain_level INT,
+    notes VARCHAR(500),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_vitals_patient (patient_id),
+    INDEX idx_vitals_recorded_at (recorded_at),
+    INDEX idx_vitals_recorded_by (recorded_by_id),
+    
+    CONSTRAINT fk_vitals_patient 
+        FOREIGN KEY (patient_id) REFERENCES patient(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_vitals_recorded_by 
+        FOREIGN KEY (recorded_by_id) REFERENCES doctor(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- TABLE: lab_test (catalog of available tests)
+-- =============================================
+CREATE TABLE lab_test (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    code VARCHAR(20) UNIQUE,
+    category VARCHAR(50),
+    description VARCHAR(500),
+    normal_range VARCHAR(100),
+    unit VARCHAR(50),
+    price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    turnaround_time VARCHAR(50),
+    sample_type VARCHAR(50),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_lab_test_name (name),
+    INDEX idx_lab_test_code (code),
+    INDEX idx_lab_test_category (category)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- TABLE: lab_order
+-- =============================================
+CREATE TABLE lab_order (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    patient_id BIGINT NOT NULL,
+    doctor_id BIGINT NOT NULL,
+    order_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    priority ENUM('NORMAL', 'URGENT', 'STAT') DEFAULT 'NORMAL',
+    status ENUM('PENDING', 'SAMPLE_COLLECTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED') DEFAULT 'PENDING',
+    clinical_notes VARCHAR(1000),
+    sample_collected_at DATETIME,
+    completed_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_lab_order_patient (patient_id),
+    INDEX idx_lab_order_doctor (doctor_id),
+    INDEX idx_lab_order_date (order_date),
+    INDEX idx_lab_order_status (status),
+    
+    CONSTRAINT fk_lab_order_patient 
+        FOREIGN KEY (patient_id) REFERENCES patient(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_lab_order_doctor 
+        FOREIGN KEY (doctor_id) REFERENCES doctor(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- TABLE: lab_result
+-- =============================================
+CREATE TABLE lab_result (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    lab_order_id BIGINT NOT NULL,
+    lab_test_id BIGINT NOT NULL,
+    result_value VARCHAR(100),
+    unit VARCHAR(50),
+    reference_range VARCHAR(100),
+    is_abnormal BOOLEAN DEFAULT FALSE,
+    performed_by VARCHAR(100),
+    performed_at DATETIME,
+    notes VARCHAR(500),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_lab_result_order (lab_order_id),
+    INDEX idx_lab_result_test (lab_test_id),
+    
+    CONSTRAINT fk_lab_result_order 
+        FOREIGN KEY (lab_order_id) REFERENCES lab_order(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_lab_result_test 
+        FOREIGN KEY (lab_test_id) REFERENCES lab_test(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- TABLE: admission (inpatient admissions)
+-- =============================================
+CREATE TABLE admission (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    patient_id BIGINT NOT NULL,
+    room_id BIGINT,
+    doctor_id BIGINT,
+    admission_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    discharge_date DATETIME,
+    admission_type ENUM('EMERGENCY', 'SCHEDULED', 'TRANSFER', 'OBSERVATION') DEFAULT 'SCHEDULED',
+    status ENUM('ADMITTED', 'DISCHARGED', 'TRANSFERRED') DEFAULT 'ADMITTED',
+    bed_number VARCHAR(10),
+    admission_reason VARCHAR(500),
+    diagnosis VARCHAR(500),
+    discharge_summary VARCHAR(2000),
+    discharge_instructions VARCHAR(1000),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_admission_patient (patient_id),
+    INDEX idx_admission_room (room_id),
+    INDEX idx_admission_doctor (doctor_id),
+    INDEX idx_admission_date (admission_date),
+    INDEX idx_admission_status (status),
+    
+    CONSTRAINT fk_admission_patient 
+        FOREIGN KEY (patient_id) REFERENCES patient(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_admission_room 
+        FOREIGN KEY (room_id) REFERENCES room(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_admission_doctor 
+        FOREIGN KEY (doctor_id) REFERENCES doctor(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- TABLE: document (file uploads)
+-- =============================================
+CREATE TABLE document (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    patient_id BIGINT NOT NULL,
+    uploaded_by_id BIGINT,
+    document_type ENUM('LAB_REPORT', 'PRESCRIPTION', 'IMAGING', 'DISCHARGE_SUMMARY', 'CONSENT_FORM', 'INSURANCE', 'OTHER') DEFAULT 'OTHER',
+    file_name VARCHAR(255) NOT NULL,
+    original_file_name VARCHAR(255),
+    file_type VARCHAR(100),
+    file_size BIGINT,
+    file_path VARCHAR(500),
+    description VARCHAR(500),
+    is_confidential BOOLEAN DEFAULT FALSE,
+    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_document_patient (patient_id),
+    INDEX idx_document_type (document_type),
+    INDEX idx_document_uploaded_by (uploaded_by_id),
+    
+    CONSTRAINT fk_document_patient 
+        FOREIGN KEY (patient_id) REFERENCES patient(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_document_uploaded_by 
+        FOREIGN KEY (uploaded_by_id) REFERENCES users(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- TABLE: notification
+-- =============================================
+CREATE TABLE notification (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    type ENUM('APPOINTMENT', 'LAB_RESULT', 'PRESCRIPTION', 'PAYMENT', 'SYSTEM', 'ALERT') DEFAULT 'SYSTEM',
+    title VARCHAR(200) NOT NULL,
+    message VARCHAR(1000),
+    is_read BOOLEAN DEFAULT FALSE,
+    link VARCHAR(255),
+    scheduled_for DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_notification_user (user_id),
+    INDEX idx_notification_type (type),
+    INDEX idx_notification_read (is_read),
+    INDEX idx_notification_created (created_at),
+    
+    CONSTRAINT fk_notification_user 
+        FOREIGN KEY (user_id) REFERENCES users(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- INSERT SAMPLE DATA: Vital Signs
+-- =============================================
+INSERT INTO vital_signs (patient_id, recorded_by_id, recorded_at, temperature, blood_pressure_systolic, blood_pressure_diastolic, heart_rate, respiratory_rate, oxygen_saturation, weight, height, bmi, pain_level, notes) VALUES
+(1, 1, '2025-12-15 09:00:00', 36.8, 140, 90, 78, 16, 98.5, 82.5, 175.0, 26.9, 2, 'Slightly elevated BP, monitoring required'),
+(1, 1, '2025-12-10 14:30:00', 36.6, 138, 88, 75, 15, 99.0, 82.0, 175.0, 26.8, 0, 'BP improving with medication'),
+(2, 2, '2025-12-14 10:15:00', 37.2, 118, 76, 82, 18, 97.5, 58.0, 162.0, 22.1, 5, 'Mild headache reported'),
+(3, 3, '2025-12-13 11:00:00', 36.5, 125, 82, 70, 14, 99.0, 95.0, 180.0, 29.3, 6, 'Knee pain from ACL injury'),
+(4, 4, '2025-12-12 09:30:00', 36.9, 100, 65, 90, 20, 98.0, 22.5, 110.0, 18.6, 0, 'Healthy child, routine checkup'),
+(5, 5, '2025-12-11 08:45:00', 36.7, 145, 95, 88, 20, 97.0, 78.0, 168.0, 27.6, 3, 'Anxiety symptoms, elevated heart rate'),
+(6, 6, '2025-12-10 15:00:00', 36.4, 115, 75, 68, 14, 99.5, 65.0, 165.0, 23.9, 4, 'Skin irritation causing discomfort'),
+(7, 7, '2025-12-09 10:00:00', 36.6, 128, 84, 72, 16, 98.0, 70.5, 170.0, 24.4, 1, 'Eye strain headache'),
+(8, 8, '2025-12-08 14:00:00', 37.0, 110, 70, 76, 16, 98.5, 62.0, 160.0, 24.2, 2, 'Post-treatment vitals stable'),
+(9, 9, '2025-12-15 11:30:00', 36.8, 135, 85, 95, 18, 96.5, 88.0, 178.0, 27.8, 1, 'Irregular heartbeat noted'),
+(10, 10, '2025-12-14 16:00:00', 36.5, 120, 78, 74, 15, 98.0, 68.0, 165.0, 25.0, 3, 'Numbness in extremities'),
+(1, 1, '2025-12-16 08:00:00', 36.7, 132, 85, 72, 15, 98.8, 82.0, 175.0, 26.8, 1, 'BP trending down, good progress'),
+(2, 2, '2025-12-16 09:30:00', 36.5, 116, 74, 78, 16, 98.5, 58.0, 162.0, 22.1, 2, 'Headache improved'),
+(5, 5, '2025-12-15 14:00:00', 36.6, 138, 88, 82, 17, 97.5, 78.0, 168.0, 27.6, 2, 'Anxiety improving with treatment');
+
+-- =============================================
+-- INSERT SAMPLE DATA: Lab Tests (Catalog)
+-- =============================================
+INSERT INTO lab_test (name, code, category, description, normal_range, unit, price, turnaround_time, sample_type, is_active) VALUES
+('Complete Blood Count', 'CBC', 'Hematology', 'Measures different components of blood', 'See individual components', '', 45.00, '2-4 hours', 'Blood', TRUE),
+('Hemoglobin', 'HGB', 'Hematology', 'Measures hemoglobin level in blood', '12-17 g/dL', 'g/dL', 25.00, '1-2 hours', 'Blood', TRUE),
+('White Blood Cell Count', 'WBC', 'Hematology', 'Counts white blood cells', '4,500-11,000', 'cells/mcL', 30.00, '1-2 hours', 'Blood', TRUE),
+('Platelet Count', 'PLT', 'Hematology', 'Measures platelet count', '150,000-400,000', 'cells/mcL', 28.00, '1-2 hours', 'Blood', TRUE),
+('Blood Glucose Fasting', 'GLU-F', 'Chemistry', 'Measures blood sugar after fasting', '70-100', 'mg/dL', 35.00, '1-2 hours', 'Blood', TRUE),
+('HbA1c', 'HBA1C', 'Chemistry', 'Measures average blood sugar over 3 months', '4.0-5.6', '%', 55.00, '24 hours', 'Blood', TRUE),
+('Lipid Panel', 'LIPID', 'Chemistry', 'Measures cholesterol and triglycerides', 'See individual components', '', 65.00, '4-6 hours', 'Blood', TRUE),
+('Total Cholesterol', 'CHOL', 'Chemistry', 'Measures total cholesterol', '<200', 'mg/dL', 30.00, '2-4 hours', 'Blood', TRUE),
+('LDL Cholesterol', 'LDL', 'Chemistry', 'Low-density lipoprotein cholesterol', '<100', 'mg/dL', 35.00, '2-4 hours', 'Blood', TRUE),
+('HDL Cholesterol', 'HDL', 'Chemistry', 'High-density lipoprotein cholesterol', '>40', 'mg/dL', 35.00, '2-4 hours', 'Blood', TRUE),
+('Triglycerides', 'TG', 'Chemistry', 'Measures triglyceride levels', '<150', 'mg/dL', 32.00, '2-4 hours', 'Blood', TRUE),
+('Liver Function Test', 'LFT', 'Chemistry', 'Assesses liver health', 'See individual components', '', 75.00, '4-6 hours', 'Blood', TRUE),
+('Kidney Function Test', 'KFT', 'Chemistry', 'Assesses kidney health', 'See individual components', '', 70.00, '4-6 hours', 'Blood', TRUE),
+('Creatinine', 'CREAT', 'Chemistry', 'Measures kidney function', '0.7-1.3', 'mg/dL', 28.00, '2-4 hours', 'Blood', TRUE),
+('Blood Urea Nitrogen', 'BUN', 'Chemistry', 'Measures kidney function', '7-20', 'mg/dL', 28.00, '2-4 hours', 'Blood', TRUE),
+('Thyroid Panel', 'THYROID', 'Endocrine', 'Measures thyroid hormones', 'See individual components', '', 85.00, '24 hours', 'Blood', TRUE),
+('TSH', 'TSH', 'Endocrine', 'Thyroid stimulating hormone', '0.4-4.0', 'mIU/L', 45.00, '24 hours', 'Blood', TRUE),
+('T3', 'T3', 'Endocrine', 'Triiodothyronine hormone', '80-200', 'ng/dL', 40.00, '24 hours', 'Blood', TRUE),
+('T4', 'T4', 'Endocrine', 'Thyroxine hormone', '4.5-12.0', 'mcg/dL', 40.00, '24 hours', 'Blood', TRUE),
+('Urinalysis', 'UA', 'Urinalysis', 'Complete urine analysis', 'Normal', '', 35.00, '2-4 hours', 'Urine', TRUE),
+('Urine Culture', 'UCULT', 'Microbiology', 'Tests for bacteria in urine', 'No growth', '', 60.00, '48-72 hours', 'Urine', TRUE),
+('COVID-19 PCR', 'COVID-PCR', 'Molecular', 'Detects SARS-CoV-2 virus', 'Negative', '', 120.00, '24-48 hours', 'Nasal Swab', TRUE),
+('Vitamin D', 'VITD', 'Chemistry', 'Measures vitamin D levels', '30-100', 'ng/mL', 55.00, '24 hours', 'Blood', TRUE),
+('Iron Studies', 'IRON', 'Hematology', 'Measures iron levels', 'See individual components', '', 65.00, '4-6 hours', 'Blood', TRUE),
+('Electrolyte Panel', 'ELEC', 'Chemistry', 'Measures sodium, potassium, chloride', 'See individual components', '', 50.00, '2-4 hours', 'Blood', TRUE);
+
+-- =============================================
+-- INSERT SAMPLE DATA: Lab Orders
+-- =============================================
+INSERT INTO lab_order (patient_id, doctor_id, order_date, priority, status, clinical_notes, sample_collected_at, completed_at) VALUES
+(1, 1, '2025-12-15 09:30:00', 'NORMAL', 'COMPLETED', 'Routine cardiac workup', '2025-12-15 10:00:00', '2025-12-15 14:00:00'),
+(1, 1, '2025-12-10 10:00:00', 'URGENT', 'COMPLETED', 'Follow-up lipid panel after medication change', '2025-12-10 10:30:00', '2025-12-10 15:00:00'),
+(2, 2, '2025-12-14 11:00:00', 'NORMAL', 'COMPLETED', 'Rule out thyroid issues for headaches', '2025-12-14 11:30:00', '2025-12-15 11:00:00'),
+(3, 3, '2025-12-13 14:00:00', 'NORMAL', 'IN_PROGRESS', 'Pre-surgery workup for ACL repair', '2025-12-13 14:30:00', NULL),
+(5, 5, '2025-12-11 09:00:00', 'STAT', 'COMPLETED', 'Emergency cardiac enzymes', '2025-12-11 09:15:00', '2025-12-11 10:30:00'),
+(8, 8, '2025-12-08 08:00:00', 'NORMAL', 'COMPLETED', 'Post-treatment monitoring', '2025-12-08 08:30:00', '2025-12-08 14:00:00'),
+(9, 9, '2025-12-15 12:00:00', 'URGENT', 'SAMPLE_COLLECTED', 'Cardiac panel for arrhythmia workup', '2025-12-15 12:30:00', NULL),
+(10, 10, '2025-12-14 15:00:00', 'NORMAL', 'PENDING', 'MS workup - comprehensive panel', NULL, NULL),
+(4, 4, '2025-12-12 10:00:00', 'NORMAL', 'COMPLETED', 'Routine pediatric checkup', '2025-12-12 10:15:00', '2025-12-12 13:00:00'),
+(6, 6, '2025-12-10 14:00:00', 'NORMAL', 'COMPLETED', 'Allergy panel for dermatitis', '2025-12-10 14:30:00', '2025-12-11 10:00:00'),
+(11, 11, '2025-12-16 08:00:00', 'NORMAL', 'PENDING', 'Annual wellness bloodwork', NULL, NULL),
+(12, 12, '2025-12-16 09:00:00', 'NORMAL', 'SAMPLE_COLLECTED', 'Thyroid check for anxiety medication', '2025-12-16 09:30:00', NULL);
+
+-- =============================================
+-- INSERT SAMPLE DATA: Lab Results
+-- =============================================
+INSERT INTO lab_result (lab_order_id, lab_test_id, result_value, unit, reference_range, is_abnormal, performed_by, performed_at, notes) VALUES
+-- Order 1: Cardiac workup for patient 1
+(1, 7, 'See components', '', '', FALSE, 'Lab Tech Johnson', '2025-12-15 13:30:00', 'Lipid panel complete'),
+(1, 8, '195', 'mg/dL', '<200', FALSE, 'Lab Tech Johnson', '2025-12-15 13:30:00', 'Within normal range'),
+(1, 9, '115', 'mg/dL', '<100', TRUE, 'Lab Tech Johnson', '2025-12-15 13:30:00', 'Slightly elevated LDL'),
+(1, 10, '52', 'mg/dL', '>40', FALSE, 'Lab Tech Johnson', '2025-12-15 13:30:00', 'Good HDL level'),
+(1, 11, '140', 'mg/dL', '<150', FALSE, 'Lab Tech Johnson', '2025-12-15 13:30:00', 'Normal triglycerides'),
+-- Order 2: Lipid panel follow-up for patient 1
+(2, 7, 'See components', '', '', FALSE, 'Lab Tech Smith', '2025-12-10 14:30:00', 'Follow-up lipid panel'),
+(2, 8, '188', 'mg/dL', '<200', FALSE, 'Lab Tech Smith', '2025-12-10 14:30:00', 'Improved from last test'),
+(2, 9, '105', 'mg/dL', '<100', TRUE, 'Lab Tech Smith', '2025-12-10 14:30:00', 'Slightly elevated but improving'),
+-- Order 3: Thyroid for patient 2
+(3, 16, 'See components', '', '', FALSE, 'Lab Tech Davis', '2025-12-15 10:30:00', 'Thyroid panel complete'),
+(3, 17, '2.5', 'mIU/L', '0.4-4.0', FALSE, 'Lab Tech Davis', '2025-12-15 10:30:00', 'Normal TSH'),
+(3, 18, '120', 'ng/dL', '80-200', FALSE, 'Lab Tech Davis', '2025-12-15 10:30:00', 'Normal T3'),
+(3, 19, '8.5', 'mcg/dL', '4.5-12.0', FALSE, 'Lab Tech Davis', '2025-12-15 10:30:00', 'Normal T4'),
+-- Order 5: Emergency cardiac enzymes for patient 5
+(5, 1, 'See components', '', '', FALSE, 'Lab Tech Emergency', '2025-12-11 10:15:00', 'STAT CBC completed'),
+(5, 2, '14.2', 'g/dL', '12-17', FALSE, 'Lab Tech Emergency', '2025-12-11 10:15:00', 'Normal hemoglobin'),
+(5, 5, '95', 'mg/dL', '70-100', FALSE, 'Lab Tech Emergency', '2025-12-11 10:15:00', 'Normal glucose'),
+-- Order 6: Post-treatment for patient 8
+(6, 1, 'See components', '', '', FALSE, 'Lab Tech Wilson', '2025-12-08 13:30:00', 'CBC for monitoring'),
+(6, 2, '11.8', 'g/dL', '12-17', TRUE, 'Lab Tech Wilson', '2025-12-08 13:30:00', 'Slightly low hemoglobin, expected post-treatment'),
+(6, 3, '5800', 'cells/mcL', '4,500-11,000', FALSE, 'Lab Tech Wilson', '2025-12-08 13:30:00', 'Normal WBC'),
+(6, 4, '180000', 'cells/mcL', '150,000-400,000', FALSE, 'Lab Tech Wilson', '2025-12-08 13:30:00', 'Normal platelets'),
+-- Order 9: Pediatric checkup for patient 4
+(9, 1, 'See components', '', '', FALSE, 'Lab Tech Pediatric', '2025-12-12 12:30:00', 'Routine CBC'),
+(9, 2, '13.5', 'g/dL', '12-17', FALSE, 'Lab Tech Pediatric', '2025-12-12 12:30:00', 'Normal for age'),
+(9, 3, '7500', 'cells/mcL', '4,500-11,000', FALSE, 'Lab Tech Pediatric', '2025-12-12 12:30:00', 'Normal WBC'),
+-- Order 10: Allergy workup for patient 6
+(10, 1, 'See components', '', '', FALSE, 'Lab Tech Allergy', '2025-12-11 09:30:00', 'CBC with differential'),
+(10, 3, '8200', 'cells/mcL', '4,500-11,000', FALSE, 'Lab Tech Allergy', '2025-12-11 09:30:00', 'Normal, slight eosinophilia noted');
+
+-- =============================================
+-- INSERT SAMPLE DATA: Admissions
+-- =============================================
+INSERT INTO admission (patient_id, room_id, doctor_id, admission_date, discharge_date, admission_type, status, bed_number, admission_reason, diagnosis, discharge_summary, discharge_instructions) VALUES
+(5, 7, 5, '2025-12-11 08:30:00', '2025-12-12 16:00:00', 'EMERGENCY', 'DISCHARGED', 'ICU-1', 'Acute anxiety attack with chest pain', 'Panic disorder, ruled out cardiac cause', 'Patient presented with chest pain and shortness of breath. ECG and cardiac enzymes normal. Diagnosed with panic attack. Started on anti-anxiety medication.', 'Take Sertraline as prescribed. Follow up with psychiatry in 1 week. Return to ER if chest pain recurs.'),
+(8, 20, 8, '2025-12-05 10:00:00', NULL, 'SCHEDULED', 'ADMITTED', 'A', 'Chemotherapy treatment cycle 3', 'Breast cancer Stage I - ongoing treatment', NULL, NULL),
+(3, 15, 3, '2025-12-13 07:00:00', NULL, 'SCHEDULED', 'ADMITTED', 'B', 'ACL reconstruction surgery', 'ACL tear - post-operative care', NULL, NULL),
+(7, 6, 7, '2025-12-14 09:00:00', '2025-12-15 11:00:00', 'OBSERVATION', 'DISCHARGED', 'A', 'Post-cataract surgery observation', 'Routine cataract surgery - successful', 'Uncomplicated cataract surgery. Vision improved. No complications observed during overnight stay.', 'Use prescribed eye drops 4 times daily. Wear eye shield while sleeping. Follow up in 1 week.'),
+(9, 1, 9, '2025-12-15 06:00:00', NULL, 'EMERGENCY', 'ADMITTED', '1', 'Atrial fibrillation with rapid ventricular response', 'Atrial fibrillation - rate control', NULL, NULL),
+(1, 4, 1, '2025-12-10 14:00:00', '2025-12-12 10:00:00', 'OBSERVATION', 'DISCHARGED', 'A', 'Hypertensive urgency observation', 'Hypertensive urgency - controlled', 'BP initially 180/110, controlled with IV medication. Transitioned to oral meds. BP stable at discharge.', 'Take Lisinopril 20mg daily. Low sodium diet. Monitor BP twice daily. Follow up in 3 days.'),
+(10, 4, 10, '2025-12-14 11:00:00', NULL, 'SCHEDULED', 'ADMITTED', 'A', 'MRI and neurological workup', 'Suspected Multiple Sclerosis - under investigation', NULL, NULL),
+(15, 11, 15, '2025-12-16 02:30:00', NULL, 'EMERGENCY', 'ADMITTED', '3', 'Motor vehicle accident - multiple injuries', 'Polytrauma - stable condition', NULL, NULL);
+
+-- =============================================
+-- INSERT SAMPLE DATA: Documents
+-- =============================================
+INSERT INTO document (patient_id, uploaded_by_id, document_type, file_name, original_file_name, file_type, file_size, description, is_confidential, uploaded_at) VALUES
+(1, 2, 'LAB_REPORT', 'lab_report_001.pdf', 'Lipid_Panel_Results.pdf', 'application/pdf', 245760, 'Lipid panel results from Dec 15', FALSE, '2025-12-15 15:00:00'),
+(1, 2, 'PRESCRIPTION', 'prescription_001.pdf', 'Lisinopril_Prescription.pdf', 'application/pdf', 128000, 'Hypertension medication prescription', FALSE, '2025-12-10 16:00:00'),
+(5, 2, 'DISCHARGE_SUMMARY', 'discharge_005.pdf', 'Discharge_Summary_Dec12.pdf', 'application/pdf', 356000, 'Discharge summary after anxiety episode', FALSE, '2025-12-12 17:00:00'),
+(8, 2, 'IMAGING', 'imaging_008.pdf', 'Mammogram_Results.pdf', 'application/pdf', 1024000, 'Pre-treatment imaging results', TRUE, '2025-12-04 14:00:00'),
+(3, 2, 'IMAGING', 'imaging_003.pdf', 'MRI_Knee_Results.pdf', 'application/pdf', 2048000, 'MRI showing ACL tear', FALSE, '2025-12-12 10:00:00'),
+(3, 2, 'CONSENT_FORM', 'consent_003.pdf', 'Surgery_Consent_Form.pdf', 'application/pdf', 180000, 'Signed consent for ACL surgery', FALSE, '2025-12-12 11:00:00'),
+(7, 2, 'DISCHARGE_SUMMARY', 'discharge_007.pdf', 'Cataract_Surgery_Discharge.pdf', 'application/pdf', 290000, 'Post-cataract surgery discharge', FALSE, '2025-12-15 12:00:00'),
+(9, 2, 'LAB_REPORT', 'lab_report_009.pdf', 'Cardiac_Enzymes.pdf', 'application/pdf', 210000, 'Emergency cardiac panel results', FALSE, '2025-12-15 13:00:00'),
+(1, 3, 'INSURANCE', 'insurance_001.pdf', 'Insurance_Card_Copy.pdf', 'application/pdf', 95000, 'Insurance information', FALSE, '2025-11-28 09:00:00'),
+(2, 2, 'LAB_REPORT', 'lab_report_002.pdf', 'Thyroid_Panel.pdf', 'application/pdf', 198000, 'Thyroid function test results', FALSE, '2025-12-15 11:30:00');
+
+-- =============================================
+-- INSERT SAMPLE DATA: Notifications
+-- =============================================
+INSERT INTO notification (user_id, type, title, message, is_read, link, scheduled_for, created_at) VALUES
+(3, 'LAB_RESULT', 'Lab Results Available', 'Your lipid panel results are now available. Please review and discuss with your doctor.', FALSE, '/lab', NULL, '2025-12-15 15:00:00'),
+(3, 'APPOINTMENT', 'Upcoming Appointment Reminder', 'You have an appointment with Dr. Chen tomorrow at 9:00 AM.', TRUE, '/appointments', '2025-12-16 09:00:00', '2025-12-15 09:00:00'),
+(3, 'PRESCRIPTION', 'Prescription Refill Reminder', 'Your Lisinopril prescription will need a refill in 7 days.', FALSE, '/prescriptions', NULL, '2025-12-10 10:00:00'),
+(2, 'SYSTEM', 'New Patient Assigned', 'Patient Robert Williams has been assigned to your care for ACL surgery.', TRUE, '/patients/3', NULL, '2025-12-13 07:30:00'),
+(2, 'LAB_RESULT', 'Lab Results Ready for Review', 'Lab results for John Smith are ready for your review.', FALSE, '/lab', NULL, '2025-12-15 14:30:00'),
+(1, 'SYSTEM', 'System Maintenance Scheduled', 'The system will undergo maintenance on Dec 20 from 2:00 AM to 4:00 AM.', FALSE, NULL, '2025-12-20 02:00:00', '2025-12-15 08:00:00'),
+(3, 'PAYMENT', 'Payment Received', 'Your payment of $486.54 has been received. Thank you.', TRUE, '/payments', NULL, '2025-11-28 12:00:00'),
+(2, 'ALERT', 'Critical Lab Value Alert', 'Patient John Smith has elevated LDL cholesterol (115 mg/dL). Review recommended.', FALSE, '/lab', NULL, '2025-12-15 14:00:00'),
+(3, 'APPOINTMENT', 'Appointment Confirmed', 'Your appointment with Dr. Walker on Dec 4 at 10:00 AM has been confirmed.', TRUE, '/appointments', NULL, '2025-12-01 10:00:00'),
+(1, 'SYSTEM', 'New User Registration', 'A new doctor account has been created: Dr. Steven Green', TRUE, '/users', NULL, '2025-11-15 11:00:00'),
+(2, 'APPOINTMENT', 'New Appointment Scheduled', 'John Smith has scheduled an appointment for Dec 1 at 9:00 AM.', TRUE, '/appointments', NULL, '2025-11-28 14:00:00'),
+(3, 'SYSTEM', 'Welcome to Hospital Management System', 'Your patient account has been created. Complete your profile for better service.', TRUE, '/profile', NULL, '2025-11-20 09:00:00');
+
+-- =============================================
 -- VERIFICATION QUERIES
 -- =============================================
 SELECT '========================================' AS '';
@@ -456,7 +809,15 @@ UNION ALL SELECT CONCAT('  Bills:           ', LPAD(COUNT(*), 3, ' ')) FROM bill
 UNION ALL SELECT CONCAT('  Medicines:       ', LPAD(COUNT(*), 3, ' ')) FROM medicine
 UNION ALL SELECT CONCAT('  Rooms:           ', LPAD(COUNT(*), 3, ' ')) FROM room
 UNION ALL SELECT CONCAT('  Medical Records: ', LPAD(COUNT(*), 3, ' ')) FROM medical_record
-UNION ALL SELECT CONCAT('  Users:           ', LPAD(COUNT(*), 3, ' ')) FROM users;
+UNION ALL SELECT CONCAT('  Users:           ', LPAD(COUNT(*), 3, ' ')) FROM users
+UNION ALL SELECT CONCAT('  Messages:        ', LPAD(COUNT(*), 3, ' ')) FROM message
+UNION ALL SELECT CONCAT('  Vital Signs:     ', LPAD(COUNT(*), 3, ' ')) FROM vital_signs
+UNION ALL SELECT CONCAT('  Lab Tests:       ', LPAD(COUNT(*), 3, ' ')) FROM lab_test
+UNION ALL SELECT CONCAT('  Lab Orders:      ', LPAD(COUNT(*), 3, ' ')) FROM lab_order
+UNION ALL SELECT CONCAT('  Lab Results:     ', LPAD(COUNT(*), 3, ' ')) FROM lab_result
+UNION ALL SELECT CONCAT('  Admissions:      ', LPAD(COUNT(*), 3, ' ')) FROM admission
+UNION ALL SELECT CONCAT('  Documents:       ', LPAD(COUNT(*), 3, ' ')) FROM document
+UNION ALL SELECT CONCAT('  Notifications:   ', LPAD(COUNT(*), 3, ' ')) FROM notification;
 
 SELECT '========================================' AS '';
 SELECT 'Connection Info:' AS '';

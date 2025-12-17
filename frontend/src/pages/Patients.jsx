@@ -229,52 +229,54 @@ const Patients = () => {
           <h1>Patients</h1>
         </div>
 
-        <div className="stats-summary">
-          <div className="stat-item">
-            <div className="stat-icon">
+        <div className="stats-row">
+          <div className="stat-card">
+            <div className="stat-icon primary">
               <FiUsers />
             </div>
-            <div className="stat-content">
-              <span className="stat-number">{patients.length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{patients.length}</span>
               <span className="stat-label">Total Patients</span>
             </div>
           </div>
-          <div className="stat-item">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', color: '#2563eb' }}>
+          <div className="stat-card">
+            <div className="stat-icon secondary">
               <FiUser />
             </div>
-            <div className="stat-content">
-              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{patients.filter(p => p.gender === 'Male').length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{patients.filter(p => p.gender === 'Male').length}</span>
               <span className="stat-label">Male</span>
             </div>
           </div>
-          <div className="stat-item">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)', color: '#db2777' }}>
+          <div className="stat-card">
+            <div className="stat-icon pink">
               <FiUser />
             </div>
-            <div className="stat-content">
-              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #db2777 0%, #ec4899 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{patients.filter(p => p.gender === 'Female').length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{patients.filter(p => p.gender === 'Female').length}</span>
               <span className="stat-label">Female</span>
             </div>
           </div>
         </div>
 
-        <div className="filter-bar">
-          <button className="btn-filter" onClick={() => setShowFilterModal(true)}>
-            <FiFilter /> Filter
-            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
-          </button>
-          <SortDropdown
-            sortOptions={sortOptions}
-            onSort={handleSort}
-            currentSort={currentSort}
-          />
-          {activeFilterCount > 0 && (
-            <button className="btn-clear-filter" onClick={clearFilters}>
-              <FiX /> Clear Filters
+        <div className="page-toolbar">
+          <div className="search-filter">
+            <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
+              <FiFilter /> Filter
+              {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
             </button>
-          )}
-          <button className="btn-primary" onClick={() => openModal()}>
+            <SortDropdown
+              sortOptions={sortOptions}
+              onSort={handleSort}
+              currentSort={currentSort}
+            />
+            {activeFilterCount > 0 && (
+              <button className="btn-clear-filter" onClick={clearFilters}>
+                <FiX /> Clear Filters
+              </button>
+            )}
+          </div>
+          <button className="add-btn" onClick={() => openModal()}>
             <FiPlus /> Add Patient
           </button>
         </div>

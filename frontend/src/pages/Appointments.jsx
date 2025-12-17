@@ -267,70 +267,72 @@ const Appointments = () => {
           <h1>Appointments</h1>
         </div>
 
-        <div className="stats-summary">
-          <div className="stat-item">
-            <div className="stat-icon">
+        <div className="stats-row">
+          <div className="stat-card">
+            <div className="stat-icon primary">
               <FiCalendar size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number">{appointments.length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{appointments.length}</span>
               <span className="stat-label">Total</span>
             </div>
           </div>
-          <div className="stat-item">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', color: '#d97706' }}>
+          <div className="stat-card">
+            <div className="stat-icon warning">
               <FiClock size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{appointments.filter(a => a.status === 'SCHEDULED').length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{appointments.filter(a => a.status === 'SCHEDULED').length}</span>
               <span className="stat-label">Scheduled</span>
             </div>
           </div>
-          <div className="stat-item">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', color: '#2563eb' }}>
+          <div className="stat-card">
+            <div className="stat-icon secondary">
               <FiCheckCircle size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{appointments.filter(a => a.status === 'CONFIRMED').length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{appointments.filter(a => a.status === 'CONFIRMED').length}</span>
               <span className="stat-label">Confirmed</span>
             </div>
           </div>
-          <div className="stat-item">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', color: '#059669' }}>
+          <div className="stat-card">
+            <div className="stat-icon primary">
               <FiCheck size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number">{appointments.filter(a => a.status === 'COMPLETED').length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{appointments.filter(a => a.status === 'COMPLETED').length}</span>
               <span className="stat-label">Completed</span>
             </div>
           </div>
-          <div className="stat-item">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)', color: '#dc2626' }}>
+          <div className="stat-card">
+            <div className="stat-icon danger">
               <FiXCircle size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{appointments.filter(a => a.status === 'CANCELLED').length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{appointments.filter(a => a.status === 'CANCELLED').length}</span>
               <span className="stat-label">Cancelled</span>
             </div>
           </div>
         </div>
 
-        <div className="filter-bar">
-          <button className="btn-filter" onClick={() => setShowFilterModal(true)}>
-            <FiFilter /> Filter
-            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
-          </button>
-          <SortDropdown
-            sortOptions={sortOptions}
-            onSort={handleSort}
-            currentSort={currentSort}
-          />
-          {activeFilterCount > 0 && (
-            <button className="btn-clear-filter" onClick={clearFilters}>
-              <FiX /> Clear Filters
+        <div className="page-toolbar">
+          <div className="search-filter">
+            <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
+              <FiFilter /> Filter
+              {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
             </button>
-          )}
-          <button className="btn-primary" onClick={() => openModal()}>
+            <SortDropdown
+              sortOptions={sortOptions}
+              onSort={handleSort}
+              currentSort={currentSort}
+            />
+            {activeFilterCount > 0 && (
+              <button className="btn-clear-filter" onClick={clearFilters}>
+                <FiX /> Clear Filters
+              </button>
+            )}
+          </div>
+          <button className="add-btn" onClick={() => openModal()}>
             <FiPlus /> Add Appointment
           </button>
         </div>

@@ -25,7 +25,6 @@ com\hms\hospital_management_system\controller\DepartmentController.class
 com\hms\hospital_management_system\controller\AppointmentController.class
 com\hms\hospital_management_system\dto\RegisterRequest$RegisterRequestBuilder.class
 com\hms\hospital_management_system\service\DepartmentService.class
-com\hms\hospital_management_system\service\RoomService.class
 com\hms\hospital_management_system\entity\Patient.class
 com\hms\hospital_management_system\config\DataInitializer.class
 com\hms\hospital_management_system\config\CorsConfig.class
@@ -34,7 +33,6 @@ com\hms\hospital_management_system\service\MedicineService.class
 com\hms\hospital_management_system\dto\LoginRequest.class
 com\hms\hospital_management_system\entity\Department$DepartmentBuilder.class
 com\hms\hospital_management_system\config\CorsConfig$1.class
-com\hms\hospital_management_system\controller\RoomController.class
 com\hms\hospital_management_system\HospitalManagementSystemApplication.class
 com\hms\hospital_management_system\service\BillService.class
 com\hms\hospital_management_system\dto\RegisterRequest.class
@@ -54,7 +52,6 @@ com\hms\hospital_management_system\entity\Appointment.class
 com\hms\hospital_management_system\entity\Room$RoomType.class
 com\hms\hospital_management_system\controller\DoctorController.class
 com\hms\hospital_management_system\security\JwtAuthenticationFilter.class
-com\hms\hospital_management_system\security\CustomUserDetails.class
 com\hms\hospital_management_system\repository\MedicineRepository.class
 com\hms\hospital_management_system\controller\BillController.class
 com\hms\hospital_management_system\entity\Room$RoomBuilder.class

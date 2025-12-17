@@ -88,7 +88,7 @@ public class AdmissionController {
         Long roomId = request.get("roomId") != null ? Long.valueOf(request.get("roomId").toString()) : null;
         String bedNumber = request.get("bedNumber") != null ? request.get("bedNumber").toString() : null;
         AdmissionType admissionType = request.get("admissionType") != null ? 
-                AdmissionType.valueOf(request.get("admissionType").toString()) : AdmissionType.MEDICAL;
+                AdmissionType.valueOf(request.get("admissionType").toString()) : AdmissionType.SCHEDULED;
         String reasonForAdmission = request.get("reasonForAdmission") != null ? 
                 request.get("reasonForAdmission").toString() : null;
         String notes = request.get("notes") != null ? request.get("notes").toString() : null;

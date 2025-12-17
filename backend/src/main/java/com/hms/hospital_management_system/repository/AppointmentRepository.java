@@ -56,4 +56,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("startTime") LocalTime startTime,
             @Param("endTime") LocalTime endTime,
             @Param("excludeId") Long excludeId);
+    
+    // For PDF report generation
+    List<Appointment> findByPatientIdOrderByAppointmentDateDesc(Long patientId);
 }

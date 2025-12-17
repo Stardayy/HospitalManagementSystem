@@ -83,7 +83,7 @@ public class Admission {
     private AdmissionType admissionType;
 
     public enum AdmissionType {
-        EMERGENCY, ELECTIVE, MATERNITY, SURGICAL, MEDICAL
+        EMERGENCY, SCHEDULED, TRANSFER, OBSERVATION
     }
 
     @Column(name = "reason_for_admission", length = 500)

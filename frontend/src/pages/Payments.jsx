@@ -271,61 +271,63 @@ const Payments = () => {
           <h1>Payments</h1>
         </div>
 
-        <div className="stats-summary payment-stats">
-          <div className="stat-item revenue">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', color: '#059669' }}>
+        <div className="stats-row">
+          <div className="stat-card">
+            <div className="stat-icon primary">
               <FiDollarSign size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number">${totalRevenue.toFixed(2)}</span>
+            <div className="stat-info">
+              <span className="stat-value">${totalRevenue.toFixed(2)}</span>
               <span className="stat-label">Total Revenue</span>
             </div>
           </div>
-          <div className="stat-item pending">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', color: '#d97706' }}>
+          <div className="stat-card">
+            <div className="stat-icon warning">
               <FiCreditCard size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>${pendingAmount.toFixed(2)}</span>
+            <div className="stat-info">
+              <span className="stat-value">${pendingAmount.toFixed(2)}</span>
               <span className="stat-label">Pending Amount</span>
             </div>
           </div>
-          <div className="stat-item">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)', color: '#4f46e5' }}>
+          <div className="stat-card">
+            <div className="stat-icon purple">
               <FiCheckCircle size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{bills.length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{bills.length}</span>
               <span className="stat-label">Total Bills</span>
             </div>
           </div>
-          <div className="stat-item">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', color: '#059669' }}>
+          <div className="stat-card">
+            <div className="stat-icon primary">
               <FiCheckCircle size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number">{bills.filter(b => b.paymentStatus === 'PAID').length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{bills.filter(b => b.paymentStatus === 'PAID').length}</span>
               <span className="stat-label">Paid Bills</span>
             </div>
           </div>
         </div>
 
-        <div className="filter-bar">
-          <button className="btn-filter" onClick={() => setShowFilterModal(true)}>
-            <FiFilter /> Filter
-            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
-          </button>
-          <SortDropdown
-            sortOptions={sortOptions}
-            onSort={handleSort}
-            currentSort={currentSort}
-          />
-          {activeFilterCount > 0 && (
-            <button className="btn-clear-filter" onClick={clearFilters}>
-              <FiX /> Clear Filters
+        <div className="page-toolbar">
+          <div className="search-filter">
+            <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
+              <FiFilter /> Filter
+              {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
             </button>
-          )}
-          <button className="btn-primary" onClick={() => openModal()}>
+            <SortDropdown
+              sortOptions={sortOptions}
+              onSort={handleSort}
+              currentSort={currentSort}
+            />
+            {activeFilterCount > 0 && (
+              <button className="btn-clear-filter" onClick={clearFilters}>
+                <FiX /> Clear Filters
+              </button>
+            )}
+          </div>
+          <button className="add-btn" onClick={() => openModal()}>
             <FiPlus /> Create Bill
           </button>
         </div>
