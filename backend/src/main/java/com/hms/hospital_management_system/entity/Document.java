@@ -60,8 +60,8 @@ public class Document {
     private DocumentType documentType;
 
     public enum DocumentType {
-        LAB_REPORT, PRESCRIPTION, XRAY, MRI, CT_SCAN, ULTRASOUND, 
-        DISCHARGE_SUMMARY, INSURANCE, CONSENT_FORM, ID_PROOF, OTHER
+        LAB_REPORT, PRESCRIPTION, IMAGING, DISCHARGE_SUMMARY, 
+        CONSENT_FORM, INSURANCE, OTHER
     }
 
     @Column(length = 500)

@@ -269,61 +269,63 @@ const Inventory = () => {
           <h1>Inventory</h1>
         </div>
 
-        <div className="stats-summary inventory-stats">
-          <div className="stat-item">
-            <div className="stat-icon">
+        <div className="stats-row">
+          <div className="stat-card">
+            <div className="stat-icon primary">
               <FiPackage size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number">{medicines.length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{medicines.length}</span>
               <span className="stat-label">Total Items</span>
             </div>
           </div>
-          <div className="stat-item warning" onClick={() => setFilterType('LOW_STOCK')}>
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', color: '#d97706' }}>
+          <div className="stat-card" onClick={() => setFilterType('LOW_STOCK')} style={{ cursor: 'pointer' }}>
+            <div className="stat-icon warning">
               <FiAlertTriangle size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{lowStockCount}</span>
+            <div className="stat-info">
+              <span className="stat-value">{lowStockCount}</span>
               <span className="stat-label">Low Stock</span>
             </div>
           </div>
-          <div className="stat-item alert" onClick={() => setFilterType('EXPIRING')}>
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%)', color: '#ea580c' }}>
+          <div className="stat-card" onClick={() => setFilterType('EXPIRING')} style={{ cursor: 'pointer' }}>
+            <div className="stat-icon warning">
               <FiCalendar size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{expiringCount}</span>
+            <div className="stat-info">
+              <span className="stat-value">{expiringCount}</span>
               <span className="stat-label">Expiring Soon</span>
             </div>
           </div>
-          <div className="stat-item danger" onClick={() => setFilterType('EXPIRED')}>
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)', color: '#dc2626' }}>
+          <div className="stat-card" onClick={() => setFilterType('EXPIRED')} style={{ cursor: 'pointer' }}>
+            <div className="stat-icon danger">
               <FiAlertTriangle size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{expiredCount}</span>
+            <div className="stat-info">
+              <span className="stat-value">{expiredCount}</span>
               <span className="stat-label">Expired</span>
             </div>
           </div>
         </div>
 
-        <div className="filter-bar">
-          <button className="btn-filter" onClick={() => setShowFilterModal(true)}>
-            <FiFilter /> Filter
-            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
-          </button>
-          <SortDropdown
-            sortOptions={sortOptions}
-            onSort={handleSort}
-            currentSort={currentSort}
-          />
-          {activeFilterCount > 0 && (
-            <button className="btn-clear-filter" onClick={clearFilters}>
-              <FiX /> Clear Filters
+        <div className="page-toolbar">
+          <div className="search-filter">
+            <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
+              <FiFilter /> Filter
+              {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
             </button>
-          )}
-          <button className="btn-primary" onClick={() => openModal()}>
+            <SortDropdown
+              sortOptions={sortOptions}
+              onSort={handleSort}
+              currentSort={currentSort}
+            />
+            {activeFilterCount > 0 && (
+              <button className="btn-clear-filter" onClick={clearFilters}>
+                <FiX /> Clear Filters
+              </button>
+            )}
+          </div>
+          <button className="add-btn" onClick={() => openModal()}>
             <FiPlus /> Add Medicine
           </button>
         </div>

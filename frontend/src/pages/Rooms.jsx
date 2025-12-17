@@ -289,22 +289,56 @@ const Rooms = () => {
           <h1>Room Management</h1>
         </div>
 
-        <div className="filter-bar">
-          <button className="btn-filter" onClick={() => setShowFilterModal(true)}>
-            <FiFilter /> Filter
-            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
-          </button>
-          <SortDropdown
-            sortOptions={sortOptions}
-            onSort={handleSort}
-            currentSort={currentSort}
-          />
-          {activeFilterCount > 0 && (
-            <button className="btn-clear-filter" onClick={clearFilters}>
-              <FiX /> Clear Filters
+        {/* Room Stats */}
+        <div className="stats-row">
+          <div className="stat-card">
+            <div className="stat-icon primary"><FiHome /></div>
+            <div className="stat-info">
+              <span className="stat-value">{rooms.length}</span>
+              <span className="stat-label">Total Rooms</span>
+            </div>
+          </div>
+          <div className="stat-card success">
+            <div className="stat-icon primary"><FiCheckCircle /></div>
+            <div className="stat-info">
+              <span className="stat-value">{availableCount}</span>
+              <span className="stat-label">Available</span>
+            </div>
+          </div>
+          <div className="stat-card warning">
+            <div className="stat-icon warning"><FiXCircle /></div>
+            <div className="stat-info">
+              <span className="stat-value">{occupiedCount}</span>
+              <span className="stat-label">Occupied</span>
+            </div>
+          </div>
+          <div className="stat-card info">
+            <div className="stat-icon secondary"><FiTool /></div>
+            <div className="stat-info">
+              <span className="stat-value">{totalBeds}</span>
+              <span className="stat-label">Total Beds</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="page-toolbar">
+          <div className="search-filter">
+            <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
+              <FiFilter /> Filter
+              {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
             </button>
-          )}
-          <button className="btn-primary" onClick={() => { resetForm(); setShowModal(true); }}>
+            <SortDropdown
+              sortOptions={sortOptions}
+              onSort={handleSort}
+              currentSort={currentSort}
+            />
+            {activeFilterCount > 0 && (
+              <button className="btn-clear-filter" onClick={clearFilters}>
+                <FiX /> Clear Filters
+              </button>
+            )}
+          </div>
+          <button className="add-btn" onClick={() => { resetForm(); setShowModal(true); }}>
             <FiPlus /> Add Room
           </button>
         </div>
@@ -316,26 +350,6 @@ const Rooms = () => {
           filterConfig={filterConfig}
           title="Filter Rooms"
         />
-
-        {/* Room Stats */}
-        <div className="stats-row">
-          <div className="stat-card">
-            <h3>Total Rooms</h3>
-            <span className="stat-value">{rooms.length}</span>
-          </div>
-          <div className="stat-card stat-success">
-            <h3>Available</h3>
-            <span className="stat-value">{availableCount}</span>
-          </div>
-          <div className="stat-card stat-warning">
-            <h3>Occupied</h3>
-            <span className="stat-value">{occupiedCount}</span>
-          </div>
-          <div className="stat-card stat-info">
-            <h3>Total Beds</h3>
-            <span className="stat-value">{totalBeds}</span>
-          </div>
-        </div>
 
         {loading ? (
           <div className="loading-spinner">Loading...</div>

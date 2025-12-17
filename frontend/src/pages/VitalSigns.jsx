@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiSearch, FiActivity, FiHeart, FiThermometer, FiDroplet } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiActivity, FiHeart, FiThermometer, FiDroplet } from 'react-icons/fi';
 import api from '../api/api';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
@@ -13,7 +13,6 @@ const VitalSigns = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingVital, setEditingVital] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState('');
 
   const [formData, setFormData] = useState({
@@ -169,10 +168,7 @@ const VitalSigns = () => {
     }
   };
 
-  const filteredVitals = vitals.filter(vital =>
-    vital.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vital.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredVitals = vitals;
 
   if (loading) {
     return (
@@ -192,6 +188,53 @@ const VitalSigns = () => {
       <div className="main-content">
         <Header title="Vital Signs" />
 
+        {/* Stats Cards */}
+        <div className="stats-row">
+          <div className="stat-card">
+            <div className="stat-icon danger"><FiThermometer /></div>
+            <div className="stat-info">
+              <span className="stat-value">
+                {filteredVitals.length > 0 && filteredVitals.filter(v => v.temperature).length > 0
+                  ? (filteredVitals.reduce((sum, v) => sum + (v.temperature || 0), 0) / 
+                      filteredVitals.filter(v => v.temperature).length).toFixed(1)
+                  : '0'}°C
+              </span>
+              <span className="stat-label">Avg Temperature</span>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon primary"><FiHeart /></div>
+            <div className="stat-info">
+              <span className="stat-value">
+                {filteredVitals.length > 0 && filteredVitals.filter(v => v.heartRate).length > 0
+                  ? Math.round(filteredVitals.reduce((sum, v) => sum + (v.heartRate || 0), 0) / 
+                      filteredVitals.filter(v => v.heartRate).length)
+                  : '0'} bpm
+              </span>
+              <span className="stat-label">Avg Heart Rate</span>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon secondary"><FiDroplet /></div>
+            <div className="stat-info">
+              <span className="stat-value">
+                {filteredVitals.length > 0 && filteredVitals.filter(v => v.oxygenSaturation).length > 0
+                  ? (filteredVitals.reduce((sum, v) => sum + (v.oxygenSaturation || 0), 0) / 
+                      filteredVitals.filter(v => v.oxygenSaturation).length).toFixed(1)
+                  : '0'}%
+              </span>
+              <span className="stat-label">Avg SpO2</span>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon warning"><FiActivity /></div>
+            <div className="stat-info">
+              <span className="stat-value">{filteredVitals.length}</span>
+              <span className="stat-label">Total Records</span>
+            </div>
+          </div>
+        </div>
+
         {/* Toolbar */}
         <div className="page-toolbar">
           <div className="search-filter">
@@ -209,15 +252,6 @@ const VitalSigns = () => {
                 ))}
               </select>
             )}
-            <div className="search-box">
-              <FiSearch className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search vitals..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
           </div>
           {(isAdmin() || isDoctor()) && (
             <button className="add-btn" onClick={() => openModal()}>
@@ -225,49 +259,6 @@ const VitalSigns = () => {
             </button>
           )}
         </div>
-
-        {/* Stats Cards */}
-        {filteredVitals.length > 0 && (
-          <div className="vitals-cards">
-            <div className="vital-card temperature">
-              <div className="vital-icon"><FiThermometer /></div>
-              <div className="vital-info">
-                <span className="vital-label">Avg Temperature</span>
-                <span className="vital-value">
-                  {(filteredVitals.reduce((sum, v) => sum + (v.temperature || 0), 0) / 
-                    filteredVitals.filter(v => v.temperature).length || 0).toFixed(1)}°C
-                </span>
-              </div>
-            </div>
-            <div className="vital-card heart-rate">
-              <div className="vital-icon"><FiHeart /></div>
-              <div className="vital-info">
-                <span className="vital-label">Avg Heart Rate</span>
-                <span className="vital-value">
-                  {Math.round(filteredVitals.reduce((sum, v) => sum + (v.heartRate || 0), 0) / 
-                    filteredVitals.filter(v => v.heartRate).length || 0)} bpm
-                </span>
-              </div>
-            </div>
-            <div className="vital-card oxygen">
-              <div className="vital-icon"><FiDroplet /></div>
-              <div className="vital-info">
-                <span className="vital-label">Avg SpO2</span>
-                <span className="vital-value">
-                  {(filteredVitals.reduce((sum, v) => sum + (v.oxygenSaturation || 0), 0) / 
-                    filteredVitals.filter(v => v.oxygenSaturation).length || 0).toFixed(1)}%
-                </span>
-              </div>
-            </div>
-            <div className="vital-card activity">
-              <div className="vital-icon"><FiActivity /></div>
-              <div className="vital-info">
-                <span className="vital-label">Total Records</span>
-                <span className="vital-value">{filteredVitals.length}</span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Vitals Table */}
         <div className="page-content">

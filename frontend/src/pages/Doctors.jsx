@@ -231,61 +231,63 @@ const Doctors = () => {
           <h1>Doctors</h1>
         </div>
 
-        <div className="stats-summary">
-          <div className="stat-item">
-            <div className="stat-icon">
+        <div className="stats-row">
+          <div className="stat-card">
+            <div className="stat-icon primary">
               <FiUsers size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number">{doctors.length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{doctors.length}</span>
               <span className="stat-label">Total Doctors</span>
             </div>
           </div>
-          <div className="stat-item">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)', color: '#4f46e5' }}>
+          <div className="stat-card">
+            <div className="stat-icon purple">
               <FiGrid size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{departments.length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{departments.length}</span>
               <span className="stat-label">Departments</span>
             </div>
           </div>
-          <div className="stat-item">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', color: '#2563eb' }}>
+          <div className="stat-card">
+            <div className="stat-icon secondary">
               <FiAward size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{doctors.length > 0 ? Math.round(doctors.reduce((sum, d) => sum + (d.yearsOfExperience || 0), 0) / doctors.length) : 0}</span>
+            <div className="stat-info">
+              <span className="stat-value">{doctors.length > 0 ? Math.round(doctors.reduce((sum, d) => sum + (d.yearsOfExperience || 0), 0) / doctors.length) : 0}</span>
               <span className="stat-label">Avg. Experience</span>
             </div>
           </div>
-          <div className="stat-item">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', color: '#059669' }}>
+          <div className="stat-card">
+            <div className="stat-icon primary">
               <FiDollarSign size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number">${doctors.length > 0 ? Math.round(doctors.reduce((sum, d) => sum + (d.consultationFee || 0), 0) / doctors.length) : 0}</span>
+            <div className="stat-info">
+              <span className="stat-value">${doctors.length > 0 ? Math.round(doctors.reduce((sum, d) => sum + (d.consultationFee || 0), 0) / doctors.length) : 0}</span>
               <span className="stat-label">Avg. Fee</span>
             </div>
           </div>
         </div>
 
-        <div className="filter-bar">
-          <button className="btn-filter" onClick={() => setShowFilterModal(true)}>
-            <FiFilter /> Filter
-            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
-          </button>
-          <SortDropdown
-            sortOptions={sortOptions}
-            onSort={handleSort}
-            currentSort={currentSort}
-          />
-          {activeFilterCount > 0 && (
-            <button className="btn-clear-filter" onClick={clearFilters}>
-              <FiX /> Clear Filters
+        <div className="page-toolbar">
+          <div className="search-filter">
+            <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
+              <FiFilter /> Filter
+              {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
             </button>
-          )}
-          <button className="btn-primary" onClick={() => openModal()}>
+            <SortDropdown
+              sortOptions={sortOptions}
+              onSort={handleSort}
+              currentSort={currentSort}
+            />
+            {activeFilterCount > 0 && (
+              <button className="btn-clear-filter" onClick={clearFilters}>
+                <FiX /> Clear Filters
+              </button>
+            )}
+          </div>
+          <button className="add-btn" onClick={() => openModal()}>
             <FiPlus /> Add Doctor
           </button>
         </div>

@@ -111,22 +111,22 @@ const Departments = () => {
           <h1>Departments</h1>
         </div>
 
-        <div className="stats-summary">
-          <div className="stat-item">
-            <div className="stat-icon">
+        <div className="stats-row">
+          <div className="stat-card">
+            <div className="stat-icon primary">
               <FiGrid size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number">{departments.length}</span>
+            <div className="stat-info">
+              <span className="stat-value">{departments.length}</span>
               <span className="stat-label">Total Departments</span>
             </div>
           </div>
-          <div className="stat-item">
-            <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)', color: '#2563eb' }}>
+          <div className="stat-card">
+            <div className="stat-icon secondary">
               <FiUsers size={24} />
             </div>
-            <div className="stat-content">
-              <span className="stat-number" style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <div className="stat-info">
+              <span className="stat-value">
                 {departments.reduce((sum, d) => sum + (d.doctors?.length || 0), 0)}
               </span>
               <span className="stat-label">Total Doctors</span>
@@ -134,17 +134,19 @@ const Departments = () => {
           </div>
         </div>
 
-        <div className="filter-bar">
-          <CustomSelect
-            options={[
-              { value: 'ALL', label: 'All Locations' },
-              ...locations.map(loc => ({ value: loc, label: loc }))
-            ]}
-            value={filterLocation}
-            onChange={setFilterLocation}
-            placeholder="Filter by location"
-          />
-          <button className="btn-primary" onClick={() => openModal()}>
+        <div className="page-toolbar">
+          <div className="search-filter">
+            <CustomSelect
+              options={[
+                { value: 'ALL', label: 'All Locations' },
+                ...locations.map(loc => ({ value: loc, label: loc }))
+              ]}
+              value={filterLocation}
+              onChange={setFilterLocation}
+              placeholder="Filter by location"
+            />
+          </div>
+          <button className="add-btn" onClick={() => openModal()}>
             <FiPlus /> Add Department
           </button>
         </div>

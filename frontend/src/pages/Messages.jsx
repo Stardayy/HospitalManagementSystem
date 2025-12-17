@@ -162,7 +162,7 @@ const Messages = () => {
             {totalUnread > 0 && (
               <span className="unread-badge">{totalUnread} unread</span>
             )}
-            <button className="btn-primary" onClick={() => setShowNewMessage(true)}>
+            <button className="add-btn" onClick={() => setShowNewMessage(true)}>
               <FiPlus /> New Message
             </button>
           </div>
