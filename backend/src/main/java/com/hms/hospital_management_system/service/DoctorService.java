@@ -96,6 +96,10 @@ public class DoctorService {
         return doctorRepository.searchByName(name);
     }
 
+    public List<Doctor> getDoctorsByPatient(Long patientId) {
+        return doctorRepository.findByPatientId(patientId);
+    }
+
     public List<Doctor> filterDoctors(Long departmentId, String specialization, String sortBy, String sortOrder) {
         List<Doctor> doctors = doctorRepository.findAll();
         

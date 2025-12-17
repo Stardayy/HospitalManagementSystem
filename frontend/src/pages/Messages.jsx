@@ -1,103 +1,97 @@
-import React, { useState } from 'react';
-import { FiSearch, FiSend, FiPaperclip, FiSmile, FiMoreVertical, FiPhone, FiVideo } from 'react-icons/fi';
+import React, { useState, useEffect, useRef } from 'react';
+import { toast } from 'react-toastify';
+import { FiSearch, FiSend, FiPaperclip, FiSmile, FiMoreVertical, FiPhone, FiVideo, FiPlus } from 'react-icons/fi';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
+import { useAuth } from '../context/AuthContext';
+import api from '../api/api';
 import '../styles/Pages.css';
 
 const Messages = () => {
+  const { user } = useAuth();
   const [selectedContact, setSelectedContact] = useState(null);
   const [messageText, setMessageText] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [conversations, setConversations] = useState([]);
+  const [messages, setMessages] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showNewMessage, setShowNewMessage] = useState(false);
+  const messagesEndRef = useRef(null);
 
-  // Mock data for messages (since there's no messages backend)
-  const [contacts] = useState([
-    {
-      id: 1,
-      name: 'Dr. Sarah Wilson',
-      role: 'Cardiologist',
-      avatar: 'S',
-      lastMessage: 'The patient report is ready for review.',
-      time: '10:30 AM',
-      unread: 3,
-      online: true
-    },
-    {
-      id: 2,
-      name: 'Dr. Michael Chen',
-      role: 'Neurologist',
-      avatar: 'M',
-      lastMessage: 'Can we discuss the MRI results?',
-      time: '09:45 AM',
-      unread: 1,
-      online: true
-    },
-    {
-      id: 3,
-      name: 'Dr. Emily Brown',
-      role: 'Pediatrician',
-      avatar: 'E',
-      lastMessage: 'Thanks for the referral!',
-      time: 'Yesterday',
-      unread: 0,
-      online: false
-    },
-    {
-      id: 4,
-      name: 'Nurse Jennifer',
-      role: 'Head Nurse',
-      avatar: 'J',
-      lastMessage: 'Room 204 needs attention.',
-      time: 'Yesterday',
-      unread: 0,
-      online: true
-    },
-    {
-      id: 5,
-      name: 'Dr. Robert Taylor',
-      role: 'Orthopedic Surgeon',
-      avatar: 'R',
-      lastMessage: 'Surgery scheduled for 3 PM.',
-      time: 'Mon',
-      unread: 0,
-      online: false
+  useEffect(() => {
+    fetchConversations();
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    if (selectedContact) {
+      fetchMessages(selectedContact.id);
     }
-  ]);
+  }, [selectedContact]);
 
-  const [conversations] = useState({
-    1: [
-      { id: 1, sender: 'them', text: 'Hi, I need to discuss the patient in Room 305.', time: '10:15 AM' },
-      { id: 2, sender: 'me', text: 'Sure, what about the patient?', time: '10:18 AM' },
-      { id: 3, sender: 'them', text: 'The ECG results show some irregularities. I think we should schedule an echocardiogram.', time: '10:22 AM' },
-      { id: 4, sender: 'me', text: 'I agree. Let me check the schedule and get back to you.', time: '10:25 AM' },
-      { id: 5, sender: 'them', text: 'The patient report is ready for review.', time: '10:30 AM' }
-    ],
-    2: [
-      { id: 1, sender: 'them', text: 'Good morning! Do you have the MRI results for patient #1023?', time: '09:30 AM' },
-      { id: 2, sender: 'me', text: 'Good morning! Yes, I received them this morning.', time: '09:35 AM' },
-      { id: 3, sender: 'them', text: 'Can we discuss the MRI results?', time: '09:45 AM' }
-    ],
-    3: [
-      { id: 1, sender: 'me', text: 'I have a young patient who needs pediatric consultation.', time: 'Yesterday 2:30 PM' },
-      { id: 2, sender: 'them', text: 'Sure, send them over to my office.', time: 'Yesterday 2:45 PM' },
-      { id: 3, sender: 'them', text: 'Thanks for the referral!', time: 'Yesterday 4:00 PM' }
-    ],
-    4: [
-      { id: 1, sender: 'them', text: 'Dr. Westervelt, we need more supplies in the ICU.', time: 'Yesterday 11:00 AM' },
-      { id: 2, sender: 'me', text: 'I will notify the inventory department.', time: 'Yesterday 11:15 AM' },
-      { id: 3, sender: 'them', text: 'Room 204 needs attention.', time: 'Yesterday 3:30 PM' }
-    ],
-    5: [
-      { id: 1, sender: 'them', text: 'The knee replacement surgery is confirmed for Monday.', time: 'Mon 9:00 AM' },
-      { id: 2, sender: 'me', text: 'Great, I will prepare the pre-op checklist.', time: 'Mon 9:30 AM' },
-      { id: 3, sender: 'them', text: 'Surgery scheduled for 3 PM.', time: 'Mon 10:00 AM' }
-    ]
-  });
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
-  const handleSendMessage = () => {
-    if (messageText.trim() && selectedContact) {
-      // In a real app, this would send to backend
-      console.log('Sending message:', messageText);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const fetchConversations = async () => {
+    try {
+      setLoading(true);
+      const data = await api.get('/messages/conversations');
+      setConversations(data);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      toast.error('Failed to load conversations');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const data = await api.get('/users/all');
+      // Filter out current user
+      const otherUsers = data.filter(u => u.id !== user?.id);
+      setUsers(otherUsers);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const fetchMessages = async (partnerId) => {
+    try {
+      const data = await api.get(`/messages/conversation/${partnerId}`);
+      setMessages(data);
+      // Mark messages as read
+      data.forEach(msg => {
+        if (!msg.read && msg.senderId !== user?.id) {
+          api.put(`/messages/${msg.id}/read`).catch(console.error);
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      toast.error('Failed to load messages');
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !selectedContact) return;
+
+    try {
+      await api.post('/messages/send', {
+        receiverId: selectedContact.id,
+        content: messageText.trim()
+      });
       setMessageText('');
+      fetchMessages(selectedContact.id);
+      fetchConversations();
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message');
     }
   };
 
@@ -108,12 +102,52 @@ const Messages = () => {
     }
   };
 
-  const filteredContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.role.toLowerCase().includes(searchTerm.toLowerCase())
+  const startNewConversation = (userToMessage) => {
+    setSelectedContact({
+      id: userToMessage.id,
+      name: userToMessage.name || `${userToMessage.firstName || ''} ${userToMessage.lastName || ''}`.trim() || userToMessage.email,
+      email: userToMessage.email,
+      role: userToMessage.role,
+      online: true
+    });
+    setShowNewMessage(false);
+    fetchMessages(userToMessage.id);
+  };
+
+  const filteredConversations = conversations.filter(conv =>
+    conv.partnerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    conv.partnerEmail?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalUnread = contacts.reduce((sum, c) => sum + c.unread, 0);
+  const filteredUsers = users.filter(u =>
+    (u.name || `${u.firstName || ''} ${u.lastName || ''}`).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalUnread = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+
+  const formatTime = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) {
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } else if (days === 1) {
+      return 'Yesterday';
+    } else if (days < 7) {
+      return date.toLocaleDateString('en-US', { weekday: 'short' });
+    } else {
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  };
+
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  };
 
   return (
     <div className="dashboard-container">
@@ -124,9 +158,14 @@ const Messages = () => {
 
         <div className="page-header">
           <h1>Messages</h1>
-          {totalUnread > 0 && (
-            <span className="unread-badge">{totalUnread} unread</span>
-          )}
+          <div className="header-actions">
+            {totalUnread > 0 && (
+              <span className="unread-badge">{totalUnread} unread</span>
+            )}
+            <button className="btn-primary" onClick={() => setShowNewMessage(true)}>
+              <FiPlus /> New Message
+            </button>
+          </div>
         </div>
 
         <div className="messages-container">
@@ -142,30 +181,44 @@ const Messages = () => {
               />
             </div>
             <div className="contacts-list">
-              {filteredContacts.map(contact => (
-                <div 
-                  key={contact.id}
-                  className={`contact-item ${selectedContact?.id === contact.id ? 'active' : ''}`}
-                  onClick={() => setSelectedContact(contact)}
-                >
-                  <div className="contact-avatar">
-                    <span>{contact.avatar}</span>
-                    {contact.online && <span className="online-dot"></span>}
-                  </div>
-                  <div className="contact-info">
-                    <div className="contact-header">
-                      <h4>{contact.name}</h4>
-                      <span className="contact-time">{contact.time}</span>
-                    </div>
-                    <div className="contact-preview">
-                      <p>{contact.lastMessage}</p>
-                      {contact.unread > 0 && (
-                        <span className="unread-count">{contact.unread}</span>
-                      )}
-                    </div>
-                  </div>
+              {loading ? (
+                <div className="loading-text">Loading conversations...</div>
+              ) : filteredConversations.length === 0 ? (
+                <div className="no-conversations">
+                  <p>No conversations yet</p>
+                  <button onClick={() => setShowNewMessage(true)}>Start a new conversation</button>
                 </div>
-              ))}
+              ) : (
+                filteredConversations.map(conv => (
+                  <div 
+                    key={conv.partnerId}
+                    className={`contact-item ${selectedContact?.id === conv.partnerId ? 'active' : ''}`}
+                    onClick={() => setSelectedContact({
+                      id: conv.partnerId,
+                      name: conv.partnerName,
+                      email: conv.partnerEmail,
+                      online: true
+                    })}
+                  >
+                    <div className="contact-avatar">
+                      <span>{getInitials(conv.partnerName)}</span>
+                      <span className="online-dot"></span>
+                    </div>
+                    <div className="contact-info">
+                      <div className="contact-header">
+                        <h4>{conv.partnerName || conv.partnerEmail}</h4>
+                        <span className="contact-time">{formatTime(conv.lastMessageTime)}</span>
+                      </div>
+                      <div className="contact-preview">
+                        <p>{conv.lastMessage?.substring(0, 40)}...</p>
+                        {conv.unreadCount > 0 && (
+                          <span className="unread-count">{conv.unreadCount}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -176,13 +229,13 @@ const Messages = () => {
                 <div className="chat-header">
                   <div className="chat-contact-info">
                     <div className="contact-avatar">
-                      <span>{selectedContact.avatar}</span>
-                      {selectedContact.online && <span className="online-dot"></span>}
+                      <span>{getInitials(selectedContact.name)}</span>
+                      <span className="online-dot"></span>
                     </div>
                     <div>
                       <h3>{selectedContact.name}</h3>
                       <span className="contact-status">
-                        {selectedContact.online ? 'Online' : 'Offline'}
+                        {selectedContact.email}
                       </span>
                     </div>
                   </div>
@@ -194,17 +247,24 @@ const Messages = () => {
                 </div>
 
                 <div className="chat-messages">
-                  {conversations[selectedContact.id]?.map(message => (
-                    <div 
-                      key={message.id} 
-                      className={`message ${message.sender === 'me' ? 'sent' : 'received'}`}
-                    >
-                      <div className="message-content">
-                        <p>{message.text}</p>
-                        <span className="message-time">{message.time}</span>
-                      </div>
+                  {messages.length === 0 ? (
+                    <div className="no-messages">
+                      <p>No messages yet. Start the conversation!</p>
                     </div>
-                  ))}
+                  ) : (
+                    messages.map(message => (
+                      <div 
+                        key={message.id} 
+                        className={`message ${message.senderId === user?.id ? 'sent' : 'received'}`}
+                      >
+                        <div className="message-content">
+                          <p>{message.content}</p>
+                          <span className="message-time">{formatTime(message.sentAt)}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
 
                 <div className="chat-input">
@@ -231,6 +291,50 @@ const Messages = () => {
             )}
           </div>
         </div>
+
+        {/* New Message Modal */}
+        {showNewMessage && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h2>New Message</h2>
+                <button className="btn-close" onClick={() => setShowNewMessage(false)}>×</button>
+              </div>
+              <div className="modal-body">
+                <div className="search-input">
+                  <FiSearch />
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="user-list">
+                  {filteredUsers.length === 0 ? (
+                    <p className="no-results">No users found</p>
+                  ) : (
+                    filteredUsers.map(u => (
+                      <div 
+                        key={u.id} 
+                        className="user-item"
+                        onClick={() => startNewConversation(u)}
+                      >
+                        <div className="contact-avatar">
+                          <span>{getInitials(u.name || `${u.firstName || ''} ${u.lastName || ''}`)}</span>
+                        </div>
+                        <div className="user-info">
+                          <h4>{u.name || `${u.firstName || ''} ${u.lastName || ''}`}</h4>
+                          <span>{u.email} • {u.role}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

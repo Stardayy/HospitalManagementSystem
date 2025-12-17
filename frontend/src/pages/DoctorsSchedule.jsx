@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { FiChevronLeft, FiChevronRight, FiClock } from 'react-icons/fi';
 import api from '../api/api';
+import { useAuth } from '../context/AuthContext';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import CustomSelect from '../component/CustomSelect';
 import '../styles/Pages.css';
 
 const DoctorsSchedule = () => {
+  const { user, isDoctor, isPatient } = useAuth();
   const [doctors, setDoctors] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,6 +21,13 @@ const DoctorsSchedule = () => {
     fetchAppointments();
   }, []);
 
+  // Auto-select current doctor if user is a doctor
+  useEffect(() => {
+    if (isDoctor() && user?.doctorId) {
+      setSelectedDoctor(user.doctorId.toString());
+    }
+  }, [user, isDoctor]);
+
   const fetchDoctors = async () => {
     try {
       const data = await api.get('/doctors');
@@ -30,6 +39,7 @@ const DoctorsSchedule = () => {
 
   const fetchAppointments = async () => {
     try {
+      // Backend will automatically filter for doctors and patients
       const data = await api.get('/appointments');
       setAppointments(data);
     } catch (error) {
@@ -95,18 +105,20 @@ const DoctorsSchedule = () => {
         <Header placeholder="Search schedule..." />
 
         <div className="page-header">
-          <h1>Doctors' Schedule</h1>
-          <div className="schedule-controls">
-            <CustomSelect
-              options={[
-                { value: 'ALL', label: 'All Doctors' },
-                ...doctors.map(d => ({ value: d.id.toString(), label: `Dr. ${d.firstName} ${d.lastName}` }))
-              ]}
-              value={selectedDoctor}
-              onChange={setSelectedDoctor}
-              placeholder="Select Doctor"
-            />
-          </div>
+          <h1>{isDoctor() ? 'My Schedule' : isPatient ? 'My Appointments' : "Doctors' Schedule"}</h1>
+          {!isDoctor() && !isPatient && (
+            <div className="schedule-controls">
+              <CustomSelect
+                options={[
+                  { value: 'ALL', label: 'All Doctors' },
+                  ...doctors.map(d => ({ value: d.id.toString(), label: `Dr. ${d.firstName} ${d.lastName}` }))
+                ]}
+                value={selectedDoctor}
+                onChange={setSelectedDoctor}
+                placeholder="Select Doctor"
+              />
+            </div>
+          )}
         </div>
 
         <div className="schedule-navigation">

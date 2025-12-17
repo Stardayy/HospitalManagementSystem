@@ -1,18 +1,23 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import '../styles/Dashboard.css';
+import Header from './Header';
 
-const Layout = () => {
-    return (
-      <div className="dashboard-container">
-        //Keep the sidebar do not re-render when change page
-        <Sidebar />
-        <main className="main-content">
-          <Outlet /> 
-        </main>
-      </div>
-    );
-  };
-  
-  export default Layout;
+const Layout = ({ children, searchTerm, setSearchTerm, searchPlaceholder }) => {
+  return (
+    <div className="dashboard-container">
+      <Sidebar />
+      <main className="main-content">
+        {(searchTerm !== undefined || setSearchTerm) && (
+          <Header 
+            searchTerm={searchTerm} 
+            setSearchTerm={setSearchTerm} 
+            placeholder={searchPlaceholder || "Search..."} 
+          />
+        )}
+        {children}
+      </main>
+    </div>
+  );
+};
+
+export default Layout;

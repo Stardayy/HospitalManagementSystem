@@ -418,6 +418,29 @@ INSERT INTO users (email, password, first_name, last_name, role, doctor_id, pati
 ('patient@hospital.com', '$2a$10$N9qo8uLOickgx2ZMRZoMye.MJ.kLOhJJrGxw3VLa1LJwqb7qbXBTO', 'John', 'Smith', 'PATIENT', NULL, 1, TRUE);
 
 -- =============================================
+-- TABLE: message (for internal messaging system)
+-- =============================================
+CREATE TABLE IF NOT EXISTS message (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    sender_id BIGINT NOT NULL,
+    receiver_id BIGINT NOT NULL,
+    content TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_message_sender (sender_id),
+    INDEX idx_message_receiver (receiver_id),
+    INDEX idx_message_sent_at (sent_at),
+    
+    CONSTRAINT fk_message_sender 
+        FOREIGN KEY (sender_id) REFERENCES users(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_message_receiver 
+        FOREIGN KEY (receiver_id) REFERENCES users(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
 -- VERIFICATION QUERIES
 -- =============================================
 SELECT '========================================' AS '';

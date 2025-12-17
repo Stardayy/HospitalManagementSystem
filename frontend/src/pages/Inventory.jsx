@@ -267,9 +267,6 @@ const Inventory = () => {
 
         <div className="page-header">
           <h1>Inventory</h1>
-          <button className="btn-primary" onClick={() => openModal()}>
-            <FiPlus /> Add Medicine
-          </button>
         </div>
 
         <div className="stats-summary inventory-stats">
@@ -326,6 +323,9 @@ const Inventory = () => {
               <FiX /> Clear Filters
             </button>
           )}
+          <button className="btn-primary" onClick={() => openModal()}>
+            <FiPlus /> Add Medicine
+          </button>
         </div>
 
         <FilterModal

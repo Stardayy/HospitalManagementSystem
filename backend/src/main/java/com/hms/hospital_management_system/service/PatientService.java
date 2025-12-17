@@ -103,4 +103,8 @@ public class PatientService {
             default -> null;
         };
     }
+
+    public List<Patient> getPatientsByDoctor(Long doctorId) {
+        return patientRepository.findByDoctorId(doctorId);
+    }
 }

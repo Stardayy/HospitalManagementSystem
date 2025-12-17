@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.hms.hospital_management_system.entity.Doctor;
@@ -16,6 +17,9 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     
     Optional<Doctor> findByLicenseNumber(String licenseNumber);
     
+    @Query("SELECT d FROM Doctor d WHERE d.id = (SELECT u.doctorId FROM User u WHERE u.id = :userId)")
+    Optional<Doctor> findByUserId(@Param("userId") Long userId);
+    
     List<Doctor> findByDepartmentId(Long departmentId);
     
     List<Doctor> findBySpecializationContainingIgnoreCase(String specialization);
@@ -26,4 +30,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     boolean existsByEmail(String email);
     
     boolean existsByLicenseNumber(String licenseNumber);
+    
+    @Query("SELECT DISTINCT d FROM Doctor d WHERE d.id IN (SELECT a.doctor.id FROM Appointment a WHERE a.patient.id = :patientId)")
+    List<Doctor> findByPatientId(@Param("patientId") Long patientId);
 }

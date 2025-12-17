@@ -3,11 +3,15 @@ package com.hms.hospital_management_system.controller;
 import com.hms.hospital_management_system.entity.Bill;
 import com.hms.hospital_management_system.entity.Bill.PaymentStatus;
 import com.hms.hospital_management_system.entity.Bill.PaymentMethod;
+import com.hms.hospital_management_system.entity.User;
+import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.BillService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -23,8 +27,21 @@ public class BillController {
 
     private final BillService billService;
 
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
+            return ((CustomUserDetails) auth.getPrincipal()).getUser();
+        }
+        return null;
+    }
+
     @GetMapping
     public ResponseEntity<List<Bill>> getAllBills() {
+        User currentUser = getCurrentUser();
+        // If user is a patient, only return their bills
+        if (currentUser != null && currentUser.getRole() == User.Role.PATIENT && currentUser.getPatientId() != null) {
+            return ResponseEntity.ok(billService.getBillsByPatient(currentUser.getPatientId()));
+        }
         return ResponseEntity.ok(billService.getAllBills());
     }
 
@@ -34,6 +51,11 @@ public class BillController {
             @RequestParam(required = false) PaymentMethod paymentMethod,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortOrder) {
+        User currentUser = getCurrentUser();
+        // If user is a patient, filter from their bills only
+        if (currentUser != null && currentUser.getRole() == User.Role.PATIENT && currentUser.getPatientId() != null) {
+            return ResponseEntity.ok(billService.filterBillsForPatient(currentUser.getPatientId(), status, paymentMethod, sortBy, sortOrder));
+        }
         return ResponseEntity.ok(billService.filterBills(status, paymentMethod, sortBy, sortOrder));
     }
 
