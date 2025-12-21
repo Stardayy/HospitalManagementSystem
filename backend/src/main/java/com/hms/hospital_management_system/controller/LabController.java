@@ -6,6 +6,8 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,17 +23,33 @@ import com.hms.hospital_management_system.entity.LabOrder;
 import com.hms.hospital_management_system.entity.LabOrder.LabOrderStatus;
 import com.hms.hospital_management_system.entity.LabResult;
 import com.hms.hospital_management_system.entity.LabTest;
+import com.hms.hospital_management_system.entity.Patient;
+import com.hms.hospital_management_system.entity.User;
+import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.LabService;
+import com.hms.hospital_management_system.service.PatientService;
+import com.hms.hospital_management_system.util.AuditHelper;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/lab")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
 public class LabController {
 
     private final LabService labService;
+    private final PatientService patientService;
+    private final AuditHelper auditHelper;
+
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
+            return ((CustomUserDetails) auth.getPrincipal()).getUser();
+        }
+        return null;
+    }
 
     // ========== Lab Test Endpoints ==========
 
@@ -63,17 +81,23 @@ public class LabController {
     }
 
     @PostMapping("/tests")
-    public ResponseEntity<LabTest> createLabTest(@RequestBody LabTest labTest) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(labService.createLabTest(labTest));
+    public ResponseEntity<LabTest> createLabTest(@RequestBody LabTest labTest, HttpServletRequest request) {
+        LabTest created = labService.createLabTest(labTest);
+        auditHelper.logCreate("LabTest", created.getId().toString(), "Created lab test: " + labTest.getName(), request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/tests/{id}")
-    public ResponseEntity<LabTest> updateLabTest(@PathVariable Long id, @RequestBody LabTest labTest) {
-        return ResponseEntity.ok(labService.updateLabTest(id, labTest));
+    public ResponseEntity<LabTest> updateLabTest(@PathVariable Long id, @RequestBody LabTest labTest,
+            HttpServletRequest request) {
+        LabTest updated = labService.updateLabTest(id, labTest);
+        auditHelper.logUpdate("LabTest", id.toString(), "Updated lab test: " + labTest.getName(), request);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/tests/{id}")
-    public ResponseEntity<Void> deleteLabTest(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteLabTest(@PathVariable Long id, HttpServletRequest request) {
+        auditHelper.logDelete("LabTest", id.toString(), "Deleted lab test", request);
         labService.deleteLabTest(id);
         return ResponseEntity.noContent().build();
     }
@@ -82,6 +106,18 @@ public class LabController {
 
     @GetMapping("/orders")
     public ResponseEntity<List<LabOrder>> getAllLabOrders() {
+        User currentUser = getCurrentUser();
+        if (currentUser != null && currentUser.getRole() == User.Role.DOCTOR && currentUser.getDoctorId() != null) {
+            List<Patient> doctorPatients = patientService.getPatientsByDoctor(currentUser.getDoctorId());
+            List<Long> patientIds = doctorPatients.stream().map(Patient::getId).toList();
+            Long doctorId = currentUser.getDoctorId();
+            List<LabOrder> allOrders = labService.getAllLabOrders();
+            List<LabOrder> filteredOrders = allOrders.stream()
+                    .filter(o -> (o.getPatient() != null && patientIds.contains(o.getPatient().getId()))
+                            || (o.getDoctor() != null && o.getDoctor().getId().equals(doctorId)))
+                    .toList();
+            return ResponseEntity.ok(filteredOrders);
+        }
         return ResponseEntity.ok(labService.getAllLabOrders());
     }
 
@@ -108,7 +144,8 @@ public class LabController {
     }
 
     @PostMapping("/orders")
-    public ResponseEntity<LabOrder> createLabOrder(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<LabOrder> createLabOrder(@RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         Long patientId = Long.valueOf(request.get("patientId").toString());
         Long doctorId = Long.valueOf(request.get("doctorId").toString());
         @SuppressWarnings("unchecked")
@@ -117,19 +154,24 @@ public class LabController {
                 .toList();
         String notes = request.get("notes") != null ? request.get("notes").toString() : null;
         String priority = request.get("priority") != null ? request.get("priority").toString() : "NORMAL";
-        
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(labService.createLabOrder(patientId, doctorId, testIds, notes, priority));
+
+        LabOrder created = labService.createLabOrder(patientId, doctorId, testIds, notes, priority);
+        auditHelper.logCreate("LabOrder", created.getId().toString(),
+                "Created lab order for patient " + patientId, httpRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/orders/{id}/status")
-    public ResponseEntity<LabOrder> updateLabOrderStatus(@PathVariable Long id, 
-                                                         @RequestParam LabOrderStatus status) {
-        return ResponseEntity.ok(labService.updateLabOrderStatus(id, status));
+    public ResponseEntity<LabOrder> updateLabOrderStatus(@PathVariable Long id, @RequestParam LabOrderStatus status,
+            HttpServletRequest request) {
+        LabOrder updated = labService.updateLabOrderStatus(id, status);
+        auditHelper.logUpdate("LabOrder", id.toString(), "Status changed to " + status, request);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/orders/{id}")
-    public ResponseEntity<Void> deleteLabOrder(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteLabOrder(@PathVariable Long id, HttpServletRequest request) {
+        auditHelper.logDelete("LabOrder", id.toString(), "Deleted lab order", request);
         labService.deleteLabOrder(id);
         return ResponseEntity.noContent().build();
     }
@@ -149,8 +191,11 @@ public class LabController {
     }
 
     @PutMapping("/results/{id}")
-    public ResponseEntity<LabResult> updateLabResult(@PathVariable Long id, @RequestBody LabResult result) {
-        return ResponseEntity.ok(labService.updateLabResult(id, result));
+    public ResponseEntity<LabResult> updateLabResult(@PathVariable Long id, @RequestBody LabResult result,
+            HttpServletRequest request) {
+        LabResult updated = labService.updateLabResult(id, result);
+        auditHelper.logUpdate("LabResult", id.toString(), "Updated lab result", request);
+        return ResponseEntity.ok(updated);
     }
 
     // ========== Statistics ==========

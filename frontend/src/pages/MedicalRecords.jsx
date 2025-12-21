@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { FiPlus, FiEdit2, FiTrash2, FiEye, FiX, FiFileText, FiCalendar, FiUser, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiEye, FiX, FiFileText, FiCalendar, FiUser, FiFilter, FiSearch } from 'react-icons/fi';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
 import SortDropdown from '../component/SortDropdown';
+import Pagination from '../component/Pagination';
 import api from '../api/api';
 import '../styles/Pages.css';
 import '../styles/FilterModal.css';
@@ -130,22 +131,22 @@ const MedicalRecords = () => {
     const doctorName = `${record.doctor?.firstName || ''} ${record.doctor?.lastName || ''}`.toLowerCase();
     const diagnosis = (record.diagnosis || '').toLowerCase();
     const term = searchTerm.toLowerCase();
-    
+
     const matchesSearch = patientName.includes(term) || doctorName.includes(term) || diagnosis.includes(term);
-    
+
     // Apply active filters
     const matchesPatient = !activeFilters.patientId || record.patient?.id?.toString() === activeFilters.patientId;
     const matchesDoctor = !activeFilters.doctorId || record.doctor?.id?.toString() === activeFilters.doctorId;
     const matchesStartDate = !activeFilters.startDate || new Date(record.recordDate) >= new Date(activeFilters.startDate);
     const matchesEndDate = !activeFilters.endDate || new Date(record.recordDate) <= new Date(activeFilters.endDate);
-    
+
     return matchesSearch && matchesPatient && matchesDoctor && matchesStartDate && matchesEndDate;
   });
 
   // Sort the filtered records
   const sortedRecords = [...filteredRecords].sort((a, b) => {
     if (!currentSort.sortBy) return 0;
-    
+
     let aValue, bValue;
     switch (currentSort.sortBy) {
       case 'date':
@@ -167,11 +168,23 @@ const MedicalRecords = () => {
       default:
         return 0;
     }
-    
+
     if (aValue < bValue) return currentSort.sortDirection === 'asc' ? -1 : 1;
     if (aValue > bValue) return currentSort.sortDirection === 'asc' ? 1 : -1;
     return 0;
   });
+
+  // Pagination calculation
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const paginatedRecords = sortedRecords.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters, currentSort]);
 
   const handleApplyFilters = (filters) => {
     setActiveFilters(filters);
@@ -232,16 +245,21 @@ const MedicalRecords = () => {
   return (
     <div className="dashboard-container">
       <Sidebar />
-      
-      <main className="main-content">
-        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Search records..." />
 
-        <div className="page-header">
-          <h1>Medical Records</h1>
-        </div>
+      <main className="main-content">
+        <Header pageTitle="Medical Records" />
 
         <div className="page-toolbar">
           <div className="search-filter">
+            <div className="search-box">
+              <FiSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search records..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
               <FiFilter /> Filter
               {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
@@ -286,19 +304,16 @@ const MedicalRecords = () => {
                 </tr>
               </thead>
               <tbody>
-                {sortedRecords.length === 0 ? (
+                {paginatedRecords.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="no-data">No medical records found</td>
                   </tr>
                 ) : (
-                  sortedRecords.map(record => (
+                  paginatedRecords.map(record => (
                     <tr key={record.id}>
                       <td>{formatDate(record.recordDate)}</td>
                       <td>
-                        <div className="user-cell">
-                          <FiUser className="user-icon" />
-                          {record.patient?.firstName} {record.patient?.lastName}
-                        </div>
+                        {record.patient?.firstName} {record.patient?.lastName}
                       </td>
                       <td>Dr. {record.doctor?.firstName} {record.doctor?.lastName}</td>
                       <td className="diagnosis-cell">{record.diagnosis || 'N/A'}</td>
@@ -325,7 +340,7 @@ const MedicalRecords = () => {
         {/* Add/Edit Modal */}
         {showModal && (
           <div className="modal-overlay">
-            <div className="modal-content edit-record-modal">
+            <div className="modal modal-large edit-record-modal">
               <div className="modal-header edit-record-header">
                 <div className="edit-record-title">
                   <div className="edit-record-icon">
@@ -342,7 +357,7 @@ const MedicalRecords = () => {
                   <FiX />
                 </button>
               </div>
-              
+
               <form onSubmit={handleSubmit} className="edit-record-form">
                 <div className="record-details-content">
                   {/* Info Cards - Same as View Modal */}
@@ -483,7 +498,7 @@ const MedicalRecords = () => {
                   </div>
                 </div>
 
-                <div className="modal-actions edit-record-actions">
+                <div className="modal-footer edit-record-actions">
                   <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>
                     <FiX /> Cancel
                   </button>
@@ -499,7 +514,7 @@ const MedicalRecords = () => {
         {/* View Modal */}
         {showViewModal && viewingRecord && (
           <div className="modal-overlay">
-            <div className="modal-content view-record-modal">
+            <div className="modal modal-large view-record-modal">
               <div className="modal-header view-record-header">
                 <div className="view-record-title">
                   <div className="view-record-icon">
@@ -514,7 +529,7 @@ const MedicalRecords = () => {
                   <FiX />
                 </button>
               </div>
-              
+
               <div className="record-details-content">
                 <div className="record-info-cards">
                   <div className="record-info-card">
@@ -589,7 +604,7 @@ const MedicalRecords = () => {
                 </div>
               </div>
 
-              <div className="modal-actions view-record-actions">
+              <div className="modal-footer view-record-actions">
                 <button className="btn-secondary" onClick={() => setShowViewModal(false)}>
                   <FiX /> Close
                 </button>

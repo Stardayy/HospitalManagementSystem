@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiHome, FiCheckCircle, FiXCircle, FiTool, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiHome, FiCheckCircle, FiXCircle, FiTool, FiFilter, FiSearch } from 'react-icons/fi';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
@@ -9,6 +9,7 @@ import api from '../api/api';
 import '../styles/Pages.css';
 import '../styles/FilterModal.css';
 import '../styles/SortDropdown.css';
+import Pagination from '../component/Pagination';
 
 const Rooms = () => {
   const [rooms, setRooms] = useState([]);
@@ -34,6 +35,10 @@ const Rooms = () => {
 
   const roomTypes = ['GENERAL', 'PRIVATE', 'ICU', 'EMERGENCY', 'OPERATION', 'RECOVERY'];
   const roomStatuses = ['AVAILABLE', 'OCCUPIED', 'MAINTENANCE', 'RESERVED'];
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9;
 
   useEffect(() => {
     fetchData();
@@ -81,8 +86,8 @@ const Rooms = () => {
         await api.put(`/rooms/${editingRoom.id}`, payload);
         toast.success('Room updated successfully');
       } else {
-        const url = formData.departmentId 
-          ? `/rooms?departmentId=${formData.departmentId}` 
+        const url = formData.departmentId
+          ? `/rooms?departmentId=${formData.departmentId}`
           : '/rooms';
         await api.post(url, payload);
         toast.success('Room created successfully');
@@ -151,11 +156,11 @@ const Rooms = () => {
   };
 
   const filteredRooms = rooms.filter(room => {
-    const matchesSearch = 
+    const matchesSearch =
       room.roomNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       room.roomType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       room.department?.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     // Apply active filters
     const matchesStatus = !activeFilters.status || room.status === activeFilters.status;
     const matchesType = !activeFilters.roomType || room.roomType === activeFilters.roomType;
@@ -167,7 +172,7 @@ const Rooms = () => {
   // Sort the filtered rooms
   const sortedRooms = [...filteredRooms].sort((a, b) => {
     if (!currentSort.sortBy) return 0;
-    
+
     let aValue, bValue;
     switch (currentSort.sortBy) {
       case 'roomNumber':
@@ -193,7 +198,7 @@ const Rooms = () => {
       default:
         return 0;
     }
-    
+
     if (aValue < bValue) return currentSort.sortDirection === 'asc' ? -1 : 1;
     if (aValue > bValue) return currentSort.sortDirection === 'asc' ? 1 : -1;
     return 0;
@@ -211,6 +216,16 @@ const Rooms = () => {
   const handleSort = (sort) => {
     setCurrentSort(sort);
   };
+
+  // Pagination calculation
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const paginatedRooms = sortedRooms.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters, currentSort]);
 
   const filterConfig = [
     {
@@ -281,13 +296,9 @@ const Rooms = () => {
   return (
     <div className="dashboard-container">
       <Sidebar />
-      
-      <main className="main-content">
-        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Search rooms..." />
 
-        <div className="page-header">
-          <h1>Room Management</h1>
-        </div>
+      <main className="main-content">
+        <Header pageTitle="Room Management" />
 
         {/* Room Stats */}
         <div className="stats-row">
@@ -323,6 +334,15 @@ const Rooms = () => {
 
         <div className="page-toolbar">
           <div className="search-filter">
+            <div className="search-box">
+              <FiSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search rooms..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
               <FiFilter /> Filter
               {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
@@ -355,10 +375,10 @@ const Rooms = () => {
           <div className="loading-spinner">Loading...</div>
         ) : (
           <div className="cards-grid">
-            {sortedRooms.length === 0 ? (
+            {paginatedRooms.length === 0 ? (
               <div className="no-data-card">No rooms found</div>
             ) : (
-              sortedRooms.map(room => (
+              paginatedRooms.map(room => (
                 <div key={room.id} className={`room-card ${room.status !== 'AVAILABLE' ? 'occupied' : ''}`}>
                   <div className="room-card-header">
                     <h3>Room {room.roomNumber}</h3>
@@ -405,130 +425,146 @@ const Rooms = () => {
                   </div>
                 </div>
               ))
-            )}
+            )
+            }
           </div>
-        )}
+        )
+        }
+
+        {/* Pagination */
+          !loading && sortedRooms.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(sortedRooms.length / itemsPerPage)}
+              onPageChange={setCurrentPage}
+              totalItems={sortedRooms.length}
+              itemsPerPage={itemsPerPage}
+            />
+          )
+        }
 
         {/* Add/Edit Modal */}
-        {showModal && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h2>{editingRoom ? 'Edit Room' : 'Add Room'}</h2>
-                <button className="btn-close" onClick={() => setShowModal(false)}>
-                  <FiX />
-                </button>
+        {
+          showModal && (
+            <div className="modal-overlay">
+              <div className="modal modal-large">
+                <div className="modal-header">
+                  <h2>{editingRoom ? 'Edit Room' : 'Add Room'}</h2>
+                  <button className="btn-close" onClick={() => setShowModal(false)}>
+                    <FiX />
+                  </button>
+                </div>
+                <form onSubmit={handleSubmit}>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>Room Number *</label>
+                      <input
+                        type="text"
+                        name="roomNumber"
+                        value={formData.roomNumber}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 101"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Room Type *</label>
+                      <select
+                        name="roomType"
+                        value={formData.roomType}
+                        onChange={handleInputChange}
+                        required
+                      >
+                        {roomTypes.map(type => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Department</label>
+                      <select
+                        name="departmentId"
+                        value={formData.departmentId}
+                        onChange={handleInputChange}
+                      >
+                        <option value="">Select Department</option>
+                        {departments.map(dept => (
+                          <option key={dept.id} value={dept.id}>{dept.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Floor Number</label>
+                      <input
+                        type="number"
+                        name="floorNumber"
+                        value={formData.floorNumber}
+                        onChange={handleInputChange}
+                        min="1"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Bed Count *</label>
+                      <input
+                        type="number"
+                        name="bedCount"
+                        value={formData.bedCount}
+                        onChange={handleInputChange}
+                        min="1"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Daily Rate ($) *</label>
+                      <input
+                        type="number"
+                        name="dailyRate"
+                        value={formData.dailyRate}
+                        onChange={handleInputChange}
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Status</label>
+                      <select
+                        name="status"
+                        value={formData.status}
+                        onChange={handleInputChange}
+                      >
+                        {roomStatuses.map(status => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group full-width">
+                      <label>Facilities</label>
+                      <textarea
+                        name="facilities"
+                        value={formData.facilities}
+                        onChange={handleInputChange}
+                        placeholder="Room facilities and amenities..."
+                        rows="3"
+                      />
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn-primary">
+                      {editingRoom ? 'Update Room' : 'Create Room'}
+                    </button>
+                  </div>
+                </form>
               </div>
-              <form onSubmit={handleSubmit}>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Room Number *</label>
-                    <input
-                      type="text"
-                      name="roomNumber"
-                      value={formData.roomNumber}
-                      onChange={handleInputChange}
-                      placeholder="e.g., 101"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Room Type *</label>
-                    <select
-                      name="roomType"
-                      value={formData.roomType}
-                      onChange={handleInputChange}
-                      required
-                    >
-                      {roomTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Department</label>
-                    <select
-                      name="departmentId"
-                      value={formData.departmentId}
-                      onChange={handleInputChange}
-                    >
-                      <option value="">Select Department</option>
-                      {departments.map(dept => (
-                        <option key={dept.id} value={dept.id}>{dept.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Floor Number</label>
-                    <input
-                      type="number"
-                      name="floorNumber"
-                      value={formData.floorNumber}
-                      onChange={handleInputChange}
-                      min="1"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Bed Count *</label>
-                    <input
-                      type="number"
-                      name="bedCount"
-                      value={formData.bedCount}
-                      onChange={handleInputChange}
-                      min="1"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Daily Rate ($) *</label>
-                    <input
-                      type="number"
-                      name="dailyRate"
-                      value={formData.dailyRate}
-                      onChange={handleInputChange}
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Status</label>
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleInputChange}
-                    >
-                      {roomStatuses.map(status => (
-                        <option key={status} value={status}>{status}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group full-width">
-                    <label>Facilities</label>
-                    <textarea
-                      name="facilities"
-                      value={formData.facilities}
-                      onChange={handleInputChange}
-                      placeholder="Room facilities and amenities..."
-                      rows="3"
-                    />
-                  </div>
-                </div>
-                <div className="modal-actions">
-                  <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn-primary">
-                    {editingRoom ? 'Update Room' : 'Create Room'}
-                  </button>
-                </div>
-              </form>
             </div>
-          </div>
-        )}
-      </main>
-    </div>
+          )
+        }
+      </main >
+    </div >
   );
 };
 

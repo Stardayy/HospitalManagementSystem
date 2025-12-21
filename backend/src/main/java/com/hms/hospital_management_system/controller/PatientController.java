@@ -21,16 +21,19 @@ import com.hms.hospital_management_system.entity.Patient;
 import com.hms.hospital_management_system.entity.User;
 import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.PatientService;
+import com.hms.hospital_management_system.service.AuditLogService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/patients")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
 public class PatientController {
 
     private final PatientService patientService;
+    private final AuditLogService auditLogService;
 
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -40,10 +43,19 @@ public class PatientController {
         return null;
     }
 
+    private void logAction(String action, String entityId, String details, HttpServletRequest request) {
+        User user = getCurrentUser();
+        String username = user != null ? user.getEmail() : "SYSTEM";
+        Long userId = user != null ? user.getId() : null;
+        String role = user != null ? user.getRole().name() : "UNKNOWN";
+        String ipAddress = request != null ? request.getRemoteAddr() : "UNKNOWN";
+
+        auditLogService.logAction(userId, username, role, action, "Patient", entityId, details, ipAddress);
+    }
+
     @GetMapping
     public ResponseEntity<List<Patient>> getAllPatients() {
         User currentUser = getCurrentUser();
-        // If user is a doctor, only return patients they have treated
         if (currentUser != null && currentUser.getRole() == User.Role.DOCTOR && currentUser.getDoctorId() != null) {
             return ResponseEntity.ok(patientService.getPatientsByDoctor(currentUser.getDoctorId()));
         }
@@ -57,7 +69,6 @@ public class PatientController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortOrder) {
         User currentUser = getCurrentUser();
-        // If user is a doctor, filter from their patients only
         if (currentUser != null && currentUser.getRole() == User.Role.DOCTOR && currentUser.getDoctorId() != null) {
             List<Patient> doctorPatients = patientService.getPatientsByDoctor(currentUser.getDoctorId());
             return ResponseEntity.ok(filterPatientsList(doctorPatients, gender, bloodType, sortBy, sortOrder));
@@ -65,20 +76,25 @@ public class PatientController {
         return ResponseEntity.ok(patientService.filterPatients(gender, bloodType, sortBy, sortOrder));
     }
 
-    private List<Patient> filterPatientsList(List<Patient> patients, String gender, String bloodType, String sortBy, String sortOrder) {
+    private List<Patient> filterPatientsList(List<Patient> patients, String gender, String bloodType, String sortBy,
+            String sortOrder) {
         java.util.Comparator<Patient> comparator = null;
-        
+
         List<Patient> filtered = patients.stream()
-            .filter(p -> gender == null || gender.isEmpty() || gender.equals(p.getGender()))
-            .filter(p -> bloodType == null || bloodType.isEmpty() || bloodType.equals(p.getBloodType()))
-            .toList();
+                .filter(p -> gender == null || gender.isEmpty() || gender.equals(p.getGender()))
+                .filter(p -> bloodType == null || bloodType.isEmpty() || bloodType.equals(p.getBloodType()))
+                .toList();
 
         if (sortBy != null && !sortBy.isEmpty()) {
             comparator = switch (sortBy) {
-                case "name" -> java.util.Comparator.comparing(Patient::getFirstName, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
-                case "dateOfBirth" -> java.util.Comparator.comparing(Patient::getDateOfBirth, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
-                case "gender" -> java.util.Comparator.comparing(Patient::getGender, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
-                case "bloodType" -> java.util.Comparator.comparing(Patient::getBloodType, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+                case "name" -> java.util.Comparator.comparing(Patient::getFirstName,
+                        java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+                case "dateOfBirth" -> java.util.Comparator.comparing(Patient::getDateOfBirth,
+                        java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+                case "gender" -> java.util.Comparator.comparing(Patient::getGender,
+                        java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+                case "bloodType" -> java.util.Comparator.comparing(Patient::getBloodType,
+                        java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
                 default -> null;
             };
             if (comparator != null) {
@@ -88,7 +104,7 @@ public class PatientController {
                 filtered = filtered.stream().sorted(comparator).toList();
             }
         }
-        
+
         return filtered;
     }
 
@@ -117,9 +133,14 @@ public class PatientController {
     }
 
     @PostMapping
-    public ResponseEntity<Patient> createPatient(@RequestBody Patient patient) {
+    public ResponseEntity<Patient> createPatient(@RequestBody Patient patient, HttpServletRequest request) {
         try {
             Patient createdPatient = patientService.createPatient(patient);
+
+            // Log the action
+            logAction("CREATE", createdPatient.getId().toString(),
+                    "Created patient: " + patient.getFirstName() + " " + patient.getLastName(), request);
+
             return ResponseEntity.status(HttpStatus.CREATED).body(createdPatient);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
@@ -127,9 +148,15 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Patient> updatePatient(@PathVariable Long id, @RequestBody Patient patient) {
+    public ResponseEntity<Patient> updatePatient(@PathVariable Long id, @RequestBody Patient patient,
+            HttpServletRequest request) {
         try {
             Patient updatedPatient = patientService.updatePatient(id, patient);
+
+            // Log the action
+            logAction("UPDATE", id.toString(),
+                    "Updated patient: " + patient.getFirstName() + " " + patient.getLastName(), request);
+
             return ResponseEntity.ok(updatedPatient);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -137,8 +164,11 @@ public class PatientController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePatient(@PathVariable Long id) {
+    public ResponseEntity<Void> deletePatient(@PathVariable Long id, HttpServletRequest request) {
         try {
+            // Log before deletion
+            logAction("DELETE", id.toString(), "Deleted patient", request);
+
             patientService.deletePatient(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {

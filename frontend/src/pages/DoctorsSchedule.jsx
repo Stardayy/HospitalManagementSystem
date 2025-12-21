@@ -54,7 +54,7 @@ const DoctorsSchedule = () => {
     const startOfWeek = new Date(currentDate);
     const day = startOfWeek.getDay();
     startOfWeek.setDate(startOfWeek.getDate() - day);
-    
+
     for (let i = 0; i < 7; i++) {
       const date = new Date(startOfWeek);
       date.setDate(date.getDate() + i);
@@ -68,14 +68,14 @@ const DoctorsSchedule = () => {
   };
 
   const getAppointmentsForDoctorAndDate = (doctorId, date) => {
-    return appointments.filter(apt => 
-      apt.doctor?.id === doctorId && 
+    return appointments.filter(apt =>
+      apt.doctor?.id === doctorId &&
       apt.appointmentDate === formatDate(date)
     );
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'COMPLETED': return '#10b981';
       case 'CONFIRMED': return '#3b82f6';
       case 'SCHEDULED': return '#6ee7b7';
@@ -91,8 +91,8 @@ const DoctorsSchedule = () => {
   };
 
   const weekDays = getWeekDays();
-  const filteredDoctors = selectedDoctor === 'ALL' 
-    ? doctors 
+  const filteredDoctors = selectedDoctor === 'ALL'
+    ? doctors
     : doctors.filter(d => d.id.toString() === selectedDoctor);
 
   const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
@@ -100,14 +100,13 @@ const DoctorsSchedule = () => {
   return (
     <div className="dashboard-container">
       <Sidebar />
-      
-      <main className="main-content">
-        <Header placeholder="Search schedule..." />
 
-        <div className="page-header">
-          <h1>{isDoctor() ? 'My Schedule' : isPatient ? 'My Appointments' : "Doctors' Schedule"}</h1>
-          {!isDoctor() && !isPatient && (
-            <div className="schedule-controls">
+      <main className="main-content">
+        <Header pageTitle={isDoctor() ? 'My Schedule' : isPatient ? 'My Appointments' : "Doctors' Schedule"} />
+
+        {!isDoctor() && !isPatient && (
+          <div className="page-toolbar">
+            <div className="search-filter">
               <CustomSelect
                 options={[
                   { value: 'ALL', label: 'All Doctors' },
@@ -118,15 +117,15 @@ const DoctorsSchedule = () => {
                 placeholder="Select Doctor"
               />
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="schedule-navigation">
           <button className="btn-icon" onClick={() => navigateWeek(-1)}>
             <FiChevronLeft />
           </button>
           <h2>
-            {weekDays[0].toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - 
+            {weekDays[0].toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} -
             {weekDays[6].toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </h2>
           <button className="btn-icon" onClick={() => navigateWeek(1)}>
@@ -147,8 +146,8 @@ const DoctorsSchedule = () => {
                   <FiClock />
                 </div>
                 {weekDays.map((day, index) => (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className={`day-header ${formatDate(day) === formatDate(new Date()) ? 'today' : ''}`}
                   >
                     <span className="day-name">{day.toLocaleDateString('en-US', { weekday: 'short' })}</span>
@@ -156,7 +155,7 @@ const DoctorsSchedule = () => {
                   </div>
                 ))}
               </div>
-              
+
               <div className="schedule-body">
                 {filteredDoctors.map(doctor => (
                   <div key={doctor.id} className="doctor-schedule-row">
@@ -169,13 +168,13 @@ const DoctorsSchedule = () => {
                     {weekDays.map((day, dayIndex) => {
                       const dayAppointments = getAppointmentsForDoctorAndDate(doctor.id, day);
                       return (
-                        <div 
-                          key={dayIndex} 
+                        <div
+                          key={dayIndex}
                           className={`schedule-cell ${formatDate(day) === formatDate(new Date()) ? 'today' : ''}`}
                         >
                           {dayAppointments.map(apt => (
-                            <div 
-                              key={apt.id} 
+                            <div
+                              key={apt.id}
                               className="appointment-block"
                               style={{ borderLeftColor: getStatusColor(apt.status) }}
                             >

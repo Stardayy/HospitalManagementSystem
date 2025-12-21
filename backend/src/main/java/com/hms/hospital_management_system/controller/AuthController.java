@@ -19,7 +19,9 @@ import com.hms.hospital_management_system.entity.User;
 import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.AuthService;
 import com.hms.hospital_management_system.service.UserService;
+import com.hms.hospital_management_system.service.AuditLogService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -30,15 +32,34 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserService userService;
+    private final AuditLogService auditLogService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authService.register(request));
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest) {
+        AuthResponse response = authService.register(request);
+
+        // Log registration
+        auditLogService.logAction(response.getUserId(), response.getEmail(), response.getRole(),
+                "REGISTER", "User", response.getUserId().toString(),
+                "New user registered: " + response.getFirstName() + " " + response.getLastName(),
+                httpRequest.getRemoteAddr());
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest) {
+        AuthResponse response = authService.login(request);
+
+        // Log login
+        auditLogService.logAction(response.getUserId(), response.getEmail(), response.getRole(),
+                "LOGIN", "User", response.getUserId().toString(),
+                "User logged in",
+                httpRequest.getRemoteAddr());
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/forgot-password")
@@ -56,7 +77,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<AuthResponse> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
+
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(401).build();
         }

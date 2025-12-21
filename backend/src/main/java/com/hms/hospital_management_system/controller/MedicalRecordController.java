@@ -4,6 +4,8 @@ import com.hms.hospital_management_system.entity.MedicalRecord;
 import com.hms.hospital_management_system.entity.User;
 import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.MedicalRecordService;
+import com.hms.hospital_management_system.service.AuditLogService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -18,10 +20,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/medical-records")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
 public class MedicalRecordController {
 
     private final MedicalRecordService medicalRecordService;
+    private final AuditLogService auditLogService;
 
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -31,14 +34,22 @@ public class MedicalRecordController {
         return null;
     }
 
+    private void logAction(String action, String entityId, String details, HttpServletRequest request) {
+        User user = getCurrentUser();
+        String username = user != null ? user.getEmail() : "SYSTEM";
+        Long userId = user != null ? user.getId() : null;
+        String role = user != null ? user.getRole().name() : "UNKNOWN";
+        String ipAddress = request != null ? request.getRemoteAddr() : "UNKNOWN";
+
+        auditLogService.logAction(userId, username, role, action, "MedicalRecord", entityId, details, ipAddress);
+    }
+
     @GetMapping
     public ResponseEntity<List<MedicalRecord>> getAllMedicalRecords() {
         User currentUser = getCurrentUser();
-        // If user is a doctor, only return their medical records
         if (currentUser != null && currentUser.getRole() == User.Role.DOCTOR && currentUser.getDoctorId() != null) {
             return ResponseEntity.ok(medicalRecordService.getMedicalRecordsByDoctor(currentUser.getDoctorId()));
         }
-        // If user is a patient, only return their medical records
         if (currentUser != null && currentUser.getRole() == User.Role.PATIENT && currentUser.getPatientId() != null) {
             return ResponseEntity.ok(medicalRecordService.getMedicalRecordsByPatient(currentUser.getPatientId()));
         }
@@ -67,7 +78,8 @@ public class MedicalRecordController {
             @PathVariable Long patientId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        return ResponseEntity.ok(medicalRecordService.getMedicalRecordsByPatientAndDateRange(patientId, startDate, endDate));
+        return ResponseEntity
+                .ok(medicalRecordService.getMedicalRecordsByPatientAndDateRange(patientId, startDate, endDate));
     }
 
     @GetMapping("/search")
@@ -79,9 +91,15 @@ public class MedicalRecordController {
     public ResponseEntity<MedicalRecord> createMedicalRecord(
             @RequestBody MedicalRecord medicalRecord,
             @RequestParam Long patientId,
-            @RequestParam Long doctorId) {
+            @RequestParam Long doctorId,
+            HttpServletRequest request) {
         try {
             MedicalRecord createdRecord = medicalRecordService.createMedicalRecord(medicalRecord, patientId, doctorId);
+
+            // Log the action
+            logAction("CREATE", createdRecord.getId().toString(),
+                    "Created medical record for patient " + patientId + ": " + medicalRecord.getDiagnosis(), request);
+
             return ResponseEntity.status(HttpStatus.CREATED).body(createdRecord);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
@@ -89,9 +107,17 @@ public class MedicalRecordController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MedicalRecord> updateMedicalRecord(@PathVariable Long id, @RequestBody MedicalRecord medicalRecord) {
+    public ResponseEntity<MedicalRecord> updateMedicalRecord(
+            @PathVariable Long id,
+            @RequestBody MedicalRecord medicalRecord,
+            HttpServletRequest request) {
         try {
             MedicalRecord updatedRecord = medicalRecordService.updateMedicalRecord(id, medicalRecord);
+
+            // Log the action
+            logAction("UPDATE", id.toString(),
+                    "Updated medical record: diagnosis=" + medicalRecord.getDiagnosis(), request);
+
             return ResponseEntity.ok(updatedRecord);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -99,8 +125,11 @@ public class MedicalRecordController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMedicalRecord(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteMedicalRecord(@PathVariable Long id, HttpServletRequest request) {
         try {
+            // Log before deletion
+            logAction("DELETE", id.toString(), "Deleted medical record", request);
+
             medicalRecordService.deleteMedicalRecord(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {

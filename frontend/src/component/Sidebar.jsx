@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FiGrid, FiCalendar, FiUsers, FiActivity, FiMessageSquare, FiDollarSign, FiPackage, FiClock, FiLayers, FiLogOut, FiFileText, FiHome, FiHeart, FiBell, FiFile, FiUserPlus, FiDroplet } from 'react-icons/fi';
+import { FiGrid, FiCalendar, FiUsers, FiActivity, FiMessageSquare, FiDollarSign, FiPackage, FiClock, FiLayers, FiLogOut, FiFileText, FiHome, FiHeart, FiBell, FiFile, FiUserPlus, FiDroplet, FiClipboard, FiShield } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/api';
 
 const Sidebar = () => {
-  const { user, logout, isAdmin, isDoctor, isPatient } = useAuth();
+  const { user, logout, isAdmin, isDoctor, isPatient, isPharmacist, isNurse } = useAuth();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -64,7 +64,7 @@ const Sidebar = () => {
             <FiCalendar /> Appointments
           </NavLink>
         </li>
-        {(isAdmin() || isDoctor()) && (
+        {(isAdmin() || isDoctor() || isNurse()) && (
           <li>
             <NavLink to="/patients" className={({ isActive }) => isActive ? 'active' : ''}>
               <FiUsers /> Patients
@@ -78,21 +78,21 @@ const Sidebar = () => {
             </NavLink>
           </li>
         )}
-        {(isAdmin() || isDoctor() || isPatient()) && (
+        {(isAdmin() || isDoctor() || isPatient() || isNurse()) && (
           <li>
             <NavLink to="/vitals" className={({ isActive }) => isActive ? 'active' : ''}>
               <FiHeart /> {isPatient() ? 'My Vitals' : 'Vital Signs'}
             </NavLink>
           </li>
         )}
-        {(isAdmin() || isDoctor()) && (
+        {(isAdmin() || isDoctor() || isNurse()) && (
           <li>
             <NavLink to="/lab" className={({ isActive }) => isActive ? 'active' : ''}>
               <FiDroplet /> Lab Management
             </NavLink>
           </li>
         )}
-        {(isAdmin() || isDoctor()) && (
+        {(isAdmin() || isNurse()) && (
           <li>
             <NavLink to="/admissions" className={({ isActive }) => isActive ? 'active' : ''}>
               <FiUserPlus /> Admissions
@@ -103,6 +103,13 @@ const Sidebar = () => {
           <li>
             <NavLink to="/documents" className={({ isActive }) => isActive ? 'active' : ''}>
               <FiFile /> {isPatient() ? 'My Documents' : 'Documents'}
+            </NavLink>
+          </li>
+        )}
+        {(isAdmin() || isDoctor() || isPatient() || isPharmacist()) && (
+          <li>
+            <NavLink to="/prescriptions" className={({ isActive }) => isActive ? 'active' : ''}>
+              <FiClipboard /> {isPatient() ? 'My Prescriptions' : 'Prescriptions'}
             </NavLink>
           </li>
         )}
@@ -127,6 +134,27 @@ const Sidebar = () => {
             </NavLink>
           </li>
         )}
+        {isAdmin() && (
+          <li>
+            <NavLink to="/staff" className={({ isActive }) => isActive ? 'active' : ''}>
+              <FiUsers /> Staff Management
+            </NavLink>
+          </li>
+        )}
+        {isAdmin() && (
+          <li>
+            <NavLink to="/insurance" className={({ isActive }) => isActive ? 'active' : ''}>
+              <FiDollarSign /> Insurance Claims
+            </NavLink>
+          </li>
+        )}
+        {(isAdmin() || isDoctor() || isNurse()) && (
+          <li>
+            <NavLink to="/emergency" className={({ isActive }) => isActive ? 'active' : ''}>
+              <FiHeart /> Emergency
+            </NavLink>
+          </li>
+        )}
         {(isAdmin() || isDoctor() || isPatient()) && (
           <li>
             <NavLink to="/schedule" className={({ isActive }) => isActive ? 'active' : ''}>
@@ -145,6 +173,13 @@ const Sidebar = () => {
           <li>
             <NavLink to="/inventory" className={({ isActive }) => isActive ? 'active' : ''}>
               <FiPackage /> Inventory
+            </NavLink>
+          </li>
+        )}
+        {isAdmin() && (
+          <li>
+            <NavLink to="/audit-logs" className={({ isActive }) => isActive ? 'active' : ''}>
+              <FiShield /> Audit Logs
             </NavLink>
           </li>
         )}

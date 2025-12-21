@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEdit2, FiTrash2, FiX, FiActivity, FiHeart, FiThermometer, FiDroplet } from 'react-icons/fi';
 import api from '../api/api';
+import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import { useAuth } from '../context/AuthContext';
@@ -147,7 +148,7 @@ const VitalSigns = () => {
 
   const getVitalStatus = (type, value) => {
     if (!value) return '';
-    switch(type) {
+    switch (type) {
       case 'temperature':
         if (value < 36) return 'low';
         if (value > 37.5) return 'high';
@@ -170,12 +171,24 @@ const VitalSigns = () => {
 
   const filteredVitals = vitals;
 
+  // Pagination calculation
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const paginatedVitals = filteredVitals.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filters change (though currently no filters on filteredVitals besides selectedPatient which triggers fetch)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedPatient]);
+
   if (loading) {
     return (
       <div className="dashboard">
         <Sidebar />
         <div className="main-content">
-          <Header title="Vital Signs" />
+          <Header pageTitle="Vital Signs" />
           <div className="loading">Loading...</div>
         </div>
       </div>
@@ -186,7 +199,7 @@ const VitalSigns = () => {
     <div className="dashboard">
       <Sidebar />
       <div className="main-content">
-        <Header title="Vital Signs" />
+        <Header pageTitle="Vital Signs" />
 
         {/* Stats Cards */}
         <div className="stats-row">
@@ -195,8 +208,8 @@ const VitalSigns = () => {
             <div className="stat-info">
               <span className="stat-value">
                 {filteredVitals.length > 0 && filteredVitals.filter(v => v.temperature).length > 0
-                  ? (filteredVitals.reduce((sum, v) => sum + (v.temperature || 0), 0) / 
-                      filteredVitals.filter(v => v.temperature).length).toFixed(1)
+                  ? (filteredVitals.reduce((sum, v) => sum + (v.temperature || 0), 0) /
+                    filteredVitals.filter(v => v.temperature).length).toFixed(1)
                   : '0'}°C
               </span>
               <span className="stat-label">Avg Temperature</span>
@@ -207,8 +220,8 @@ const VitalSigns = () => {
             <div className="stat-info">
               <span className="stat-value">
                 {filteredVitals.length > 0 && filteredVitals.filter(v => v.heartRate).length > 0
-                  ? Math.round(filteredVitals.reduce((sum, v) => sum + (v.heartRate || 0), 0) / 
-                      filteredVitals.filter(v => v.heartRate).length)
+                  ? Math.round(filteredVitals.reduce((sum, v) => sum + (v.heartRate || 0), 0) /
+                    filteredVitals.filter(v => v.heartRate).length)
                   : '0'} bpm
               </span>
               <span className="stat-label">Avg Heart Rate</span>
@@ -219,8 +232,8 @@ const VitalSigns = () => {
             <div className="stat-info">
               <span className="stat-value">
                 {filteredVitals.length > 0 && filteredVitals.filter(v => v.oxygenSaturation).length > 0
-                  ? (filteredVitals.reduce((sum, v) => sum + (v.oxygenSaturation || 0), 0) / 
-                      filteredVitals.filter(v => v.oxygenSaturation).length).toFixed(1)
+                  ? (filteredVitals.reduce((sum, v) => sum + (v.oxygenSaturation || 0), 0) /
+                    filteredVitals.filter(v => v.oxygenSaturation).length).toFixed(1)
                   : '0'}%
               </span>
               <span className="stat-label">Avg SpO2</span>
@@ -261,7 +274,7 @@ const VitalSigns = () => {
         </div>
 
         {/* Vitals Table */}
-        <div className="page-content">
+        <div className="table-container">
           <table className="data-table">
             <thead>
               <tr>
@@ -277,7 +290,7 @@ const VitalSigns = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredVitals.map(vital => (
+              {paginatedVitals.map(vital => (
                 <tr key={vital.id}>
                   <td>{vital.recordedAt ? new Date(vital.recordedAt).toLocaleString() : '-'}</td>
                   {!isPatient() && <td>{vital.patient?.firstName} {vital.patient?.lastName}</td>}
@@ -285,8 +298,8 @@ const VitalSigns = () => {
                     {vital.temperature || '-'}
                   </td>
                   <td className={`vital-value-cell ${getVitalStatus('bloodPressureSystolic', vital.bloodPressureSystolic)}`}>
-                    {vital.bloodPressureSystolic && vital.bloodPressureDiastolic 
-                      ? `${vital.bloodPressureSystolic}/${vital.bloodPressureDiastolic}` 
+                    {vital.bloodPressureSystolic && vital.bloodPressureDiastolic
+                      ? `${vital.bloodPressureSystolic}/${vital.bloodPressureDiastolic}`
                       : '-'}
                   </td>
                   <td className={`vital-value-cell ${getVitalStatus('heartRate', vital.heartRate)}`}>
@@ -315,6 +328,16 @@ const VitalSigns = () => {
               ))}
             </tbody>
           </table>
+          {/* Pagination */}
+          {!loading && filteredVitals.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredVitals.length / itemsPerPage)}
+              onPageChange={setCurrentPage}
+              totalItems={filteredVitals.length}
+              itemsPerPage={itemsPerPage}
+            />
+          )}
           {filteredVitals.length === 0 && (
             <div className="empty-state">No vital signs recorded</div>
           )}
@@ -323,10 +346,10 @@ const VitalSigns = () => {
         {/* Add/Edit Vitals Modal */}
         {showModal && (
           <div className="modal-overlay" onClick={closeModal}>
-            <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
+            <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>{editingVital ? 'Edit Vital Signs' : 'Record Vital Signs'}</h2>
-                <button className="close-btn" onClick={closeModal}><FiX /></button>
+                <button className="btn-close" onClick={closeModal}><FiX /></button>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="form-grid">
@@ -335,7 +358,7 @@ const VitalSigns = () => {
                       <label>Patient *</label>
                       <select
                         value={formData.patientId}
-                        onChange={(e) => setFormData({...formData, patientId: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
                         required
                       >
                         <option value="">Select Patient</option>
@@ -347,18 +370,18 @@ const VitalSigns = () => {
                       </select>
                     </div>
                   )}
-                  
+
                   <div className="form-section">
                     <h4>Core Vitals</h4>
                   </div>
-                  
+
                   <div className="form-group">
                     <label>Temperature (°C)</label>
                     <input
                       type="number"
                       step="0.1"
                       value={formData.temperature}
-                      onChange={(e) => setFormData({...formData, temperature: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
                       placeholder="36.5"
                     />
                   </div>
@@ -367,7 +390,7 @@ const VitalSigns = () => {
                     <input
                       type="number"
                       value={formData.bloodPressureSystolic}
-                      onChange={(e) => setFormData({...formData, bloodPressureSystolic: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, bloodPressureSystolic: e.target.value })}
                       placeholder="120"
                     />
                   </div>
@@ -376,7 +399,7 @@ const VitalSigns = () => {
                     <input
                       type="number"
                       value={formData.bloodPressureDiastolic}
-                      onChange={(e) => setFormData({...formData, bloodPressureDiastolic: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, bloodPressureDiastolic: e.target.value })}
                       placeholder="80"
                     />
                   </div>
@@ -385,7 +408,7 @@ const VitalSigns = () => {
                     <input
                       type="number"
                       value={formData.heartRate}
-                      onChange={(e) => setFormData({...formData, heartRate: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, heartRate: e.target.value })}
                       placeholder="72"
                     />
                   </div>
@@ -394,7 +417,7 @@ const VitalSigns = () => {
                     <input
                       type="number"
                       value={formData.respiratoryRate}
-                      onChange={(e) => setFormData({...formData, respiratoryRate: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, respiratoryRate: e.target.value })}
                       placeholder="16"
                     />
                   </div>
@@ -404,7 +427,7 @@ const VitalSigns = () => {
                       type="number"
                       step="0.1"
                       value={formData.oxygenSaturation}
-                      onChange={(e) => setFormData({...formData, oxygenSaturation: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, oxygenSaturation: e.target.value })}
                       placeholder="98"
                     />
                   </div>
@@ -419,7 +442,7 @@ const VitalSigns = () => {
                       type="number"
                       step="0.1"
                       value={formData.weight}
-                      onChange={(e) => setFormData({...formData, weight: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
                       placeholder="70"
                     />
                   </div>
@@ -429,7 +452,7 @@ const VitalSigns = () => {
                       type="number"
                       step="0.1"
                       value={formData.height}
-                      onChange={(e) => setFormData({...formData, height: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, height: e.target.value })}
                       placeholder="175"
                     />
                   </div>
@@ -439,7 +462,7 @@ const VitalSigns = () => {
                       type="number"
                       step="0.1"
                       value={formData.bloodGlucose}
-                      onChange={(e) => setFormData({...formData, bloodGlucose: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, bloodGlucose: e.target.value })}
                       placeholder="100"
                     />
                   </div>
@@ -450,7 +473,7 @@ const VitalSigns = () => {
                       min="0"
                       max="10"
                       value={formData.painLevel}
-                      onChange={(e) => setFormData({...formData, painLevel: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, painLevel: e.target.value })}
                       placeholder="0"
                     />
                   </div>
@@ -458,14 +481,14 @@ const VitalSigns = () => {
                     <label>Notes</label>
                     <textarea
                       value={formData.notes}
-                      onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       rows={2}
                     />
                   </div>
                 </div>
-                <div className="form-actions">
-                  <button type="button" className="cancel-btn" onClick={closeModal}>Cancel</button>
-                  <button type="submit" className="submit-btn">
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={closeModal}>Cancel</button>
+                  <button type="submit" className="btn-primary">
                     {editingVital ? 'Update' : 'Record Vitals'}
                   </button>
                 </div>

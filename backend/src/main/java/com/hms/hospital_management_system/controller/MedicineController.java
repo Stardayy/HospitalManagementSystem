@@ -2,6 +2,8 @@ package com.hms.hospital_management_system.controller;
 
 import com.hms.hospital_management_system.entity.Medicine;
 import com.hms.hospital_management_system.service.MedicineService;
+import com.hms.hospital_management_system.util.AuditHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,10 +14,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/medicines")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
 public class MedicineController {
 
     private final MedicineService medicineService;
+    private final AuditHelper auditHelper;
 
     @GetMapping
     public ResponseEntity<List<Medicine>> getAllMedicines() {
@@ -30,7 +33,8 @@ public class MedicineController {
             @RequestParam(required = false) Boolean expiringSoon,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortOrder) {
-        return ResponseEntity.ok(medicineService.filterMedicines(dosageForm, lowStock, expired, expiringSoon, sortBy, sortOrder));
+        return ResponseEntity
+                .ok(medicineService.filterMedicines(dosageForm, lowStock, expired, expiringSoon, sortBy, sortOrder));
     }
 
     @GetMapping("/{id}")
@@ -73,9 +77,11 @@ public class MedicineController {
     }
 
     @PostMapping
-    public ResponseEntity<Medicine> createMedicine(@RequestBody Medicine medicine) {
+    public ResponseEntity<Medicine> createMedicine(@RequestBody Medicine medicine, HttpServletRequest request) {
         try {
             Medicine createdMedicine = medicineService.createMedicine(medicine);
+            auditHelper.logCreate("Medicine", createdMedicine.getId().toString(),
+                    "Created medicine: " + medicine.getName(), request);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdMedicine);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
@@ -83,9 +89,11 @@ public class MedicineController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Medicine> updateMedicine(@PathVariable Long id, @RequestBody Medicine medicine) {
+    public ResponseEntity<Medicine> updateMedicine(@PathVariable Long id, @RequestBody Medicine medicine,
+            HttpServletRequest request) {
         try {
             Medicine updatedMedicine = medicineService.updateMedicine(id, medicine);
+            auditHelper.logUpdate("Medicine", id.toString(), "Updated medicine: " + medicine.getName(), request);
             return ResponseEntity.ok(updatedMedicine);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -93,9 +101,11 @@ public class MedicineController {
     }
 
     @PatchMapping("/{id}/stock")
-    public ResponseEntity<Medicine> updateStock(@PathVariable Long id, @RequestParam Integer quantity) {
+    public ResponseEntity<Medicine> updateStock(@PathVariable Long id, @RequestParam Integer quantity,
+            HttpServletRequest request) {
         try {
             Medicine updatedMedicine = medicineService.updateStock(id, quantity);
+            auditHelper.logUpdate("Medicine", id.toString(), "Stock updated to: " + quantity, request);
             return ResponseEntity.ok(updatedMedicine);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -103,8 +113,9 @@ public class MedicineController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMedicine(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteMedicine(@PathVariable Long id, HttpServletRequest request) {
         try {
+            auditHelper.logDelete("Medicine", id.toString(), "Deleted medicine", request);
             medicineService.deleteMedicine(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {

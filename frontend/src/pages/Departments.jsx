@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiMapPin, FiPhone, FiUsers, FiGrid } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiMapPin, FiPhone, FiUsers, FiGrid, FiSearch } from 'react-icons/fi';
 import api from '../api/api';
+import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import CustomSelect from '../component/CustomSelect';
@@ -91,25 +92,33 @@ const Departments = () => {
   const locations = [...new Set(departments.map(d => d.location).filter(Boolean))];
 
   const filteredDepartments = departments.filter(dept => {
-    const matchesSearch = 
+    const matchesSearch =
       dept.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       dept.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLocation = filterLocation === 'ALL' || dept.location === filterLocation;
     return matchesSearch && matchesLocation;
   });
 
+  // Pagination calculation
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const paginatedDepartments = filteredDepartments.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterLocation]);
+
   const departmentColors = ['#6ee7b7', '#93c5fd', '#fca5a5', '#fcd34d', '#c4b5fd', '#f9a8d4'];
 
   return (
     <div className="dashboard-container">
       <Sidebar />
-      
-      <main className="main-content">
-        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Search departments..." />
 
-        <div className="page-header">
-          <h1>Departments</h1>
-        </div>
+      <main className="main-content">
+        <Header pageTitle="Departments" />
 
         <div className="stats-row">
           <div className="stat-card">
@@ -136,6 +145,15 @@ const Departments = () => {
 
         <div className="page-toolbar">
           <div className="search-filter">
+            <div className="search-box">
+              <FiSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search departments..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <CustomSelect
               options={[
                 { value: 'ALL', label: 'All Locations' },
@@ -168,7 +186,7 @@ const Departments = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredDepartments.map((dept, index) => (
+                {paginatedDepartments.map((dept, index) => (
                   <tr key={dept.id}>
                     <td>{dept.id}</td>
                     <td>{dept.name}</td>
@@ -192,11 +210,22 @@ const Departments = () => {
                 ))}
               </tbody>
             </table>
-            {filteredDepartments.length === 0 && (
-              <div className="no-data">No departments found</div>
+            {paginatedDepartments.length === 0 && (
+              <div className="no-data">No departments found matching your search.</div>
             )}
           </div>
         )}
+
+        {/* Pagination */
+          !loading && filteredDepartments.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredDepartments.length / itemsPerPage)}
+              onPageChange={setCurrentPage}
+              totalItems={filteredDepartments.length}
+              itemsPerPage={itemsPerPage}
+            />
+          )}
 
         {showModal && (
           <div className="modal-overlay" onClick={closeModal}>
@@ -212,7 +241,7 @@ const Departments = () => {
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
                       placeholder="e.g., Cardiology, Emergency"
                     />
@@ -221,7 +250,7 @@ const Departments = () => {
                     <label>Description</label>
                     <textarea
                       value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows="3"
                       placeholder="Department description..."
                     />
@@ -231,7 +260,7 @@ const Departments = () => {
                     <input
                       type="text"
                       value={formData.location}
-                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                       placeholder="e.g., Building A, Floor 2"
                     />
                   </div>
@@ -240,7 +269,7 @@ const Departments = () => {
                     <input
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       placeholder="Department phone"
                     />
                   </div>

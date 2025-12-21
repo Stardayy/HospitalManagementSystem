@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiAlertTriangle, FiPackage, FiCalendar, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiAlertTriangle, FiPackage, FiCalendar, FiFilter, FiSearch } from 'react-icons/fi';
 import api from '../api/api';
+import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
@@ -162,7 +163,7 @@ const Inventory = () => {
       if (filters.expiringSoon) params.append('expiringSoon', 'true');
       if (sort.sortBy) params.append('sortBy', sort.sortBy);
       if (sort.sortDirection) params.append('sortDirection', sort.sortDirection);
-      
+
       const data = await api.get(`/medicines/filter?${params.toString()}`);
       setMedicines(data);
       setActiveFilters(filters);
@@ -247,12 +248,24 @@ const Inventory = () => {
   const activeFilterCount = Object.values(activeFilters).filter(v => v !== '' && v !== false && v !== undefined).length;
 
   const filteredMedicines = medicines.filter(medicine => {
-    const matchesSearch = 
+    const matchesSearch =
       medicine.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       medicine.genericName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       medicine.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
+
+  // Pagination calculation
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const paginatedMedicines = filteredMedicines.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters, currentSort]);
 
   const lowStockCount = medicines.filter(isLowStock).length;
   const expiringCount = medicines.filter(isExpiringSoon).length;
@@ -261,13 +274,9 @@ const Inventory = () => {
   return (
     <div className="dashboard-container">
       <Sidebar />
-      
-      <main className="main-content">
-        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Search medicines..." />
 
-        <div className="page-header">
-          <h1>Inventory</h1>
-        </div>
+      <main className="main-content">
+        <Header pageTitle="Inventory" />
 
         <div className="stats-row">
           <div className="stat-card">
@@ -310,6 +319,15 @@ const Inventory = () => {
 
         <div className="page-toolbar">
           <div className="search-filter">
+            <div className="search-box">
+              <FiSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search medicines..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
               <FiFilter /> Filter
               {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
@@ -361,7 +379,7 @@ const Inventory = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredMedicines.map((medicine) => (
+                {paginatedMedicines.map((medicine) => (
                   <tr key={medicine.id} className={isExpired(medicine) ? 'row-expired' : ''}>
                     <td>{medicine.id}</td>
                     <td>{medicine.name}</td>
@@ -412,11 +430,22 @@ const Inventory = () => {
                 ))}
               </tbody>
             </table>
-            {filteredMedicines.length === 0 && (
-              <div className="no-data">No medicines found</div>
+            {paginatedMedicines.length === 0 && (
+              <div className="no-data">No medicines found matching your search.</div>
             )}
           </div>
         )}
+
+        {/* Pagination */
+          !loading && filteredMedicines.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredMedicines.length / itemsPerPage)}
+              onPageChange={setCurrentPage}
+              totalItems={filteredMedicines.length}
+              itemsPerPage={itemsPerPage}
+            />
+          )}
 
         {showModal && (
           <div className="modal-overlay" onClick={closeModal}>
@@ -432,7 +461,7 @@ const Inventory = () => {
                     <input
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
                     />
                   </div>
@@ -441,7 +470,7 @@ const Inventory = () => {
                     <input
                       type="text"
                       value={formData.genericName}
-                      onChange={(e) => setFormData({...formData, genericName: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, genericName: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
@@ -449,14 +478,14 @@ const Inventory = () => {
                     <input
                       type="text"
                       value={formData.manufacturer}
-                      onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
                     <label>Dosage Form</label>
                     <select
                       value={formData.dosageForm}
-                      onChange={(e) => setFormData({...formData, dosageForm: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, dosageForm: e.target.value })}
                     >
                       <option value="">Select Form</option>
                       <option value="Tablet">Tablet</option>
@@ -473,7 +502,7 @@ const Inventory = () => {
                     <input
                       type="text"
                       value={formData.strength}
-                      onChange={(e) => setFormData({...formData, strength: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, strength: e.target.value })}
                       placeholder="e.g., 500mg, 10ml"
                     />
                   </div>
@@ -482,7 +511,7 @@ const Inventory = () => {
                     <input
                       type="number"
                       value={formData.price}
-                      onChange={(e) => setFormData({...formData, price: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       min="0"
                       step="0.01"
                       required
@@ -493,7 +522,7 @@ const Inventory = () => {
                     <input
                       type="number"
                       value={formData.stockQuantity}
-                      onChange={(e) => setFormData({...formData, stockQuantity: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, stockQuantity: e.target.value })}
                       min="0"
                       required
                     />
@@ -503,7 +532,7 @@ const Inventory = () => {
                     <input
                       type="number"
                       value={formData.reorderLevel}
-                      onChange={(e) => setFormData({...formData, reorderLevel: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, reorderLevel: e.target.value })}
                       min="0"
                     />
                   </div>
@@ -512,14 +541,14 @@ const Inventory = () => {
                     <input
                       type="date"
                       value={formData.expiryDate}
-                      onChange={(e) => setFormData({...formData, expiryDate: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
                     />
                   </div>
                   <div className="form-group full-width">
                     <label>Description</label>
                     <textarea
                       value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows="2"
                     />
                   </div>

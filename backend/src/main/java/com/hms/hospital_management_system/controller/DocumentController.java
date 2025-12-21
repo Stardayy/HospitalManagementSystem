@@ -22,18 +22,25 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.hms.hospital_management_system.entity.Document;
 import com.hms.hospital_management_system.entity.Document.DocumentType;
+import com.hms.hospital_management_system.entity.Patient;
+import com.hms.hospital_management_system.entity.User;
 import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.DocumentService;
+import com.hms.hospital_management_system.service.PatientService;
+import com.hms.hospital_management_system.util.AuditHelper;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/documents")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final PatientService patientService;
+    private final AuditHelper auditHelper;
 
     private Long getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -43,8 +50,27 @@ public class DocumentController {
         return null;
     }
 
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails) {
+            return ((CustomUserDetails) auth.getPrincipal()).getUser();
+        }
+        return null;
+    }
+
     @GetMapping
     public ResponseEntity<List<Document>> getAllDocuments() {
+        User currentUser = getCurrentUser();
+        // If user is a doctor, only return documents for their patients
+        if (currentUser != null && currentUser.getRole() == User.Role.DOCTOR && currentUser.getDoctorId() != null) {
+            List<Patient> doctorPatients = patientService.getPatientsByDoctor(currentUser.getDoctorId());
+            List<Long> patientIds = doctorPatients.stream().map(Patient::getId).toList();
+            List<Document> allDocuments = documentService.getAllDocuments();
+            List<Document> filteredDocuments = allDocuments.stream()
+                    .filter(d -> d.getPatient() != null && patientIds.contains(d.getPatient().getId()))
+                    .toList();
+            return ResponseEntity.ok(filteredDocuments);
+        }
         return ResponseEntity.ok(documentService.getAllDocuments());
     }
 
@@ -67,7 +93,7 @@ public class DocumentController {
 
     @GetMapping("/patient/{patientId}/type/{documentType}")
     public ResponseEntity<List<Document>> getDocumentsByPatientAndType(
-            @PathVariable Long patientId, 
+            @PathVariable Long patientId,
             @PathVariable DocumentType documentType) {
         return ResponseEntity.ok(documentService.getDocumentsByPatientAndType(patientId, documentType));
     }
@@ -78,11 +104,14 @@ public class DocumentController {
             @RequestParam Long patientId,
             @RequestParam(required = false) DocumentType documentType,
             @RequestParam(required = false) String description,
-            @RequestParam(required = false) Boolean isConfidential) {
+            @RequestParam(required = false) Boolean isConfidential,
+            HttpServletRequest request) {
         try {
             Long uploadedBy = getCurrentUserId();
-            Document document = documentService.uploadDocument(file, patientId, documentType, 
+            Document document = documentService.uploadDocument(file, patientId, documentType,
                     description, uploadedBy, isConfidential);
+            auditHelper.logCreate("Document", document.getId().toString(),
+                    "Uploaded document: " + file.getOriginalFilename() + " for patient " + patientId, request);
             return ResponseEntity.status(HttpStatus.CREATED).body(document);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -94,14 +123,14 @@ public class DocumentController {
         try {
             Document document = documentService.getDocumentById(id)
                     .orElseThrow(() -> new RuntimeException("Document not found"));
-            
+
             byte[] fileContent = documentService.downloadDocument(id);
-            
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.parseMediaType(document.getFileType()));
             headers.setContentDispositionFormData("attachment", document.getOriginalFileName());
             headers.setContentLength(fileContent.length);
-            
+
             return new ResponseEntity<>(fileContent, headers, HttpStatus.OK);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -113,13 +142,17 @@ public class DocumentController {
             @PathVariable Long id,
             @RequestParam(required = false) DocumentType documentType,
             @RequestParam(required = false) String description,
-            @RequestParam(required = false) Boolean isConfidential) {
-        return ResponseEntity.ok(documentService.updateDocument(id, documentType, description, isConfidential));
+            @RequestParam(required = false) Boolean isConfidential,
+            HttpServletRequest request) {
+        Document updated = documentService.updateDocument(id, documentType, description, isConfidential);
+        auditHelper.logUpdate("Document", id.toString(), "Updated document metadata", request);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDocument(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteDocument(@PathVariable Long id, HttpServletRequest request) {
         try {
+            auditHelper.logDelete("Document", id.toString(), "Deleted document", request);
             documentService.deleteDocument(id);
             return ResponseEntity.noContent().build();
         } catch (IOException e) {

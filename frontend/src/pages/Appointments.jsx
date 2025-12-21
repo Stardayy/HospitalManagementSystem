@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiClock, FiCalendar, FiCheckCircle, FiXCircle, FiFilter } from 'react-icons/fi';
+import { toast } from 'react-toastify';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiClock, FiCalendar, FiCheckCircle, FiXCircle, FiFilter, FiSearch } from 'react-icons/fi';
 import api from '../api/api';
+import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
@@ -76,6 +78,7 @@ const Appointments = () => {
           notes: formData.notes,
           status: formData.status
         });
+        toast.success('Appointment updated successfully!');
       } else {
         await api.post(`/appointments?patientId=${formData.patientId}&doctorId=${formData.doctorId}`, {
           appointmentDate: formData.appointmentDate,
@@ -84,11 +87,13 @@ const Appointments = () => {
           notes: formData.notes,
           status: formData.status
         });
+        toast.success('Appointment created successfully!');
       }
       fetchAppointments();
       closeModal();
     } catch (error) {
       console.error('Error saving appointment:', error);
+      toast.error(error.message || 'Failed to save appointment. Please check for conflicts.');
     }
   };
 
@@ -145,7 +150,7 @@ const Appointments = () => {
   };
 
   const getStatusClass = (status) => {
-    switch(status) {
+    switch (status) {
       case 'COMPLETED': return 'status-completed';
       case 'CONFIRMED': return 'status-confirmed';
       case 'SCHEDULED': return 'status-scheduled';
@@ -165,7 +170,7 @@ const Appointments = () => {
       if (filters.endDate) params.append('endDate', filters.endDate);
       if (sort.sortBy) params.append('sortBy', sort.sortBy);
       if (sort.sortDirection) params.append('sortDirection', sort.sortDirection);
-      
+
       const data = await api.get(`/appointments/filter?${params.toString()}`);
       setAppointments(data);
       setActiveFilters(filters);
@@ -248,7 +253,7 @@ const Appointments = () => {
   const activeFilterCount = Object.values(activeFilters).filter(v => v !== '' && v !== false && v !== undefined).length;
 
   const filteredAppointments = appointments.filter(apt => {
-    const matchesSearch = 
+    const matchesSearch =
       apt.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       apt.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       apt.doctor?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -256,16 +261,24 @@ const Appointments = () => {
     return matchesSearch;
   });
 
+  // Pagination calculation
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const paginatedAppointments = filteredAppointments.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters, currentSort]);
+
   return (
     <div className="dashboard-container">
       <Sidebar />
-      
-      <main className="main-content">
-        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Search appointments..." />
 
-        <div className="page-header">
-          <h1>Appointments</h1>
-        </div>
+      <main className="main-content">
+        <Header pageTitle="Appointments" />
 
         <div className="stats-row">
           <div className="stat-card">
@@ -317,6 +330,15 @@ const Appointments = () => {
 
         <div className="page-toolbar">
           <div className="search-filter">
+            <div className="search-box">
+              <FiSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search appointments..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
               <FiFilter /> Filter
               {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
@@ -365,7 +387,7 @@ const Appointments = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredAppointments.map((apt) => (
+                {paginatedAppointments.map((apt) => (
                   <tr key={apt.id}>
                     <td>{apt.id}</td>
                     <td>{apt.patient?.firstName} {apt.patient?.lastName}</td>
@@ -397,97 +419,110 @@ const Appointments = () => {
                 ))}
               </tbody>
             </table>
-            {filteredAppointments.length === 0 && (
-              <div className="no-data">No appointments found</div>
+            {paginatedAppointments.length === 0 && (
+              <div className="no-data">No appointments found matching your search.</div>
             )}
           </div>
         )}
 
+        {/* Pagination */}
+        {!loading && filteredAppointments.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredAppointments.length / itemsPerPage)}
+            onPageChange={setCurrentPage}
+            totalItems={filteredAppointments.length}
+            itemsPerPage={itemsPerPage}
+          />
+        )}
+
         {showModal && (
           <div className="modal-overlay" onClick={closeModal}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>{editingAppointment ? 'Edit Appointment' : 'Add Appointment'}</h2>
                 <button className="btn-close" onClick={closeModal}><FiX /></button>
               </div>
               <form onSubmit={handleSubmit}>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Patient</label>
-                    <select
-                      value={formData.patientId}
-                      onChange={(e) => setFormData({...formData, patientId: e.target.value})}
-                      required
-                      disabled={editingAppointment}
-                    >
-                      <option value="">Select Patient</option>
-                      {patients.map(p => (
-                        <option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Doctor</label>
-                    <select
-                      value={formData.doctorId}
-                      onChange={(e) => setFormData({...formData, doctorId: e.target.value})}
-                      required
-                      disabled={editingAppointment}
-                    >
-                      <option value="">Select Doctor</option>
-                      {doctors.map(d => (
-                        <option key={d.id} value={d.id}>Dr. {d.firstName} {d.lastName} - {d.specialization}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Date</label>
-                    <input
-                      type="date"
-                      value={formData.appointmentDate}
-                      onChange={(e) => setFormData({...formData, appointmentDate: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Time</label>
-                    <input
-                      type="time"
-                      value={formData.appointmentTime}
-                      onChange={(e) => setFormData({...formData, appointmentTime: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Status</label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({...formData, status: e.target.value})}
-                    >
-                      <option value="SCHEDULED">Scheduled</option>
-                      <option value="CONFIRMED">Confirmed</option>
-                      <option value="COMPLETED">Completed</option>
-                      <option value="CANCELLED">Cancelled</option>
-                      <option value="NO_SHOW">No Show</option>
-                    </select>
-                  </div>
-                  <div className="form-group full-width">
-                    <label>Reason</label>
-                    <input
-                      type="text"
-                      value={formData.reason}
-                      onChange={(e) => setFormData({...formData, reason: e.target.value})}
-                      placeholder="Reason for appointment"
-                    />
-                  </div>
-                  <div className="form-group full-width">
-                    <label>Notes</label>
-                    <textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                      placeholder="Additional notes"
-                      rows="3"
-                    />
+                <div className="modal-body">
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>Patient</label>
+                      <select
+                        value={formData.patientId}
+                        onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
+                        required
+                        disabled={editingAppointment}
+                      >
+                        <option value="">Select Patient</option>
+                        {patients.map(p => (
+                          <option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Doctor</label>
+                      <select
+                        value={formData.doctorId}
+                        onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}
+                        required
+                        disabled={editingAppointment}
+                      >
+                        <option value="">Select Doctor</option>
+                        {doctors.map(d => (
+                          <option key={d.id} value={d.id}>Dr. {d.firstName} {d.lastName} - {d.specialization}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Date</label>
+                      <input
+                        type="date"
+                        value={formData.appointmentDate}
+                        onChange={(e) => setFormData({ ...formData, appointmentDate: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Time</label>
+                      <input
+                        type="time"
+                        value={formData.appointmentTime}
+                        onChange={(e) => setFormData({ ...formData, appointmentTime: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Status</label>
+                      <select
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      >
+                        <option value="SCHEDULED">Scheduled</option>
+                        <option value="CONFIRMED">Confirmed</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="CANCELLED">Cancelled</option>
+                        <option value="NO_SHOW">No Show</option>
+                      </select>
+                    </div>
+                    <div className="form-group full-width">
+                      <label>Reason</label>
+                      <input
+                        type="text"
+                        value={formData.reason}
+                        onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                        placeholder="Reason for appointment"
+                      />
+                    </div>
+                    <div className="form-group full-width">
+                      <label>Notes</label>
+                      <textarea
+                        value={formData.notes}
+                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                        placeholder="Additional notes"
+                        rows="3"
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="modal-footer">

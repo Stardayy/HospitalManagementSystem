@@ -223,7 +223,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
-    role ENUM('ADMIN', 'DOCTOR', 'PATIENT') NOT NULL,
+    role ENUM('ADMIN', 'DOCTOR', 'PATIENT', 'PHARMACIST', 'NURSE') NOT NULL,
     doctor_id BIGINT,
     patient_id BIGINT,
     is_active BOOLEAN DEFAULT TRUE,
@@ -413,9 +413,9 @@ INSERT INTO medical_record (patient_id, doctor_id, record_date, diagnosis, sympt
 -- admin123, doctor123, patient123
 -- =============================================
 INSERT INTO users (email, password, first_name, last_name, role, doctor_id, patient_id, is_active) VALUES
-('admin@hospital.com', '$2a$10$N9qo8uLOickgx2ZMRZoMye.MJ.kLOhJJrGxw3VLa1LJwqb7qbXBTO', 'Admin', 'Khôi', 'ADMIN', NULL, NULL, TRUE),
-('doctor@hospital.com', '$2a$10$N9qo8uLOickgx2ZMRZoMye.MJ.kLOhJJrGxw3VLa1LJwqb7qbXBTO', 'William', 'Chen', 'DOCTOR', 1, NULL, TRUE),
-('patient@hospital.com', '$2a$10$N9qo8uLOickgx2ZMRZoMye.MJ.kLOhJJrGxw3VLa1LJwqb7qbXBTO', 'John', 'Smith', 'PATIENT', NULL, 1, TRUE);
+('admin@hospital.com', '$2a$10$i7kCU6C.AKr6tDCumh3bmuk.HuN4E1VRusBpQvWg46CMojo4qundi', 'Admin', 'Khôi', 'ADMIN', NULL, NULL, TRUE),
+('doctor@hospital.com', '$2a$10$i7kCU6C.AKr6tDCumh3bmuk.HuN4E1VRusBpQvWg46CMojo4qundi', 'William', 'Chen', 'DOCTOR', 1, NULL, TRUE),
+('patient@hospital.com', '$2a$10$i7kCU6C.AKr6tDCumh3bmuk.HuN4E1VRusBpQvWg46CMojo4qundi', 'John', 'Smith', 'PATIENT', NULL, 1, TRUE);
 
 -- =============================================
 -- TABLE: message (for internal messaging system)
@@ -794,6 +794,326 @@ INSERT INTO notification (user_id, type, title, message, is_read, link, schedule
 (3, 'SYSTEM', 'Welcome to Hospital Management System', 'Your patient account has been created. Complete your profile for better service.', TRUE, '/profile', NULL, '2025-11-20 09:00:00');
 
 -- =============================================
+-- TABLE: prescription (e-Prescribing)
+-- =============================================
+CREATE TABLE prescription (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    patient_id BIGINT NOT NULL,
+    doctor_id BIGINT,
+    appointment_id BIGINT,
+    prescription_date DATE DEFAULT (CURRENT_DATE),
+    expiry_date DATE,
+    status ENUM('ACTIVE', 'DISPENSED', 'PARTIALLY_DISPENSED', 'EXPIRED', 'CANCELLED') DEFAULT 'ACTIVE',
+    diagnosis VARCHAR(500),
+    notes VARCHAR(1000),
+    pharmacy_name VARCHAR(200),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_prescription_patient (patient_id),
+    INDEX idx_prescription_doctor (doctor_id),
+    INDEX idx_prescription_status (status),
+    INDEX idx_prescription_date (prescription_date),
+    
+    CONSTRAINT fk_prescription_patient 
+        FOREIGN KEY (patient_id) REFERENCES patient(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_prescription_doctor 
+        FOREIGN KEY (doctor_id) REFERENCES doctor(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_prescription_appointment 
+        FOREIGN KEY (appointment_id) REFERENCES appointment(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- TABLE: prescription_item (Medicines in Prescription)
+-- =============================================
+CREATE TABLE prescription_item (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    prescription_id BIGINT NOT NULL,
+    medicine_id BIGINT,
+    medicine_name VARCHAR(200) NOT NULL,
+    dosage VARCHAR(100),
+    frequency VARCHAR(100),
+    duration VARCHAR(100),
+    quantity INT,
+    instructions VARCHAR(500),
+    dispensed BOOLEAN DEFAULT FALSE,
+    
+    INDEX idx_prescription_item_prescription (prescription_id),
+    INDEX idx_prescription_item_medicine (medicine_id),
+    
+    CONSTRAINT fk_prescription_item_prescription 
+        FOREIGN KEY (prescription_id) REFERENCES prescription(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_prescription_item_medicine 
+        FOREIGN KEY (medicine_id) REFERENCES medicine(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- TABLE: staff (Staff Management)
+-- =============================================
+CREATE TABLE staff (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    phone VARCHAR(20),
+    role ENUM('NURSE', 'HEAD_NURSE', 'TECHNICIAN', 'LAB_TECHNICIAN', 'PHARMACIST', 'RECEPTIONIST', 'ADMIN_STAFF', 'MAINTENANCE', 'SECURITY') NOT NULL,
+    department_id BIGINT,
+    hire_date DATE,
+    status ENUM('ACTIVE', 'ON_LEAVE', 'INACTIVE', 'TERMINATED') DEFAULT 'ACTIVE',
+    address VARCHAR(200),
+    qualifications VARCHAR(500),
+    emergency_contact VARCHAR(100),
+    emergency_phone VARCHAR(20),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_staff_name (first_name, last_name),
+    INDEX idx_staff_role (role),
+    INDEX idx_staff_department (department_id),
+    INDEX idx_staff_status (status),
+    
+    CONSTRAINT fk_staff_department 
+        FOREIGN KEY (department_id) REFERENCES department(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- TABLE: shift (Shift Scheduling)
+-- =============================================
+CREATE TABLE shift (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    staff_id BIGINT NOT NULL,
+    shift_date DATE NOT NULL,
+    shift_type ENUM('MORNING', 'AFTERNOON', 'NIGHT', 'CUSTOM') NOT NULL,
+    start_time TIME,
+    end_time TIME,
+    department_id BIGINT,
+    status ENUM('SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'ABSENT', 'ON_LEAVE', 'CANCELLED') DEFAULT 'SCHEDULED',
+    check_in_time DATETIME,
+    check_out_time DATETIME,
+    notes VARCHAR(500),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_shift_staff (staff_id),
+    INDEX idx_shift_date (shift_date),
+    INDEX idx_shift_type (shift_type),
+    INDEX idx_shift_status (status),
+    INDEX idx_shift_department (department_id),
+    
+    CONSTRAINT fk_shift_staff 
+        FOREIGN KEY (staff_id) REFERENCES staff(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_shift_department 
+        FOREIGN KEY (department_id) REFERENCES department(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- TABLE: insurance_claim (Insurance Claims Management)
+-- =============================================
+CREATE TABLE insurance_claim (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    patient_id BIGINT NOT NULL,
+    bill_id BIGINT,
+    admission_id BIGINT,
+    claim_number VARCHAR(50) UNIQUE,
+    insurance_provider VARCHAR(200) NOT NULL,
+    policy_number VARCHAR(100),
+    group_number VARCHAR(100),
+    subscriber_name VARCHAR(200),
+    subscriber_id VARCHAR(100),
+    claim_amount DECIMAL(12,2),
+    approved_amount DECIMAL(12,2),
+    paid_amount DECIMAL(12,2),
+    patient_responsibility DECIMAL(12,2),
+    status ENUM('DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'PARTIALLY_APPROVED', 'REJECTED', 'APPEALED', 'PAID', 'CLOSED') DEFAULT 'DRAFT',
+    submission_date DATE,
+    response_date DATE,
+    payment_date DATE,
+    pre_authorization_number VARCHAR(100),
+    diagnosis_codes VARCHAR(500),
+    procedure_codes VARCHAR(500),
+    rejection_reason VARCHAR(1000),
+    notes VARCHAR(2000),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_insurance_patient (patient_id),
+    INDEX idx_insurance_claim_number (claim_number),
+    INDEX idx_insurance_status (status),
+    INDEX idx_insurance_provider (insurance_provider),
+    INDEX idx_insurance_submission (submission_date),
+    
+    CONSTRAINT fk_insurance_patient 
+        FOREIGN KEY (patient_id) REFERENCES patient(id) 
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_insurance_bill 
+        FOREIGN KEY (bill_id) REFERENCES bill(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_insurance_admission 
+        FOREIGN KEY (admission_id) REFERENCES admission(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- TABLE: emergency_case (Emergency/Triage Module)
+-- =============================================
+CREATE TABLE emergency_case (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    patient_id BIGINT,
+    patient_name VARCHAR(200),
+    patient_age INT,
+    patient_gender VARCHAR(10),
+    patient_phone VARCHAR(20),
+    arrival_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    triage_level ENUM('LEVEL_1_RESUSCITATION', 'LEVEL_2_EMERGENCY', 'LEVEL_3_URGENT', 'LEVEL_4_LESS_URGENT', 'LEVEL_5_NON_URGENT') NOT NULL,
+    chief_complaint VARCHAR(500) NOT NULL,
+    vital_signs VARCHAR(500),
+    initial_assessment VARCHAR(2000),
+    assigned_doctor_id BIGINT,
+    assigned_nurse_id BIGINT,
+    treatment_area VARCHAR(50),
+    bed_number VARCHAR(20),
+    status ENUM('WAITING', 'TRIAGE', 'IN_TREATMENT', 'OBSERVATION', 'ADMITTED', 'DISCHARGED', 'TRANSFERRED', 'DECEASED', 'LEFT_WITHOUT_BEING_SEEN') DEFAULT 'WAITING',
+    treatment_notes VARCHAR(2000),
+    diagnosis VARCHAR(500),
+    disposition VARCHAR(500),
+    treatment_start_time DATETIME,
+    treatment_end_time DATETIME,
+    discharge_time DATETIME,
+    admission_id BIGINT,
+    ambulance_arrival BOOLEAN DEFAULT FALSE,
+    brought_by VARCHAR(200),
+    notes VARCHAR(2000),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_emergency_patient (patient_id),
+    INDEX idx_emergency_triage (triage_level),
+    INDEX idx_emergency_status (status),
+    INDEX idx_emergency_arrival (arrival_time),
+    INDEX idx_emergency_doctor (assigned_doctor_id),
+    
+    CONSTRAINT fk_emergency_patient 
+        FOREIGN KEY (patient_id) REFERENCES patient(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_emergency_doctor 
+        FOREIGN KEY (assigned_doctor_id) REFERENCES doctor(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_emergency_nurse 
+        FOREIGN KEY (assigned_nurse_id) REFERENCES staff(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_emergency_admission 
+        FOREIGN KEY (admission_id) REFERENCES admission(id) 
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- TABLE: audit_log (Compliance & Security)
+-- =============================================
+CREATE TABLE audit_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT,
+    username VARCHAR(100),
+    user_role VARCHAR(50),
+    action VARCHAR(50) NOT NULL,
+    entity_name VARCHAR(100),
+    entity_id VARCHAR(50),
+    details VARCHAR(1000),
+    ip_address VARCHAR(50),
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_audit_log_username (username),
+    INDEX idx_audit_log_action (action),
+    INDEX idx_audit_log_timestamp (timestamp),
+    INDEX idx_audit_log_entity (entity_name, entity_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- INSERT SAMPLE DATA: Staff
+-- =============================================
+INSERT INTO staff (first_name, last_name, email, phone, role, department_id, hire_date, status, qualifications) VALUES
+('Mary', 'Johnson', 'mary.johnson@hospital.com', '555-3001', 'HEAD_NURSE', 1, '2018-03-15', 'ACTIVE', 'BSN, RN, ACLS Certified'),
+('Linda', 'Williams', 'linda.williams@hospital.com', '555-3002', 'NURSE', 1, '2020-06-01', 'ACTIVE', 'BSN, RN'),
+('James', 'Brown', 'james.brown@hospital.com', '555-3003', 'NURSE', 2, '2019-09-10', 'ACTIVE', 'BSN, RN, Neurology Certified'),
+('Patricia', 'Jones', 'patricia.jones@hospital.com', '555-3004', 'LAB_TECHNICIAN', NULL, '2017-01-20', 'ACTIVE', 'BS Medical Technology, ASCP'),
+('Robert', 'Garcia', 'robert.garcia@hospital.com', '555-3005', 'PHARMACIST', NULL, '2016-08-05', 'ACTIVE', 'PharmD, Licensed Pharmacist'),
+('Jennifer', 'Martinez', 'jennifer.martinez@hospital.com', '555-3006', 'RECEPTIONIST', NULL, '2021-02-14', 'ACTIVE', 'Medical Office Administration'),
+('Michael', 'Robinson', 'michael.robinson@hospital.com', '555-3007', 'TECHNICIAN', 5, '2019-11-30', 'ACTIVE', 'Emergency Medical Technician'),
+('Elizabeth', 'Clark', 'elizabeth.clark@hospital.com', '555-3008', 'NURSE', 5, '2018-07-22', 'ACTIVE', 'BSN, RN, Emergency Nursing Certified'),
+('David', 'Rodriguez', 'david.rodriguez@hospital.com', '555-3009', 'MAINTENANCE', NULL, '2015-04-18', 'ACTIVE', 'Facilities Management'),
+('Susan', 'Lewis', 'susan.lewis@hospital.com', '555-3010', 'NURSE', 4, '2020-01-08', 'ACTIVE', 'BSN, RN, Pediatric Certified');
+
+-- =============================================
+-- INSERT SAMPLE DATA: Shifts
+-- =============================================
+INSERT INTO shift (staff_id, shift_date, shift_type, start_time, end_time, department_id, status, notes) VALUES
+(1, '2025-12-21', 'MORNING', '06:00:00', '14:00:00', 1, 'SCHEDULED', 'Regular shift'),
+(2, '2025-12-21', 'AFTERNOON', '14:00:00', '22:00:00', 1, 'SCHEDULED', 'Regular shift'),
+(3, '2025-12-21', 'NIGHT', '22:00:00', '06:00:00', 2, 'SCHEDULED', 'Night rotation'),
+(7, '2025-12-21', 'MORNING', '06:00:00', '14:00:00', 5, 'SCHEDULED', 'ER coverage'),
+(8, '2025-12-21', 'AFTERNOON', '14:00:00', '22:00:00', 5, 'SCHEDULED', 'ER coverage'),
+(1, '2025-12-22', 'MORNING', '06:00:00', '14:00:00', 1, 'SCHEDULED', 'Regular shift'),
+(4, '2025-12-21', 'MORNING', '07:00:00', '15:00:00', NULL, 'SCHEDULED', 'Lab operations'),
+(5, '2025-12-21', 'MORNING', '08:00:00', '16:00:00', NULL, 'SCHEDULED', 'Pharmacy hours'),
+(6, '2025-12-21', 'MORNING', '07:30:00', '15:30:00', NULL, 'SCHEDULED', 'Reception desk'),
+(10, '2025-12-21', 'AFTERNOON', '14:00:00', '22:00:00', 4, 'SCHEDULED', 'Pediatrics coverage');
+
+-- =============================================
+-- INSERT SAMPLE DATA: Prescriptions
+-- =============================================
+INSERT INTO prescription (patient_id, doctor_id, appointment_id, prescription_date, expiry_date, status, diagnosis, notes) VALUES
+(1, 1, 1, '2025-12-01', '2026-01-01', 'ACTIVE', 'Hypertension', 'Take with food, monitor blood pressure daily'),
+(2, 2, 2, '2025-12-01', '2026-01-01', 'ACTIVE', 'Tension headache', 'Take only when needed for pain'),
+(5, 5, 5, '2025-11-28', '2025-12-28', 'DISPENSED', 'Anxiety disorder', 'Start with low dose, increase after 2 weeks'),
+(6, 6, 6, '2025-11-29', '2025-12-29', 'DISPENSED', 'Contact dermatitis', 'Apply twice daily to affected areas'),
+(3, 3, 3, '2025-12-01', '2026-01-01', 'ACTIVE', 'ACL injury pain management', 'For post-injury pain control');
+
+-- =============================================
+-- INSERT SAMPLE DATA: Prescription Items
+-- =============================================
+INSERT INTO prescription_item (prescription_id, medicine_id, medicine_name, dosage, frequency, duration, quantity, instructions, dispensed) VALUES
+(1, 2, 'Lisinopril', '10mg', 'Once daily', '30 days', 30, 'Take in the morning with water', FALSE),
+(1, 12, 'Aspirin', '81mg', 'Once daily', '30 days', 30, 'Take with breakfast', FALSE),
+(2, 4, 'Ibuprofen', '400mg', 'As needed', '14 days', 20, 'Take with food, max 3 times daily', FALSE),
+(3, 15, 'Sertraline', '50mg', 'Once daily', '30 days', 30, 'Take in the morning', TRUE),
+(4, 9, 'Prednisone', '10mg', 'Twice daily', '7 days', 14, 'Apply to affected skin areas', TRUE),
+(5, 4, 'Ibuprofen', '400mg', 'Three times daily', '14 days', 42, 'Take with food for pain', FALSE),
+(5, NULL, 'Acetaminophen', '500mg', 'As needed', '14 days', 28, 'Alternate with ibuprofen', FALSE);
+
+-- =============================================
+-- INSERT SAMPLE DATA: Insurance Claims
+-- =============================================
+INSERT INTO insurance_claim (patient_id, bill_id, claim_number, insurance_provider, policy_number, group_number, subscriber_name, subscriber_id, claim_amount, approved_amount, status, submission_date, diagnosis_codes, procedure_codes, notes) VALUES
+(1, 1, 'CLM-2025-0001', 'Blue Cross Blue Shield', 'BCBS-123456', 'GRP-001', 'John Smith', 'SUB-001', 486.54, 450.00, 'APPROVED', '2025-11-29', 'I10', '99213, 80061', 'Emergency visit for hypertension'),
+(2, 2, 'CLM-2025-0002', 'Aetna', 'AET-789012', 'GRP-002', 'Michael Johnson', 'SUB-002', 170.10, 170.10, 'PAID', '2025-11-30', 'G43.909', '99213', 'Migraine consultation'),
+(3, 3, 'CLM-2025-0003', 'UnitedHealthcare', 'UHC-345678', 'GRP-003', 'Sarah Williams', 'SUB-003', 835.92, NULL, 'UNDER_REVIEW', '2025-11-28', 'S83.519A', '99214, 73721', 'ACL injury evaluation'),
+(5, 5, 'CLM-2025-0004', 'Cigna', 'CIG-901234', 'GRP-005', 'David Brown', 'SUB-005', 1749.60, NULL, 'SUBMITTED', '2025-11-26', 'F41.1', '99284', 'Emergency anxiety episode'),
+(8, 8, 'CLM-2025-0005', 'Humana', 'HUM-567890', 'GRP-008', 'Sarah Wilson', 'SUB-008', 3577.00, 3000.00, 'PARTIALLY_APPROVED', '2025-11-24', 'C50.911', '19301, 77401', 'Breast cancer treatment');
+
+-- =============================================
+-- INSERT SAMPLE DATA: Emergency Cases
+-- =============================================
+INSERT INTO emergency_case (patient_id, arrival_time, triage_level, chief_complaint, vital_signs, initial_assessment, assigned_doctor_id, treatment_area, bed_number, status, diagnosis, notes, ambulance_arrival) VALUES
+(5, '2025-12-11 08:15:00', 'LEVEL_2_EMERGENCY', 'Chest pain, shortness of breath', 'BP: 145/95, HR: 88, RR: 20, SpO2: 97%', 'Alert, anxious, diaphoretic. Onset 30 min ago.', 5, 'Trauma Bay', 'ER-1', 'DISCHARGED', 'Panic attack', 'ECG normal, cardiac enzymes negative', FALSE),
+(15, '2025-12-16 02:25:00', 'LEVEL_2_EMERGENCY', 'Multiple injuries from MVA', 'BP: 110/70, HR: 105, RR: 22, SpO2: 94%', 'Multiple lacerations, possible rib fractures', 15, 'Trauma Bay', 'ER-2', 'ADMITTED', 'Polytrauma', 'CT scan ordered, IV fluids started', TRUE),
+(NULL, '2025-12-21 09:30:00', 'LEVEL_4_LESS_URGENT', 'Sprained ankle', 'BP: 120/80, HR: 72, RR: 16, SpO2: 99%', 'Swelling and bruising noted on right ankle', 15, 'Fast Track', 'FT-1', 'WAITING', NULL, 'Walk-in patient, waiting for X-ray', FALSE),
+(9, '2025-12-15 05:45:00', 'LEVEL_3_URGENT', 'Rapid irregular heartbeat', 'BP: 135/85, HR: 145 irregular, RR: 18, SpO2: 96%', 'AFib with RVR, hemodynamically stable', 9, 'Cardiac', 'ER-3', 'ADMITTED', 'Atrial fibrillation', 'Rate control initiated', FALSE);
+
+-- =============================================
+-- INSERT SAMPLE DATA: Pharmacist and Nurse Users
+-- =============================================
+INSERT INTO users (email, password, first_name, last_name, role, doctor_id, patient_id, is_active) VALUES
+('pharmacist@hospital.com', '$2a$10$i7kCU6C.AKr6tDCumh3bmuk.HuN4E1VRusBpQvWg46CMojo4qundi', 'Robert', 'Garcia', 'PHARMACIST', NULL, NULL, TRUE),
+('nurse@hospital.com', '$2a$10$i7kCU6C.AKr6tDCumh3bmuk.HuN4E1VRusBpQvWg46CMojo4qundi', 'Mary', 'Johnson', 'NURSE', NULL, NULL, TRUE);
+
+-- =============================================
 -- VERIFICATION QUERIES
 -- =============================================
 SELECT '========================================' AS '';
@@ -817,7 +1137,14 @@ UNION ALL SELECT CONCAT('  Lab Orders:      ', LPAD(COUNT(*), 3, ' ')) FROM lab_
 UNION ALL SELECT CONCAT('  Lab Results:     ', LPAD(COUNT(*), 3, ' ')) FROM lab_result
 UNION ALL SELECT CONCAT('  Admissions:      ', LPAD(COUNT(*), 3, ' ')) FROM admission
 UNION ALL SELECT CONCAT('  Documents:       ', LPAD(COUNT(*), 3, ' ')) FROM document
-UNION ALL SELECT CONCAT('  Notifications:   ', LPAD(COUNT(*), 3, ' ')) FROM notification;
+UNION ALL SELECT CONCAT('  Notifications:   ', LPAD(COUNT(*), 3, ' ')) FROM notification
+UNION ALL SELECT CONCAT('  Prescriptions:   ', LPAD(COUNT(*), 3, ' ')) FROM prescription
+UNION ALL SELECT CONCAT('  Rx Items:        ', LPAD(COUNT(*), 3, ' ')) FROM prescription_item
+UNION ALL SELECT CONCAT('  Staff:           ', LPAD(COUNT(*), 3, ' ')) FROM staff
+UNION ALL SELECT CONCAT('  Shifts:          ', LPAD(COUNT(*), 3, ' ')) FROM shift
+UNION ALL SELECT CONCAT('  Insurance Claims:', LPAD(COUNT(*), 3, ' ')) FROM insurance_claim
+UNION ALL SELECT CONCAT('  Emergency Cases: ', LPAD(COUNT(*), 3, ' ')) FROM emergency_case
+UNION ALL SELECT CONCAT('  Audit Logs:      ', LPAD(COUNT(*), 3, ' ')) FROM audit_log;
 
 SELECT '========================================' AS '';
 SELECT 'Connection Info:' AS '';

@@ -20,17 +20,20 @@ import com.hms.hospital_management_system.dto.MessageDTO.SendMessageRequest;
 import com.hms.hospital_management_system.entity.User;
 import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.MessageService;
+import com.hms.hospital_management_system.util.AuditHelper;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
 public class MessageController {
 
     private final MessageService messageService;
+    private final AuditHelper auditHelper;
 
     private Long getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -39,9 +42,13 @@ public class MessageController {
     }
 
     @PostMapping("/send")
-    public ResponseEntity<MessageDTO> sendMessage(@Valid @RequestBody SendMessageRequest request) {
+    public ResponseEntity<MessageDTO> sendMessage(@Valid @RequestBody SendMessageRequest request,
+            HttpServletRequest httpRequest) {
         Long senderId = getCurrentUserId();
-        return ResponseEntity.ok(messageService.sendMessage(senderId, request));
+        MessageDTO message = messageService.sendMessage(senderId, request);
+        auditHelper.logCreate("Message", message.getId().toString(),
+                "Sent message to user: " + request.getReceiverId(), httpRequest);
+        return ResponseEntity.ok(message);
     }
 
     @GetMapping("/conversations")

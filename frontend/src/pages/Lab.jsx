@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEdit2, FiTrash2, FiX, FiCheckCircle, FiClock, FiAlertCircle, FiDownload, FiFilter, FiSearch } from 'react-icons/fi';
 import api from '../api/api';
+import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
@@ -110,9 +111,9 @@ const Lab = () => {
         priority: orderFormData.priority,
         notes: orderFormData.notes
       };
-      
+
       const testIdsParam = orderFormData.testIds.join(',');
-      
+
       if (editingOrder) {
         await api.put(`/lab/orders/${editingOrder.id}`, payload);
       } else {
@@ -286,7 +287,7 @@ const Lab = () => {
   };
 
   const getStatusClass = (status) => {
-    switch(status) {
+    switch (status) {
       case 'COMPLETED': return 'status-completed';
       case 'IN_PROGRESS': return 'status-confirmed';
       case 'SAMPLE_COLLECTED': return 'status-scheduled';
@@ -297,9 +298,9 @@ const Lab = () => {
   };
 
   const getResultStatusClass = (status) => {
-    switch(status) {
+    switch (status) {
       case 'NORMAL': return 'status-completed';
-      case 'ABNORMAL_LOW': 
+      case 'ABNORMAL_LOW':
       case 'ABNORMAL_HIGH': return 'status-scheduled';
       case 'CRITICAL': return 'status-cancelled';
       default: return 'status-pending';
@@ -307,7 +308,7 @@ const Lab = () => {
   };
 
   const getPriorityClass = (priority) => {
-    switch(priority) {
+    switch (priority) {
       case 'URGENT': return 'priority-urgent';
       case 'STAT': return 'priority-stat';
       default: return 'priority-normal';
@@ -317,21 +318,21 @@ const Lab = () => {
   // Filter and sort
   const filteredOrders = labOrders
     .filter(order => {
-      const matchesSearch = 
+      const matchesSearch =
         order.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.doctor?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.doctor?.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesStatus = !activeFilters.status || order.status === activeFilters.status;
       const matchesPriority = !activeFilters.priority || order.priority === activeFilters.priority;
-      
+
       return matchesSearch && matchesStatus && matchesPriority;
     })
     .sort((a, b) => {
       if (!currentSort.sortBy) return 0;
       let comparison = 0;
-      switch(currentSort.sortBy) {
+      switch (currentSort.sortBy) {
         case 'date':
           comparison = new Date(a.orderDate) - new Date(b.orderDate);
           break;
@@ -348,6 +349,20 @@ const Lab = () => {
     test.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     test.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination calculation
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
+  const currentList = activeTab === 'orders' ? filteredOrders : filteredTests;
+  const paginatedList = currentList.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filters or tab change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters, currentSort, activeTab]);
 
   const filterConfig = [
     {
@@ -384,7 +399,7 @@ const Lab = () => {
       <div className="dashboard">
         <Sidebar />
         <div className="main-content">
-          <Header title="Lab Management" />
+          <Header pageTitle="Lab Management" />
           <div className="loading">Loading...</div>
         </div>
       </div>
@@ -395,18 +410,18 @@ const Lab = () => {
     <div className="dashboard">
       <Sidebar />
       <div className="main-content">
-        <Header title="Lab Management" />
+        <Header pageTitle="Lab Management" />
 
         {/* Tab Navigation */}
         <div className="page-tabs">
-          <button 
+          <button
             className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
             onClick={() => setActiveTab('orders')}
           >
             Lab Orders
           </button>
           {(isAdmin() || isDoctor()) && (
-            <button 
+            <button
               className={`tab-btn ${activeTab === 'tests' ? 'active' : ''}`}
               onClick={() => setActiveTab('tests')}
             >
@@ -449,7 +464,7 @@ const Lab = () => {
 
         {/* Lab Orders Tab */}
         {activeTab === 'orders' && (
-          <div className="page-content">
+          <div className="table-container">
             <table className="data-table">
               <thead>
                 <tr>
@@ -463,7 +478,7 @@ const Lab = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.map(order => (
+                {paginatedList.map(order => (
                   <tr key={order.id}>
                     <td>LAB-{String(order.id).padStart(4, '0')}</td>
                     <td>{order.patient?.firstName} {order.patient?.lastName}</td>
@@ -482,8 +497,8 @@ const Lab = () => {
                     <td>
                       <div className="action-buttons">
                         {(isAdmin() || isDoctor()) && order.status !== 'COMPLETED' && order.status !== 'CANCELLED' && (
-                          <button 
-                            className="action-btn add-result" 
+                          <button
+                            className="action-btn add-result"
                             onClick={() => openResultModal(order)}
                             title="Add Result"
                           >
@@ -491,8 +506,8 @@ const Lab = () => {
                           </button>
                         )}
                         {order.status === 'COMPLETED' && (
-                          <button 
-                            className="action-btn download" 
+                          <button
+                            className="action-btn download"
                             onClick={() => downloadLabReport(order.id)}
                             title="Download Report"
                           >
@@ -523,7 +538,7 @@ const Lab = () => {
 
         {/* Lab Tests Catalog Tab */}
         {activeTab === 'tests' && (isAdmin() || isDoctor()) && (
-          <div className="page-content">
+          <div className="table-container">
             <table className="data-table">
               <thead>
                 <tr>
@@ -538,7 +553,7 @@ const Lab = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredTests.map(test => (
+                {paginatedList.map(test => (
                   <tr key={test.id}>
                     <td>{test.name}</td>
                     <td>{test.category}</td>
@@ -571,6 +586,17 @@ const Lab = () => {
           </div>
         )}
 
+        {/* Pagination */
+          !loading && currentList.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(currentList.length / itemsPerPage)}
+              onPageChange={setCurrentPage}
+              totalItems={currentList.length}
+              itemsPerPage={itemsPerPage}
+            />
+          )}
+
         {/* Filter Modal */}
         {showFilterModal && (
           <FilterModal
@@ -587,10 +613,10 @@ const Lab = () => {
         {/* New/Edit Lab Order Modal */}
         {showModal && (
           <div className="modal-overlay" onClick={closeModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>{editingOrder ? 'Edit Lab Order' : 'New Lab Order'}</h2>
-                <button className="close-btn" onClick={closeModal}><FiX /></button>
+                <button className="btn-close" onClick={closeModal}><FiX /></button>
               </div>
               <form onSubmit={handleOrderSubmit}>
                 <div className="form-grid">
@@ -600,7 +626,7 @@ const Lab = () => {
                         <label>Patient *</label>
                         <select
                           value={orderFormData.patientId}
-                          onChange={(e) => setOrderFormData({...orderFormData, patientId: e.target.value})}
+                          onChange={(e) => setOrderFormData({ ...orderFormData, patientId: e.target.value })}
                           required
                         >
                           <option value="">Select Patient</option>
@@ -615,7 +641,7 @@ const Lab = () => {
                         <label>Ordering Doctor *</label>
                         <select
                           value={orderFormData.doctorId}
-                          onChange={(e) => setOrderFormData({...orderFormData, doctorId: e.target.value})}
+                          onChange={(e) => setOrderFormData({ ...orderFormData, doctorId: e.target.value })}
                           required
                         >
                           <option value="">Select Doctor</option>
@@ -632,7 +658,7 @@ const Lab = () => {
                     <label>Priority</label>
                     <select
                       value={orderFormData.priority}
-                      onChange={(e) => setOrderFormData({...orderFormData, priority: e.target.value})}
+                      onChange={(e) => setOrderFormData({ ...orderFormData, priority: e.target.value })}
                     >
                       <option value="NORMAL">Normal</option>
                       <option value="URGENT">Urgent</option>
@@ -650,9 +676,9 @@ const Lab = () => {
                               checked={orderFormData.testIds.includes(test.id)}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setOrderFormData({...orderFormData, testIds: [...orderFormData.testIds, test.id]});
+                                  setOrderFormData({ ...orderFormData, testIds: [...orderFormData.testIds, test.id] });
                                 } else {
-                                  setOrderFormData({...orderFormData, testIds: orderFormData.testIds.filter(id => id !== test.id)});
+                                  setOrderFormData({ ...orderFormData, testIds: orderFormData.testIds.filter(id => id !== test.id) });
                                 }
                               }}
                             />
@@ -666,14 +692,14 @@ const Lab = () => {
                     <label>Notes</label>
                     <textarea
                       value={orderFormData.notes}
-                      onChange={(e) => setOrderFormData({...orderFormData, notes: e.target.value})}
+                      onChange={(e) => setOrderFormData({ ...orderFormData, notes: e.target.value })}
                       rows={3}
                     />
                   </div>
                 </div>
-                <div className="form-actions">
-                  <button type="button" className="cancel-btn" onClick={closeModal}>Cancel</button>
-                  <button type="submit" className="submit-btn">
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={closeModal}>Cancel</button>
+                  <button type="submit" className="btn-primary">
                     {editingOrder ? 'Update' : 'Create Order'}
                   </button>
                 </div>
@@ -685,10 +711,10 @@ const Lab = () => {
         {/* New/Edit Lab Test Modal */}
         {showTestModal && (
           <div className="modal-overlay" onClick={closeTestModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>{editingTest ? 'Edit Lab Test' : 'New Lab Test'}</h2>
-                <button className="close-btn" onClick={closeTestModal}><FiX /></button>
+                <button className="btn-close" onClick={closeTestModal}><FiX /></button>
               </div>
               <form onSubmit={handleTestSubmit}>
                 <div className="form-grid">
@@ -697,7 +723,7 @@ const Lab = () => {
                     <input
                       type="text"
                       value={testFormData.name}
-                      onChange={(e) => setTestFormData({...testFormData, name: e.target.value})}
+                      onChange={(e) => setTestFormData({ ...testFormData, name: e.target.value })}
                       required
                     />
                   </div>
@@ -705,7 +731,7 @@ const Lab = () => {
                     <label>Category *</label>
                     <select
                       value={testFormData.category}
-                      onChange={(e) => setTestFormData({...testFormData, category: e.target.value})}
+                      onChange={(e) => setTestFormData({ ...testFormData, category: e.target.value })}
                       required
                     >
                       <option value="">Select Category</option>
@@ -722,7 +748,7 @@ const Lab = () => {
                     <label>Sample Type *</label>
                     <select
                       value={testFormData.sampleType}
-                      onChange={(e) => setTestFormData({...testFormData, sampleType: e.target.value})}
+                      onChange={(e) => setTestFormData({ ...testFormData, sampleType: e.target.value })}
                       required
                     >
                       <option value="">Select Sample Type</option>
@@ -741,7 +767,7 @@ const Lab = () => {
                       type="number"
                       step="0.01"
                       value={testFormData.price}
-                      onChange={(e) => setTestFormData({...testFormData, price: e.target.value})}
+                      onChange={(e) => setTestFormData({ ...testFormData, price: e.target.value })}
                       required
                     />
                   </div>
@@ -750,7 +776,7 @@ const Lab = () => {
                     <input
                       type="text"
                       value={testFormData.normalRange}
-                      onChange={(e) => setTestFormData({...testFormData, normalRange: e.target.value})}
+                      onChange={(e) => setTestFormData({ ...testFormData, normalRange: e.target.value })}
                       placeholder="e.g., 4.5-11.0"
                     />
                   </div>
@@ -759,7 +785,7 @@ const Lab = () => {
                     <input
                       type="text"
                       value={testFormData.turnaroundTime}
-                      onChange={(e) => setTestFormData({...testFormData, turnaroundTime: e.target.value})}
+                      onChange={(e) => setTestFormData({ ...testFormData, turnaroundTime: e.target.value })}
                       placeholder="e.g., 24 hours"
                     />
                   </div>
@@ -767,7 +793,7 @@ const Lab = () => {
                     <label>Description</label>
                     <textarea
                       value={testFormData.description}
-                      onChange={(e) => setTestFormData({...testFormData, description: e.target.value})}
+                      onChange={(e) => setTestFormData({ ...testFormData, description: e.target.value })}
                       rows={2}
                     />
                   </div>
@@ -776,15 +802,15 @@ const Lab = () => {
                       <input
                         type="checkbox"
                         checked={testFormData.isActive}
-                        onChange={(e) => setTestFormData({...testFormData, isActive: e.target.checked})}
+                        onChange={(e) => setTestFormData({ ...testFormData, isActive: e.target.checked })}
                       />
                       Active
                     </label>
                   </div>
                 </div>
-                <div className="form-actions">
-                  <button type="button" className="cancel-btn" onClick={closeTestModal}>Cancel</button>
-                  <button type="submit" className="submit-btn">
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={closeTestModal}>Cancel</button>
+                  <button type="submit" className="btn-primary">
                     {editingTest ? 'Update' : 'Create Test'}
                   </button>
                 </div>
@@ -796,10 +822,10 @@ const Lab = () => {
         {/* Add Result Modal */}
         {showResultModal && selectedOrder && (
           <div className="modal-overlay" onClick={closeResultModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>Add Test Result</h2>
-                <button className="close-btn" onClick={closeResultModal}><FiX /></button>
+                <button className="btn-close" onClick={closeResultModal}><FiX /></button>
               </div>
               <form onSubmit={handleResultSubmit}>
                 <div className="form-grid">
@@ -810,7 +836,7 @@ const Lab = () => {
                       onChange={(e) => {
                         const test = labTests.find(t => t.id === parseInt(e.target.value));
                         setResultFormData({
-                          ...resultFormData, 
+                          ...resultFormData,
                           labTestId: e.target.value,
                           referenceRange: test?.normalRange || ''
                         });
@@ -828,7 +854,7 @@ const Lab = () => {
                     <input
                       type="text"
                       value={resultFormData.resultValue}
-                      onChange={(e) => setResultFormData({...resultFormData, resultValue: e.target.value})}
+                      onChange={(e) => setResultFormData({ ...resultFormData, resultValue: e.target.value })}
                       required
                     />
                   </div>
@@ -837,7 +863,7 @@ const Lab = () => {
                     <input
                       type="text"
                       value={resultFormData.unit}
-                      onChange={(e) => setResultFormData({...resultFormData, unit: e.target.value})}
+                      onChange={(e) => setResultFormData({ ...resultFormData, unit: e.target.value })}
                       placeholder="e.g., mg/dL"
                     />
                   </div>
@@ -846,14 +872,14 @@ const Lab = () => {
                     <input
                       type="text"
                       value={resultFormData.referenceRange}
-                      onChange={(e) => setResultFormData({...resultFormData, referenceRange: e.target.value})}
+                      onChange={(e) => setResultFormData({ ...resultFormData, referenceRange: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
                     <label>Result Status *</label>
                     <select
                       value={resultFormData.resultStatus}
-                      onChange={(e) => setResultFormData({...resultFormData, resultStatus: e.target.value})}
+                      onChange={(e) => setResultFormData({ ...resultFormData, resultStatus: e.target.value })}
                       required
                     >
                       <option value="NORMAL">Normal</option>
@@ -866,14 +892,14 @@ const Lab = () => {
                     <label>Notes</label>
                     <textarea
                       value={resultFormData.notes}
-                      onChange={(e) => setResultFormData({...resultFormData, notes: e.target.value})}
+                      onChange={(e) => setResultFormData({ ...resultFormData, notes: e.target.value })}
                       rows={2}
                     />
                   </div>
                 </div>
-                <div className="form-actions">
-                  <button type="button" className="cancel-btn" onClick={closeResultModal}>Cancel</button>
-                  <button type="submit" className="submit-btn">Save Result</button>
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={closeResultModal}>Cancel</button>
+                  <button type="submit" className="btn-primary">Save Result</button>
                 </div>
               </form>
             </div>

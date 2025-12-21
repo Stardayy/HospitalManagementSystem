@@ -132,7 +132,7 @@ const Messages = () => {
     const now = new Date();
     const diff = now - date;
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
+
     if (days === 0) {
       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     } else if (days === 1) {
@@ -152,20 +152,19 @@ const Messages = () => {
   return (
     <div className="dashboard-container">
       <Sidebar />
-      
-      <main className="main-content">
-        <Header placeholder="Search messages..." />
 
-        <div className="page-header">
-          <h1>Messages</h1>
-          <div className="header-actions">
+      <main className="main-content">
+        <Header pageTitle="Messages" />
+
+        <div className="page-toolbar">
+          <div className="search-filter">
             {totalUnread > 0 && (
               <span className="unread-badge">{totalUnread} unread</span>
             )}
-            <button className="add-btn" onClick={() => setShowNewMessage(true)}>
-              <FiPlus /> New Message
-            </button>
           </div>
+          <button className="add-btn" onClick={() => setShowNewMessage(true)}>
+            <FiPlus /> New Message
+          </button>
         </div>
 
         <div className="messages-container">
@@ -173,9 +172,9 @@ const Messages = () => {
           <div className="contacts-panel">
             <div className="contacts-search">
               <FiSearch />
-              <input 
-                type="text" 
-                placeholder="Search contacts..." 
+              <input
+                type="text"
+                placeholder="Search contacts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -190,7 +189,7 @@ const Messages = () => {
                 </div>
               ) : (
                 filteredConversations.map(conv => (
-                  <div 
+                  <div
                     key={conv.partnerId}
                     className={`contact-item ${selectedContact?.id === conv.partnerId ? 'active' : ''}`}
                     onClick={() => setSelectedContact({
@@ -253,8 +252,8 @@ const Messages = () => {
                     </div>
                   ) : (
                     messages.map(message => (
-                      <div 
-                        key={message.id} 
+                      <div
+                        key={message.id}
                         className={`message ${message.senderId === user?.id ? 'sent' : 'received'}`}
                       >
                         <div className="message-content">
@@ -269,8 +268,8 @@ const Messages = () => {
 
                 <div className="chat-input">
                   <button className="btn-icon"><FiPaperclip /></button>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="Type a message..."
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
@@ -295,7 +294,7 @@ const Messages = () => {
         {/* New Message Modal */}
         {showNewMessage && (
           <div className="modal-overlay">
-            <div className="modal-content">
+            <div className="modal modal-large">
               <div className="modal-header">
                 <h2>New Message</h2>
                 <button className="btn-close" onClick={() => setShowNewMessage(false)}>×</button>
@@ -315,8 +314,8 @@ const Messages = () => {
                     <p className="no-results">No users found</p>
                   ) : (
                     filteredUsers.map(u => (
-                      <div 
-                        key={u.id} 
+                      <div
+                        key={u.id}
                         className="user-item"
                         onClick={() => startNewConversation(u)}
                       >

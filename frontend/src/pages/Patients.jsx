@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail, FiUsers, FiUser, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail, FiUsers, FiUser, FiFilter, FiSearch } from 'react-icons/fi';
 import api from '../api/api';
+import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
@@ -30,6 +31,10 @@ const Patients = () => {
     emergencyContact: '',
     emergencyPhone: ''
   });
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchPatients();
@@ -118,7 +123,7 @@ const Patients = () => {
       if (filters.bloodType) params.append('bloodType', filters.bloodType);
       if (sort.sortBy) params.append('sortBy', sort.sortBy);
       if (sort.sortDirection) params.append('sortDirection', sort.sortDirection);
-      
+
       const data = await api.get(`/patients/filter?${params.toString()}`);
       setPatients(data);
       setActiveFilters(filters);
@@ -198,13 +203,23 @@ const Patients = () => {
   const activeFilterCount = Object.values(activeFilters).filter(v => v !== '' && v !== false && v !== undefined).length;
 
   const filteredPatients = patients.filter(patient => {
-    const matchesSearch = 
+    const matchesSearch =
       patient.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.phone?.includes(searchTerm);
     return matchesSearch;
   });
+
+  // Pagination calculation
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const paginatedPatients = filteredPatients.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters, currentSort]);
 
   const calculateAge = (dateOfBirth) => {
     if (!dateOfBirth) return '-';
@@ -221,13 +236,9 @@ const Patients = () => {
   return (
     <div className="dashboard-container">
       <Sidebar />
-      
-      <main className="main-content">
-        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Search patients..." />
 
-        <div className="page-header">
-          <h1>Patients</h1>
-        </div>
+      <main className="main-content">
+        <Header pageTitle="Patients" />
 
         <div className="stats-row">
           <div className="stat-card">
@@ -261,6 +272,15 @@ const Patients = () => {
 
         <div className="page-toolbar">
           <div className="search-filter">
+            <div className="search-box">
+              <FiSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search patients..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
               <FiFilter /> Filter
               {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
@@ -311,7 +331,7 @@ const Patients = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredPatients.map((patient) => (
+                {paginatedPatients.map((patient) => (
                   <tr key={patient.id}>
                     <td>{patient.id}</td>
                     <td>{patient.firstName} {patient.lastName}</td>
@@ -340,10 +360,20 @@ const Patients = () => {
                 ))}
               </tbody>
             </table>
-            {filteredPatients.length === 0 && (
-              <div className="no-data">No patients found</div>
+            {paginatedPatients.length === 0 && (
+              <div className="no-data">No patients found matching your search.</div>
             )}
           </div>
+        )}
+        {/* Pagination */}
+        {!loading && filteredPatients.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredPatients.length / itemsPerPage)}
+            onPageChange={setCurrentPage}
+            totalItems={filteredPatients.length}
+            itemsPerPage={itemsPerPage}
+          />
         )}
 
         {showModal && (
@@ -360,7 +390,7 @@ const Patients = () => {
                     <input
                       type="text"
                       value={formData.firstName}
-                      onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                       required
                     />
                   </div>
@@ -369,7 +399,7 @@ const Patients = () => {
                     <input
                       type="text"
                       value={formData.lastName}
-                      onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                       required
                     />
                   </div>
@@ -378,14 +408,14 @@ const Patients = () => {
                     <input
                       type="date"
                       value={formData.dateOfBirth}
-                      onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
                     <label>Gender</label>
                     <select
                       value={formData.gender}
-                      onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                     >
                       <option value="">Select Gender</option>
                       <option value="Male">Male</option>
@@ -398,7 +428,7 @@ const Patients = () => {
                     <input
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
@@ -406,14 +436,14 @@ const Patients = () => {
                     <input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
                     <label>Blood Type</label>
                     <select
                       value={formData.bloodType}
-                      onChange={(e) => setFormData({...formData, bloodType: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, bloodType: e.target.value })}
                     >
                       <option value="">Select Blood Type</option>
                       <option value="A+">A+</option>
@@ -431,7 +461,7 @@ const Patients = () => {
                     <input
                       type="text"
                       value={formData.address}
-                      onChange={(e) => setFormData({...formData, address: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
@@ -439,7 +469,7 @@ const Patients = () => {
                     <input
                       type="text"
                       value={formData.emergencyContact}
-                      onChange={(e) => setFormData({...formData, emergencyContact: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
@@ -447,7 +477,7 @@ const Patients = () => {
                     <input
                       type="tel"
                       value={formData.emergencyPhone}
-                      onChange={(e) => setFormData({...formData, emergencyPhone: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, emergencyPhone: e.target.value })}
                     />
                   </div>
                 </div>

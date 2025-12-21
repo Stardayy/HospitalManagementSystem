@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiTrash2, FiX, FiSearch, FiDownload, FiFile, FiImage, FiFileText, FiFilter, FiUpload, FiLock } from 'react-icons/fi';
 import api from '../api/api';
+import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
@@ -71,13 +72,21 @@ const Documents = () => {
     try {
       const uploadFormData = new FormData();
       uploadFormData.append('file', formData.file);
-      uploadFormData.append('documentType', formData.documentType);
-      uploadFormData.append('description', formData.description);
-      uploadFormData.append('isConfidential', formData.isConfidential);
+
+      // Build URL with query parameters
+      const params = new URLSearchParams();
+      params.append('patientId', formData.patientId);
+      if (formData.documentType) {
+        params.append('documentType', formData.documentType);
+      }
+      if (formData.description) {
+        params.append('description', formData.description);
+      }
+      params.append('isConfidential', formData.isConfidential.toString());
 
       const token = localStorage.getItem('token');
       const response = await fetch(
-        `http://localhost:8080/api/documents/upload?patientId=${formData.patientId}`,
+        `http://localhost:8080/api/documents/upload?${params.toString()}`,
         {
           method: 'POST',
           headers: {
@@ -88,7 +97,8 @@ const Documents = () => {
       );
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorText = await response.text();
+        throw new Error(errorText || 'Upload failed');
       }
 
       fetchDocuments();
@@ -118,19 +128,19 @@ const Documents = () => {
       const response = await fetch(`http://localhost:8080/api/documents/${doc.id}/download`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || 'Failed to download document');
       }
-      
+
       const blob = await response.blob();
-      
+
       // Check if the blob is valid
       if (blob.size === 0) {
         throw new Error('File not found or empty');
       }
-      
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -173,7 +183,7 @@ const Documents = () => {
   };
 
   const getDocumentTypeLabel = (type) => {
-    switch(type) {
+    switch (type) {
       case 'LAB_REPORT': return 'Lab Report';
       case 'PRESCRIPTION': return 'Prescription';
       case 'XRAY': return 'X-Ray';
@@ -189,11 +199,11 @@ const Documents = () => {
   };
 
   const getDocumentTypeClass = (type) => {
-    switch(type) {
+    switch (type) {
       case 'LAB_REPORT': return 'doc-lab';
       case 'PRESCRIPTION': return 'doc-prescription';
-      case 'XRAY': 
-      case 'MRI': 
+      case 'XRAY':
+      case 'MRI':
       case 'CT_SCAN':
       case 'ULTRASOUND': return 'doc-imaging';
       case 'DISCHARGE_SUMMARY': return 'doc-discharge';
@@ -209,16 +219,28 @@ const Documents = () => {
   };
 
   const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = 
+    const matchesSearch =
       doc.originalFileName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doc.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doc.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doc.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesType = !activeFilters.documentType || doc.documentType === activeFilters.documentType;
-    
+
     return matchesSearch && matchesType;
   });
+
+  // Pagination calculation
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 9; // Documents grid matches Rooms grid (9 items per page)
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const paginatedDocuments = filteredDocuments.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters]);
 
   const filterConfig = [
     {
@@ -246,7 +268,7 @@ const Documents = () => {
       <div className="dashboard">
         <Sidebar />
         <div className="main-content">
-          <Header title="Documents" />
+          <Header pageTitle="Documents" />
           <div className="loading">Loading...</div>
         </div>
       </div>
@@ -257,7 +279,7 @@ const Documents = () => {
     <div className="dashboard">
       <Sidebar />
       <div className="main-content">
-        <Header title="Documents" />
+        <Header pageTitle="Documents" />
 
         {/* Toolbar */}
         <div className="page-toolbar">
@@ -299,7 +321,7 @@ const Documents = () => {
         {/* Documents Grid */}
         <div className="page-content">
           <div className="documents-grid">
-            {filteredDocuments.map(doc => (
+            {paginatedDocuments.map(doc => (
               <div key={doc.id} className="document-card">
                 <div className="document-icon">
                   {getFileIcon(doc.fileType)}
@@ -325,16 +347,16 @@ const Documents = () => {
                   )}
                 </div>
                 <div className="document-actions">
-                  <button 
-                    className="action-btn download" 
+                  <button
+                    className="action-btn download"
                     onClick={() => downloadDocument(doc)}
                     title="Download"
                   >
                     <FiDownload />
                   </button>
                   {(isAdmin() || isDoctor()) && (
-                    <button 
-                      className="action-btn delete" 
+                    <button
+                      className="action-btn delete"
                       onClick={() => handleDelete(doc.id)}
                       title="Delete"
                     >
@@ -345,6 +367,16 @@ const Documents = () => {
               </div>
             ))}
           </div>
+          {/* Pagination */}
+          {!loading && filteredDocuments.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredDocuments.length / itemsPerPage)}
+              onPageChange={setCurrentPage}
+              totalItems={filteredDocuments.length}
+              itemsPerPage={itemsPerPage}
+            />
+          )}
           {filteredDocuments.length === 0 && (
             <div className="empty-state">No documents found</div>
           )}
@@ -366,10 +398,10 @@ const Documents = () => {
         {/* Upload Modal */}
         {showModal && (
           <div className="modal-overlay" onClick={closeModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>Upload Document</h2>
-                <button className="close-btn" onClick={closeModal}><FiX /></button>
+                <button className="btn-close" onClick={closeModal}><FiX /></button>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="form-grid">
@@ -378,7 +410,7 @@ const Documents = () => {
                       <label>Patient *</label>
                       <select
                         value={formData.patientId}
-                        onChange={(e) => setFormData({...formData, patientId: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
                         required
                       >
                         <option value="">Select Patient</option>
@@ -396,7 +428,7 @@ const Documents = () => {
                       <input
                         type="file"
                         id="file-input"
-                        onChange={(e) => setFormData({...formData, file: e.target.files[0]})}
+                        onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })}
                         required
                       />
                       <label htmlFor="file-input" className="file-upload-label">
@@ -409,7 +441,7 @@ const Documents = () => {
                     <label>Document Type *</label>
                     <select
                       value={formData.documentType}
-                      onChange={(e) => setFormData({...formData, documentType: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, documentType: e.target.value })}
                       required
                     >
                       <option value="LAB_REPORT">Lab Report</option>
@@ -430,7 +462,7 @@ const Documents = () => {
                       <input
                         type="checkbox"
                         checked={formData.isConfidential}
-                        onChange={(e) => setFormData({...formData, isConfidential: e.target.checked})}
+                        onChange={(e) => setFormData({ ...formData, isConfidential: e.target.checked })}
                       />
                       Mark as Confidential
                     </label>
@@ -439,15 +471,15 @@ const Documents = () => {
                     <label>Description</label>
                     <textarea
                       value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={2}
                       placeholder="Optional description..."
                     />
                   </div>
                 </div>
-                <div className="form-actions">
-                  <button type="button" className="cancel-btn" onClick={closeModal}>Cancel</button>
-                  <button type="submit" className="submit-btn" disabled={uploading}>
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={closeModal}>Cancel</button>
+                  <button type="submit" className="btn-primary" disabled={uploading}>
                     {uploading ? 'Uploading...' : 'Upload'}
                   </button>
                 </div>

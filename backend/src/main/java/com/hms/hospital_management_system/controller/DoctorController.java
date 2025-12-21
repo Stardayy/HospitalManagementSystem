@@ -4,6 +4,8 @@ import com.hms.hospital_management_system.entity.Doctor;
 import com.hms.hospital_management_system.entity.User;
 import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.DoctorService;
+import com.hms.hospital_management_system.util.AuditHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +18,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/doctors")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
 public class DoctorController {
 
     private final DoctorService doctorService;
+    private final AuditHelper auditHelper;
 
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -32,11 +35,9 @@ public class DoctorController {
     @GetMapping
     public ResponseEntity<List<Doctor>> getAllDoctors() {
         User currentUser = getCurrentUser();
-        // Patients can only see doctors they have appointments with
         if (currentUser != null && currentUser.getRole() == User.Role.PATIENT && currentUser.getPatientId() != null) {
             return ResponseEntity.ok(doctorService.getDoctorsByPatient(currentUser.getPatientId()));
         }
-        // Doctors and admins can see all doctors
         return ResponseEntity.ok(doctorService.getAllDoctors());
     }
 
@@ -90,10 +91,13 @@ public class DoctorController {
     }
 
     @PostMapping
-    public ResponseEntity<Doctor> createDoctor(@RequestBody Doctor doctor, 
-                                               @RequestParam(required = false) Long departmentId) {
+    public ResponseEntity<Doctor> createDoctor(@RequestBody Doctor doctor,
+            @RequestParam(required = false) Long departmentId,
+            HttpServletRequest request) {
         try {
             Doctor createdDoctor = doctorService.createDoctorWithDepartment(doctor, departmentId);
+            auditHelper.logCreate("Doctor", createdDoctor.getId().toString(),
+                    "Created doctor: Dr. " + doctor.getFirstName() + " " + doctor.getLastName(), request);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdDoctor);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
@@ -101,9 +105,12 @@ public class DoctorController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Doctor> updateDoctor(@PathVariable Long id, @RequestBody Doctor doctor) {
+    public ResponseEntity<Doctor> updateDoctor(@PathVariable Long id, @RequestBody Doctor doctor,
+            HttpServletRequest request) {
         try {
             Doctor updatedDoctor = doctorService.updateDoctor(id, doctor);
+            auditHelper.logUpdate("Doctor", id.toString(),
+                    "Updated doctor: Dr. " + doctor.getFirstName() + " " + doctor.getLastName(), request);
             return ResponseEntity.ok(updatedDoctor);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -111,9 +118,11 @@ public class DoctorController {
     }
 
     @PutMapping("/{id}/department/{departmentId}")
-    public ResponseEntity<Doctor> assignDepartment(@PathVariable Long id, @PathVariable Long departmentId) {
+    public ResponseEntity<Doctor> assignDepartment(@PathVariable Long id, @PathVariable Long departmentId,
+            HttpServletRequest request) {
         try {
             Doctor updatedDoctor = doctorService.assignDepartment(id, departmentId);
+            auditHelper.logUpdate("Doctor", id.toString(), "Assigned to department " + departmentId, request);
             return ResponseEntity.ok(updatedDoctor);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -121,8 +130,9 @@ public class DoctorController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDoctor(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteDoctor(@PathVariable Long id, HttpServletRequest request) {
         try {
+            auditHelper.logDelete("Doctor", id.toString(), "Deleted doctor", request);
             doctorService.deleteDoctor(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {

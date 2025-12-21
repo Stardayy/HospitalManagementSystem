@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiDollarSign, FiCreditCard, FiCheckCircle, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiDollarSign, FiCreditCard, FiCheckCircle, FiFilter, FiSearch } from 'react-icons/fi';
 import api from '../api/api';
+import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
@@ -154,7 +155,7 @@ const Payments = () => {
   };
 
   const getStatusClass = (status) => {
-    switch(status) {
+    switch (status) {
       case 'PAID': return 'status-completed';
       case 'PENDING': return 'status-scheduled';
       case 'PARTIAL': return 'status-confirmed';
@@ -172,7 +173,7 @@ const Payments = () => {
       if (filters.paymentMethod) params.append('paymentMethod', filters.paymentMethod);
       if (sort.sortBy) params.append('sortBy', sort.sortBy);
       if (sort.sortDirection) params.append('sortDirection', sort.sortDirection);
-      
+
       const data = await api.get(`/bills/filter?${params.toString()}`);
       setBills(data);
       setActiveFilters(filters);
@@ -251,11 +252,23 @@ const Payments = () => {
   const activeFilterCount = Object.values(activeFilters).filter(v => v !== '' && v !== false && v !== undefined).length;
 
   const filteredBills = bills.filter(bill => {
-    const matchesSearch = 
+    const matchesSearch =
       bill.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       bill.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
+
+  // Pagination calculation
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const paginatedBills = filteredBills.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters, currentSort]);
 
   const totalRevenue = bills.filter(b => b.paymentStatus === 'PAID').reduce((sum, b) => sum + (b.netAmount || 0), 0);
   const pendingAmount = bills.filter(b => b.paymentStatus === 'PENDING').reduce((sum, b) => sum + (b.netAmount || 0), 0);
@@ -263,13 +276,9 @@ const Payments = () => {
   return (
     <div className="dashboard-container">
       <Sidebar />
-      
-      <main className="main-content">
-        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Search bills..." />
 
-        <div className="page-header">
-          <h1>Payments</h1>
-        </div>
+      <main className="main-content">
+        <Header pageTitle="Payments" />
 
         <div className="stats-row">
           <div className="stat-card">
@@ -312,6 +321,15 @@ const Payments = () => {
 
         <div className="page-toolbar">
           <div className="search-filter">
+            <div className="search-box">
+              <FiSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search bills..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
               <FiFilter /> Filter
               {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
@@ -367,7 +385,7 @@ const Payments = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredBills.map((bill) => (
+                {paginatedBills.map((bill) => (
                   <tr key={bill.id}>
                     <td>{bill.id}</td>
                     <td>{bill.patient?.firstName} {bill.patient?.lastName}</td>
@@ -392,8 +410,8 @@ const Payments = () => {
                     <td>
                       <div className="action-buttons">
                         {bill.paymentStatus === 'PENDING' && (
-                          <button 
-                            className="btn-icon btn-success" 
+                          <button
+                            className="btn-icon btn-success"
                             onClick={() => openPayModal(bill)}
                             title="Process Payment"
                           >
@@ -412,11 +430,22 @@ const Payments = () => {
                 ))}
               </tbody>
             </table>
-            {filteredBills.length === 0 && (
-              <div className="no-data">No bills found</div>
+            {paginatedBills.length === 0 && (
+              <div className="no-data">No bills found matching your search.</div>
             )}
           </div>
         )}
+
+        {/* Pagination */
+          !loading && filteredBills.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredBills.length / itemsPerPage)}
+              onPageChange={setCurrentPage}
+              totalItems={filteredBills.length}
+              itemsPerPage={itemsPerPage}
+            />
+          )}
 
         {showModal && (
           <div className="modal-overlay" onClick={closeModal}>
@@ -431,7 +460,7 @@ const Payments = () => {
                     <label>Patient *</label>
                     <select
                       value={formData.patientId}
-                      onChange={(e) => setFormData({...formData, patientId: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
                       required
                       disabled={editingBill}
                     >
@@ -446,7 +475,7 @@ const Payments = () => {
                     <input
                       type="date"
                       value={formData.billDate}
-                      onChange={(e) => setFormData({...formData, billDate: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, billDate: e.target.value })}
                       required
                     />
                   </div>
@@ -455,7 +484,7 @@ const Payments = () => {
                     <input
                       type="number"
                       value={formData.consultationFee}
-                      onChange={(e) => setFormData({...formData, consultationFee: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, consultationFee: e.target.value })}
                       min="0"
                       step="0.01"
                     />
@@ -465,7 +494,7 @@ const Payments = () => {
                     <input
                       type="number"
                       value={formData.medicineCost}
-                      onChange={(e) => setFormData({...formData, medicineCost: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, medicineCost: e.target.value })}
                       min="0"
                       step="0.01"
                     />
@@ -475,7 +504,7 @@ const Payments = () => {
                     <input
                       type="number"
                       value={formData.roomCharges}
-                      onChange={(e) => setFormData({...formData, roomCharges: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, roomCharges: e.target.value })}
                       min="0"
                       step="0.01"
                     />
@@ -485,7 +514,7 @@ const Payments = () => {
                     <input
                       type="number"
                       value={formData.labCharges}
-                      onChange={(e) => setFormData({...formData, labCharges: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, labCharges: e.target.value })}
                       min="0"
                       step="0.01"
                     />
@@ -495,7 +524,7 @@ const Payments = () => {
                     <input
                       type="number"
                       value={formData.otherCharges}
-                      onChange={(e) => setFormData({...formData, otherCharges: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, otherCharges: e.target.value })}
                       min="0"
                       step="0.01"
                     />
@@ -505,7 +534,7 @@ const Payments = () => {
                     <input
                       type="number"
                       value={formData.discount}
-                      onChange={(e) => setFormData({...formData, discount: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
                       min="0"
                       step="0.01"
                     />
@@ -515,7 +544,7 @@ const Payments = () => {
                     <input
                       type="number"
                       value={formData.tax}
-                      onChange={(e) => setFormData({...formData, tax: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, tax: e.target.value })}
                       min="0"
                       step="0.01"
                     />
@@ -524,7 +553,7 @@ const Payments = () => {
                     <label>Notes</label>
                     <textarea
                       value={formData.notes}
-                      onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       rows="2"
                     />
                   </div>

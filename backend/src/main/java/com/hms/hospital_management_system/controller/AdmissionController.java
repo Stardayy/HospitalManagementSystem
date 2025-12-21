@@ -22,16 +22,19 @@ import com.hms.hospital_management_system.entity.Admission;
 import com.hms.hospital_management_system.entity.Admission.AdmissionStatus;
 import com.hms.hospital_management_system.entity.Admission.AdmissionType;
 import com.hms.hospital_management_system.service.AdmissionService;
+import com.hms.hospital_management_system.util.AuditHelper;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/admissions")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
 public class AdmissionController {
 
     private final AdmissionService admissionService;
+    private final AuditHelper auditHelper;
 
     @GetMapping
     public ResponseEntity<List<Admission>> getAllAdmissions() {
@@ -82,40 +85,55 @@ public class AdmissionController {
     }
 
     @PostMapping
-    public ResponseEntity<Admission> createAdmission(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<Admission> createAdmission(@RequestBody Map<String, Object> request,
+            HttpServletRequest httpRequest) {
         Long patientId = Long.valueOf(request.get("patientId").toString());
         Long doctorId = Long.valueOf(request.get("doctorId").toString());
         Long roomId = request.get("roomId") != null ? Long.valueOf(request.get("roomId").toString()) : null;
         String bedNumber = request.get("bedNumber") != null ? request.get("bedNumber").toString() : null;
-        AdmissionType admissionType = request.get("admissionType") != null ? 
-                AdmissionType.valueOf(request.get("admissionType").toString()) : AdmissionType.SCHEDULED;
-        String reasonForAdmission = request.get("reasonForAdmission") != null ? 
-                request.get("reasonForAdmission").toString() : null;
+        AdmissionType admissionType = request.get("admissionType") != null
+                ? AdmissionType.valueOf(request.get("admissionType").toString())
+                : AdmissionType.SCHEDULED;
+        String reasonForAdmission = request.get("reasonForAdmission") != null
+                ? request.get("reasonForAdmission").toString()
+                : null;
         String notes = request.get("notes") != null ? request.get("notes").toString() : null;
-        
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(admissionService.createAdmission(patientId, doctorId, roomId, bedNumber, 
-                        admissionType, reasonForAdmission, notes));
+
+        Admission admission = admissionService.createAdmission(patientId, doctorId, roomId, bedNumber,
+                admissionType, reasonForAdmission, notes);
+        auditHelper.logCreate("Admission", admission.getId().toString(),
+                "Patient admitted: ID " + patientId + ", type: " + admissionType, httpRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(admission);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Admission> updateAdmission(@PathVariable Long id, @RequestBody Admission admission) {
-        return ResponseEntity.ok(admissionService.updateAdmission(id, admission));
+    public ResponseEntity<Admission> updateAdmission(@PathVariable Long id, @RequestBody Admission admission,
+            HttpServletRequest request) {
+        Admission updated = admissionService.updateAdmission(id, admission);
+        auditHelper.logUpdate("Admission", id.toString(), "Updated admission details", request);
+        return ResponseEntity.ok(updated);
     }
 
     @PutMapping("/{id}/room")
     public ResponseEntity<Admission> assignRoom(@PathVariable Long id,
-                                                @RequestParam Long roomId,
-                                                @RequestParam(required = false) String bedNumber) {
-        return ResponseEntity.ok(admissionService.assignRoom(id, roomId, bedNumber));
+            @RequestParam Long roomId,
+            @RequestParam(required = false) String bedNumber,
+            HttpServletRequest request) {
+        Admission updated = admissionService.assignRoom(id, roomId, bedNumber);
+        auditHelper.logUpdate("Admission", id.toString(), "Assigned to room: " + roomId + ", bed: " + bedNumber,
+                request);
+        return ResponseEntity.ok(updated);
     }
 
     @PutMapping("/{id}/discharge")
     public ResponseEntity<Admission> dischargePatient(@PathVariable Long id,
-                                                      @RequestBody Map<String, String> request) {
+            @RequestBody Map<String, String> request,
+            HttpServletRequest httpRequest) {
         String dischargeSummary = request.get("dischargeSummary");
         String dischargeInstructions = request.get("dischargeInstructions");
-        return ResponseEntity.ok(admissionService.dischargePatient(id, dischargeSummary, dischargeInstructions));
+        Admission discharged = admissionService.dischargePatient(id, dischargeSummary, dischargeInstructions);
+        auditHelper.logUpdate("Admission", id.toString(), "Patient discharged", httpRequest);
+        return ResponseEntity.ok(discharged);
     }
 
     @GetMapping("/stats")

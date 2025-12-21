@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 public class User {
 
     public enum Role {
-        ADMIN, DOCTOR, PATIENT
+        ADMIN, DOCTOR, PATIENT, PHARMACIST, NURSE
     }
 
     @Id

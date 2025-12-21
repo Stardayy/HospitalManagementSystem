@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
         response.put("timestamp", LocalDateTime.now().toString());
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("error", "Validation Failed");
-        
+
         // Collect all field errors
         Map<String, String> fieldErrors = ex.getBindingResult()
                 .getFieldErrors()
@@ -38,9 +38,9 @@ public class GlobalExceptionHandler {
                         error -> error.getDefaultMessage() != null ? error.getDefaultMessage() : "Invalid value",
                         (existing, replacement) -> existing // Keep first error if duplicate field
                 ));
-        
+
         response.put("fieldErrors", fieldErrors);
-        
+
         // Create a summary message
         String message = ex.getBindingResult()
                 .getFieldErrors()
@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.joining(", "));
         response.put("message", message);
-        
+
         return ResponseEntity.badRequest().body(response);
     }
 
@@ -62,7 +62,7 @@ public class GlobalExceptionHandler {
         response.put("status", HttpStatus.UNAUTHORIZED.value());
         response.put("error", "Authentication Failed");
         response.put("message", "Invalid email or password");
-        
+
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
@@ -76,7 +76,7 @@ public class GlobalExceptionHandler {
         response.put("status", HttpStatus.UNAUTHORIZED.value());
         response.put("error", "Authentication Failed");
         response.put("message", "Invalid email or password");
-        
+
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
@@ -90,7 +90,7 @@ public class GlobalExceptionHandler {
         response.put("status", HttpStatus.NOT_FOUND.value());
         response.put("error", "Not Found");
         response.put("message", ex.getMessage());
-        
+
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
@@ -104,7 +104,7 @@ public class GlobalExceptionHandler {
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("error", "Bad Request");
         response.put("message", ex.getMessage());
-        
+
         return ResponseEntity.badRequest().body(response);
     }
 
@@ -118,7 +118,7 @@ public class GlobalExceptionHandler {
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("error", "Invalid Argument");
         response.put("message", ex.getMessage());
-        
+
         return ResponseEntity.badRequest().body(response);
     }
 
@@ -131,11 +131,12 @@ public class GlobalExceptionHandler {
         response.put("timestamp", LocalDateTime.now().toString());
         response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
         response.put("error", "Internal Server Error");
-        response.put("message", "An unexpected error occurred. Please try again later.");
-        
+        response.put("message",
+                ex.getMessage() != null ? ex.getMessage() : "An unexpected error occurred. Please try again later.");
+
         // Log the actual error for debugging
         ex.printStackTrace();
-        
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

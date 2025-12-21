@@ -28,7 +28,7 @@ const Notifications = () => {
   const markAsRead = async (id) => {
     try {
       await api.put(`/notifications/${id}/read`, {});
-      setNotifications(notifications.map(n => 
+      setNotifications(notifications.map(n =>
         n.id === id ? { ...n, isRead: true } : n
       ));
     } catch (error) {
@@ -55,23 +55,23 @@ const Notifications = () => {
   };
 
   const getNotificationIcon = (type) => {
-    switch(type) {
+    switch (type) {
       case 'APPOINTMENT_REMINDER': return <FiCalendar className="notif-icon appointment" />;
       case 'APPOINTMENT_CONFIRMED': return <FiCheckCircle className="notif-icon confirmed" />;
       case 'APPOINTMENT_CANCELLED': return <FiX className="notif-icon cancelled" />;
       case 'LAB_RESULT_READY': return <FiActivity className="notif-icon lab" />;
       case 'PRESCRIPTION_READY': return <FiFileText className="notif-icon prescription" />;
-      case 'BILL_GENERATED': 
-      case 'PAYMENT_RECEIVED': 
+      case 'BILL_GENERATED':
+      case 'PAYMENT_RECEIVED':
       case 'PAYMENT_DUE': return <FiDollarSign className="notif-icon payment" />;
-      case 'ADMISSION_ALERT': 
+      case 'ADMISSION_ALERT':
       case 'DISCHARGE_ALERT': return <FiAlertCircle className="notif-icon alert" />;
       default: return <FiBell className="notif-icon default" />;
     }
   };
 
   const getNotificationTypeLabel = (type) => {
-    switch(type) {
+    switch (type) {
       case 'APPOINTMENT_REMINDER': return 'Appointment Reminder';
       case 'APPOINTMENT_CONFIRMED': return 'Appointment Confirmed';
       case 'APPOINTMENT_CANCELLED': return 'Appointment Cancelled';
@@ -92,7 +92,7 @@ const Notifications = () => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInSeconds = Math.floor((now - date) / 1000);
-    
+
     if (diffInSeconds < 60) return 'Just now';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
@@ -113,7 +113,7 @@ const Notifications = () => {
       <div className="dashboard">
         <Sidebar />
         <div className="main-content">
-          <Header title="Notifications" />
+          <Header pageTitle="Notifications" />
           <div className="loading">Loading...</div>
         </div>
       </div>
@@ -124,24 +124,24 @@ const Notifications = () => {
     <div className="dashboard">
       <Sidebar />
       <div className="main-content">
-        <Header title="Notifications" />
+        <Header pageTitle="Notifications" />
 
         {/* Toolbar */}
         <div className="page-toolbar notifications-toolbar">
           <div className="filter-tabs">
-            <button 
+            <button
               className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
               onClick={() => setFilter('all')}
             >
               All ({notifications.length})
             </button>
-            <button 
+            <button
               className={`filter-tab ${filter === 'unread' ? 'active' : ''}`}
               onClick={() => setFilter('unread')}
             >
               Unread ({unreadCount})
             </button>
-            <button 
+            <button
               className={`filter-tab ${filter === 'read' ? 'active' : ''}`}
               onClick={() => setFilter('read')}
             >
@@ -170,8 +170,8 @@ const Notifications = () => {
           ) : (
             <div className="notifications-list">
               {filteredNotifications.map(notification => (
-                <div 
-                  key={notification.id} 
+                <div
+                  key={notification.id}
                   className={`notification-item ${!notification.isRead ? 'unread' : ''}`}
                 >
                   <div className="notification-icon-wrapper">
@@ -196,16 +196,16 @@ const Notifications = () => {
                   </div>
                   <div className="notification-actions">
                     {!notification.isRead && (
-                      <button 
-                        className="action-btn mark-read" 
+                      <button
+                        className="action-btn mark-read"
                         onClick={() => markAsRead(notification.id)}
                         title="Mark as read"
                       >
                         <FiCheck />
                       </button>
                     )}
-                    <button 
-                      className="action-btn delete" 
+                    <button
+                      className="action-btn delete"
                       onClick={() => deleteNotification(notification.id)}
                       title="Delete"
                     >

@@ -70,6 +70,8 @@ export const AuthProvider = ({ children }) => {
     const isAdmin = () => user?.role === 'ADMIN';
     const isDoctor = () => user?.role === 'DOCTOR';
     const isPatient = () => user?.role === 'PATIENT';
+    const isPharmacist = () => user?.role === 'PHARMACIST';
+    const isNurse = () => user?.role === 'NURSE';
 
     const hasRole = (roles) => {
         if (!user) return false;
@@ -87,6 +89,8 @@ export const AuthProvider = ({ children }) => {
         isAdmin,
         isDoctor,
         isPatient,
+        isPharmacist,
+        isNurse,
         hasRole,
         isAuthenticated: !!user
     };

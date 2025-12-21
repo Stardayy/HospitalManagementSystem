@@ -18,17 +18,20 @@ import com.hms.hospital_management_system.dto.PasswordDTO.PasswordResetResponse;
 import com.hms.hospital_management_system.dto.UserProfileDTO;
 import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.UserService;
+import com.hms.hospital_management_system.util.AuditHelper;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
 public class UserController {
 
     private final UserService userService;
+    private final AuditHelper auditHelper;
 
     private Long getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -50,16 +53,22 @@ public class UserController {
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<UserProfileDTO> updateProfile(@Valid @RequestBody UserProfileDTO profileDTO) {
+    public ResponseEntity<UserProfileDTO> updateProfile(@Valid @RequestBody UserProfileDTO profileDTO,
+            HttpServletRequest request) {
         Long userId = getCurrentUserId();
-        return ResponseEntity.ok(userService.updateProfile(userId, profileDTO));
+        UserProfileDTO updated = userService.updateProfile(userId, profileDTO);
+        auditHelper.logUpdate("User", userId.toString(), "Updated user profile", request);
+        return ResponseEntity.ok(updated);
     }
 
     // Password change (for authenticated users)
     @PostMapping("/change-password")
     public ResponseEntity<PasswordResetResponse> changePassword(
-            @Valid @RequestBody ChangePasswordRequest request) {
+            @Valid @RequestBody ChangePasswordRequest passwordRequest,
+            HttpServletRequest httpRequest) {
         Long userId = getCurrentUserId();
-        return ResponseEntity.ok(userService.changePassword(userId, request));
+        PasswordResetResponse response = userService.changePassword(userId, passwordRequest);
+        auditHelper.logUpdate("User", userId.toString(), "Password changed", httpRequest);
+        return ResponseEntity.ok(response);
     }
 }

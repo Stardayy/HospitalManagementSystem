@@ -2,6 +2,8 @@ package com.hms.hospital_management_system.controller;
 
 import com.hms.hospital_management_system.entity.Department;
 import com.hms.hospital_management_system.service.DepartmentService;
+import com.hms.hospital_management_system.util.AuditHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,10 +14,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/departments")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
 public class DepartmentController {
 
     private final DepartmentService departmentService;
+    private final AuditHelper auditHelper;
 
     @GetMapping
     public ResponseEntity<List<Department>> getAllDepartments() {
@@ -42,9 +45,12 @@ public class DepartmentController {
     }
 
     @PostMapping
-    public ResponseEntity<Department> createDepartment(@RequestBody Department department) {
+    public ResponseEntity<Department> createDepartment(@RequestBody Department department,
+            HttpServletRequest request) {
         try {
             Department createdDepartment = departmentService.createDepartment(department);
+            auditHelper.logCreate("Department", createdDepartment.getId().toString(),
+                    "Created department: " + department.getName(), request);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdDepartment);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
@@ -52,9 +58,11 @@ public class DepartmentController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Department> updateDepartment(@PathVariable Long id, @RequestBody Department department) {
+    public ResponseEntity<Department> updateDepartment(@PathVariable Long id, @RequestBody Department department,
+            HttpServletRequest request) {
         try {
             Department updatedDepartment = departmentService.updateDepartment(id, department);
+            auditHelper.logUpdate("Department", id.toString(), "Updated department: " + department.getName(), request);
             return ResponseEntity.ok(updatedDepartment);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -62,8 +70,9 @@ public class DepartmentController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDepartment(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteDepartment(@PathVariable Long id, HttpServletRequest request) {
         try {
+            auditHelper.logDelete("Department", id.toString(), "Deleted department", request);
             departmentService.deleteDepartment(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {

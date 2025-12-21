@@ -5,6 +5,8 @@ import com.hms.hospital_management_system.entity.Appointment.AppointmentStatus;
 import com.hms.hospital_management_system.entity.User;
 import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.AppointmentService;
+import com.hms.hospital_management_system.service.AuditLogService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -21,10 +23,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/appointments")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
 public class AppointmentController {
 
     private final AppointmentService appointmentService;
+    private final AuditLogService auditLogService;
 
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -32,6 +35,16 @@ public class AppointmentController {
             return ((CustomUserDetails) auth.getPrincipal()).getUser();
         }
         return null;
+    }
+
+    private void logAction(String action, String entityId, String details, HttpServletRequest request) {
+        User user = getCurrentUser();
+        String username = user != null ? user.getEmail() : "SYSTEM";
+        Long userId = user != null ? user.getId() : null;
+        String role = user != null ? user.getRole().name() : "UNKNOWN";
+        String ipAddress = request != null ? request.getRemoteAddr() : "UNKNOWN";
+
+        auditLogService.logAction(userId, username, role, action, "Appointment", entityId, details, ipAddress);
     }
 
     @GetMapping
@@ -58,15 +71,14 @@ public class AppointmentController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortOrder) {
         User currentUser = getCurrentUser();
-        // If user is a doctor, force filter to their appointments only
         if (currentUser != null && currentUser.getRole() == User.Role.DOCTOR && currentUser.getDoctorId() != null) {
             doctorId = currentUser.getDoctorId();
         }
-        // If user is a patient, force filter to their appointments only
         if (currentUser != null && currentUser.getRole() == User.Role.PATIENT && currentUser.getPatientId() != null) {
             patientId = currentUser.getPatientId();
         }
-        return ResponseEntity.ok(appointmentService.filterAppointments(status, doctorId, patientId, startDate, endDate, sortBy, sortOrder));
+        return ResponseEntity.ok(appointmentService.filterAppointments(status, doctorId, patientId, startDate, endDate,
+                sortBy, sortOrder));
     }
 
     @GetMapping("/{id}")
@@ -115,14 +127,14 @@ public class AppointmentController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         return ResponseEntity.ok(appointmentService.getAppointmentsByDateRange(startDate, endDate));
     }
-    
+
     @GetMapping("/available-slots")
     public ResponseEntity<List<LocalTime>> getAvailableTimeSlots(
             @RequestParam Long doctorId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(appointmentService.getAvailableTimeSlots(doctorId, date));
     }
-    
+
     @GetMapping("/check-availability")
     public ResponseEntity<Map<String, Boolean>> checkTimeSlotAvailability(
             @RequestParam Long doctorId,
@@ -133,22 +145,38 @@ public class AppointmentController {
     }
 
     @PostMapping
-    public ResponseEntity<Appointment> createAppointment(
+    public ResponseEntity<?> createAppointment(
             @RequestBody Appointment appointment,
             @RequestParam Long patientId,
-            @RequestParam Long doctorId) {
+            @RequestParam Long doctorId,
+            HttpServletRequest request) {
         try {
             Appointment createdAppointment = appointmentService.createAppointment(appointment, patientId, doctorId);
+
+            // Log the action
+            logAction("CREATE", createdAppointment.getId().toString(),
+                    "Created appointment for patient " + patientId + " with doctor " + doctorId, request);
+
             return ResponseEntity.status(HttpStatus.CREATED).body(createdAppointment);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Appointment> updateAppointment(@PathVariable Long id, @RequestBody Appointment appointment) {
+    public ResponseEntity<Appointment> updateAppointment(
+            @PathVariable Long id,
+            @RequestBody Appointment appointment,
+            HttpServletRequest request) {
         try {
             Appointment updatedAppointment = appointmentService.updateAppointment(id, appointment);
+
+            // Log the action
+            logAction("UPDATE", id.toString(),
+                    "Updated appointment: date=" + appointment.getAppointmentDate() + ", status="
+                            + appointment.getStatus(),
+                    request);
+
             return ResponseEntity.ok(updatedAppointment);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -158,9 +186,14 @@ public class AppointmentController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<Appointment> updateAppointmentStatus(
             @PathVariable Long id,
-            @RequestParam AppointmentStatus status) {
+            @RequestParam AppointmentStatus status,
+            HttpServletRequest request) {
         try {
             Appointment updatedAppointment = appointmentService.updateAppointmentStatus(id, status);
+
+            // Log the action
+            logAction("UPDATE", id.toString(), "Changed status to " + status, request);
+
             return ResponseEntity.ok(updatedAppointment);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -168,8 +201,11 @@ public class AppointmentController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAppointment(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteAppointment(@PathVariable Long id, HttpServletRequest request) {
         try {
+            // Log before deletion
+            logAction("DELETE", id.toString(), "Deleted appointment", request);
+
             appointmentService.deleteAppointment(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {

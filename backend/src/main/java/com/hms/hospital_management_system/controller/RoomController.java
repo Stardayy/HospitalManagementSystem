@@ -4,6 +4,8 @@ import com.hms.hospital_management_system.entity.Room;
 import com.hms.hospital_management_system.entity.Room.RoomStatus;
 import com.hms.hospital_management_system.entity.Room.RoomType;
 import com.hms.hospital_management_system.service.RoomService;
+import com.hms.hospital_management_system.util.AuditHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +16,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/rooms")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
 public class RoomController {
 
     private final RoomService roomService;
+    private final AuditHelper auditHelper;
 
     @GetMapping
     public ResponseEntity<List<Room>> getAllRooms() {
@@ -70,9 +73,11 @@ public class RoomController {
 
     @PostMapping
     public ResponseEntity<Room> createRoom(@RequestBody Room room,
-                                           @RequestParam(required = false) Long departmentId) {
+            @RequestParam(required = false) Long departmentId, HttpServletRequest request) {
         try {
             Room createdRoom = roomService.createRoomWithDepartment(room, departmentId);
+            auditHelper.logCreate("Room", createdRoom.getId().toString(),
+                    "Created room: " + room.getRoomNumber(), request);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdRoom);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
@@ -80,9 +85,11 @@ public class RoomController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Room> updateRoom(@PathVariable Long id, @RequestBody Room room) {
+    public ResponseEntity<Room> updateRoom(@PathVariable Long id, @RequestBody Room room,
+            HttpServletRequest request) {
         try {
             Room updatedRoom = roomService.updateRoom(id, room);
+            auditHelper.logUpdate("Room", id.toString(), "Updated room: " + room.getRoomNumber(), request);
             return ResponseEntity.ok(updatedRoom);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -90,9 +97,11 @@ public class RoomController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Room> updateRoomStatus(@PathVariable Long id, @RequestParam RoomStatus status) {
+    public ResponseEntity<Room> updateRoomStatus(@PathVariable Long id, @RequestParam RoomStatus status,
+            HttpServletRequest request) {
         try {
             Room updatedRoom = roomService.updateRoomStatus(id, status);
+            auditHelper.logUpdate("Room", id.toString(), "Room status updated to: " + status, request);
             return ResponseEntity.ok(updatedRoom);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -100,9 +109,11 @@ public class RoomController {
     }
 
     @PutMapping("/{id}/department/{departmentId}")
-    public ResponseEntity<Room> assignDepartment(@PathVariable Long id, @PathVariable Long departmentId) {
+    public ResponseEntity<Room> assignDepartment(@PathVariable Long id, @PathVariable Long departmentId,
+            HttpServletRequest request) {
         try {
             Room updatedRoom = roomService.assignDepartment(id, departmentId);
+            auditHelper.logUpdate("Room", id.toString(), "Assigned to department: " + departmentId, request);
             return ResponseEntity.ok(updatedRoom);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -110,8 +121,9 @@ public class RoomController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteRoom(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteRoom(@PathVariable Long id, HttpServletRequest request) {
         try {
+            auditHelper.logDelete("Room", id.toString(), "Deleted room", request);
             roomService.deleteRoom(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {

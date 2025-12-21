@@ -6,6 +6,8 @@ import com.hms.hospital_management_system.entity.Bill.PaymentMethod;
 import com.hms.hospital_management_system.entity.User;
 import com.hms.hospital_management_system.security.CustomUserDetails;
 import com.hms.hospital_management_system.service.BillService;
+import com.hms.hospital_management_system.util.AuditHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -22,10 +24,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/bills")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"})
+@CrossOrigin(origins = { "http://localhost:5173", "http://localhost:5174", "http://localhost:3000" })
 public class BillController {
 
     private final BillService billService;
+    private final AuditHelper auditHelper;
 
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -54,7 +57,8 @@ public class BillController {
         User currentUser = getCurrentUser();
         // If user is a patient, filter from their bills only
         if (currentUser != null && currentUser.getRole() == User.Role.PATIENT && currentUser.getPatientId() != null) {
-            return ResponseEntity.ok(billService.filterBillsForPatient(currentUser.getPatientId(), status, paymentMethod, sortBy, sortOrder));
+            return ResponseEntity.ok(billService.filterBillsForPatient(currentUser.getPatientId(), status,
+                    paymentMethod, sortBy, sortOrder));
         }
         return ResponseEntity.ok(billService.filterBills(status, paymentMethod, sortBy, sortOrder));
     }
@@ -83,7 +87,7 @@ public class BillController {
 
     @GetMapping("/patient/{patientId}/status/{status}")
     public ResponseEntity<List<Bill>> getBillsByPatientAndStatus(
-            @PathVariable Long patientId, 
+            @PathVariable Long patientId,
             @PathVariable PaymentStatus status) {
         return ResponseEntity.ok(billService.getBillsByPatientAndStatus(patientId, status));
     }
@@ -106,9 +110,12 @@ public class BillController {
     }
 
     @PostMapping
-    public ResponseEntity<Bill> createBill(@RequestBody Bill bill, @RequestParam Long patientId) {
+    public ResponseEntity<Bill> createBill(@RequestBody Bill bill, @RequestParam Long patientId,
+            HttpServletRequest request) {
         try {
             Bill createdBill = billService.createBill(bill, patientId);
+            auditHelper.logCreate("Bill", createdBill.getId().toString(),
+                    "Created bill for patient ID: " + patientId + ", amount: " + createdBill.getTotalAmount(), request);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdBill);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
@@ -116,9 +123,11 @@ public class BillController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Bill> updateBill(@PathVariable Long id, @RequestBody Bill bill) {
+    public ResponseEntity<Bill> updateBill(@PathVariable Long id, @RequestBody Bill bill,
+            HttpServletRequest request) {
         try {
             Bill updatedBill = billService.updateBill(id, bill);
+            auditHelper.logUpdate("Bill", id.toString(), "Updated bill details", request);
             return ResponseEntity.ok(updatedBill);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -126,9 +135,11 @@ public class BillController {
     }
 
     @PatchMapping("/{id}/pay")
-    public ResponseEntity<Bill> processPayment(@PathVariable Long id, @RequestParam PaymentMethod paymentMethod) {
+    public ResponseEntity<Bill> processPayment(@PathVariable Long id, @RequestParam PaymentMethod paymentMethod,
+            HttpServletRequest request) {
         try {
             Bill updatedBill = billService.processPayment(id, paymentMethod);
+            auditHelper.logUpdate("Bill", id.toString(), "Payment processed via " + paymentMethod, request);
             return ResponseEntity.ok(updatedBill);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -136,9 +147,11 @@ public class BillController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Bill> updatePaymentStatus(@PathVariable Long id, @RequestParam PaymentStatus status) {
+    public ResponseEntity<Bill> updatePaymentStatus(@PathVariable Long id, @RequestParam PaymentStatus status,
+            HttpServletRequest request) {
         try {
             Bill updatedBill = billService.updatePaymentStatus(id, status);
+            auditHelper.logUpdate("Bill", id.toString(), "Payment status updated to " + status, request);
             return ResponseEntity.ok(updatedBill);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -146,8 +159,9 @@ public class BillController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBill(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteBill(@PathVariable Long id, HttpServletRequest request) {
         try {
+            auditHelper.logDelete("Bill", id.toString(), "Deleted bill", request);
             billService.deleteBill(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {

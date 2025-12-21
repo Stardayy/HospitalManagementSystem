@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail, FiAward, FiUsers, FiGrid, FiDollarSign, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiPhone, FiMail, FiAward, FiUsers, FiGrid, FiDollarSign, FiFilter, FiSearch } from 'react-icons/fi';
 import api from '../api/api';
+import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
@@ -76,8 +77,8 @@ const Doctors = () => {
           await api.put(`/doctors/${editingDoctor.id}/department/${formData.departmentId}`, {});
         }
       } else {
-        const url = formData.departmentId 
-          ? `/doctors?departmentId=${formData.departmentId}` 
+        const url = formData.departmentId
+          ? `/doctors?departmentId=${formData.departmentId}`
           : '/doctors';
         await api.post(url, doctorData);
       }
@@ -146,7 +147,7 @@ const Doctors = () => {
       if (filters.specialization) params.append('specialization', filters.specialization);
       if (sort.sortBy) params.append('sortBy', sort.sortBy);
       if (sort.sortDirection) params.append('sortDirection', sort.sortDirection);
-      
+
       const data = await api.get(`/doctors/filter?${params.toString()}`);
       setDoctors(data);
       setActiveFilters(filters);
@@ -213,23 +214,31 @@ const Doctors = () => {
   const activeFilterCount = Object.values(activeFilters).filter(v => v !== '' && v !== false && v !== undefined).length;
 
   const filteredDoctors = doctors.filter(doctor => {
-    const matchesSearch = 
+    const matchesSearch =
       doctor.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doctor.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doctor.specialization?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
+  // Pagination calculation
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const paginatedDoctors = filteredDoctors.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters, currentSort]);
+
   return (
     <div className="dashboard-container">
       <Sidebar />
-      
-      <main className="main-content">
-        <Header searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Search doctors..." />
 
-        <div className="page-header">
-          <h1>Doctors</h1>
-        </div>
+      <main className="main-content">
+        <Header pageTitle="Doctors" />
 
         <div className="stats-row">
           <div className="stat-card">
@@ -272,6 +281,15 @@ const Doctors = () => {
 
         <div className="page-toolbar">
           <div className="search-filter">
+            <div className="search-box">
+              <FiSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search doctors..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
             <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
               <FiFilter /> Filter
               {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
@@ -320,7 +338,7 @@ const Doctors = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredDoctors.map((doctor) => (
+                {paginatedDoctors.map((doctor) => (
                   <tr key={doctor.id}>
                     <td>{doctor.id}</td>
                     <td>Dr. {doctor.firstName} {doctor.lastName}</td>
@@ -349,10 +367,21 @@ const Doctors = () => {
                 ))}
               </tbody>
             </table>
-            {filteredDoctors.length === 0 && (
-              <div className="no-data">No doctors found</div>
+            {paginatedDoctors.length === 0 && (
+              <div className="no-data">No doctors found matching your search.</div>
             )}
           </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && filteredDoctors.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredDoctors.length / itemsPerPage)}
+            onPageChange={setCurrentPage}
+            totalItems={filteredDoctors.length}
+            itemsPerPage={itemsPerPage}
+          />
         )}
 
         {showModal && (
@@ -369,7 +398,7 @@ const Doctors = () => {
                     <input
                       type="text"
                       value={formData.firstName}
-                      onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                       required
                     />
                   </div>
@@ -378,7 +407,7 @@ const Doctors = () => {
                     <input
                       type="text"
                       value={formData.lastName}
-                      onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                       required
                     />
                   </div>
@@ -387,7 +416,7 @@ const Doctors = () => {
                     <input
                       type="text"
                       value={formData.specialization}
-                      onChange={(e) => setFormData({...formData, specialization: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
                       placeholder="e.g., Cardiology, Neurology"
                     />
                   </div>
@@ -395,7 +424,7 @@ const Doctors = () => {
                     <label>Department</label>
                     <select
                       value={formData.departmentId}
-                      onChange={(e) => setFormData({...formData, departmentId: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
                     >
                       <option value="">Select Department</option>
                       {departments.map(dept => (
@@ -408,7 +437,7 @@ const Doctors = () => {
                     <input
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
@@ -416,7 +445,7 @@ const Doctors = () => {
                     <input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
@@ -424,7 +453,7 @@ const Doctors = () => {
                     <input
                       type="text"
                       value={formData.licenseNumber}
-                      onChange={(e) => setFormData({...formData, licenseNumber: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
@@ -432,7 +461,7 @@ const Doctors = () => {
                     <input
                       type="number"
                       value={formData.yearsOfExperience}
-                      onChange={(e) => setFormData({...formData, yearsOfExperience: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, yearsOfExperience: e.target.value })}
                       min="0"
                     />
                   </div>
@@ -441,7 +470,7 @@ const Doctors = () => {
                     <input
                       type="number"
                       value={formData.consultationFee}
-                      onChange={(e) => setFormData({...formData, consultationFee: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, consultationFee: e.target.value })}
                       min="0"
                       step="0.01"
                     />

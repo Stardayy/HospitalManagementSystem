@@ -32,9 +32,9 @@ async function parseErrorResponse(response) {
 // Generic fetch wrapper with error handling
 async function fetchApi(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const token = getToken();
-  
+
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
@@ -47,6 +47,9 @@ async function fetchApi(endpoint, options = {}) {
 
   if (!response.ok) {
     const errorMessage = await parseErrorResponse(response);
+    if (response.status === 500) {
+      throw new Error(errorMessage || 'Server error. Please check the backend logs for details.');
+    }
     throw new Error(errorMessage);
   }
 
@@ -58,7 +61,7 @@ async function fetchApi(endpoint, options = {}) {
 // Fetch with custom token (for auth verification)
 async function fetchApiWithToken(endpoint, token, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',

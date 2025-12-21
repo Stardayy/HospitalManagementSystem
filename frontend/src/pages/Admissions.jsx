@@ -5,6 +5,7 @@ import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
 import SortDropdown from '../component/SortDropdown';
+import Pagination from '../component/Pagination';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Pages.css';
 import '../styles/FilterModal.css';
@@ -207,7 +208,7 @@ const Admissions = () => {
   };
 
   const getStatusClass = (status) => {
-    switch(status) {
+    switch (status) {
       case 'ADMITTED': return 'status-confirmed';
       case 'DISCHARGED': return 'status-completed';
       case 'TRANSFERRED': return 'status-scheduled';
@@ -217,7 +218,7 @@ const Admissions = () => {
   };
 
   const getAdmissionTypeClass = (type) => {
-    switch(type) {
+    switch (type) {
       case 'EMERGENCY': return 'type-emergency';
       case 'SURGICAL': return 'type-surgical';
       case 'MATERNITY': return 'type-maternity';
@@ -227,26 +228,25 @@ const Admissions = () => {
 
   const filteredAdmissions = admissions
     .filter(admission => {
-      const matchesSearch = 
+      const matchesSearch =
         admission.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         admission.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         admission.room?.roomNumber?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesStatus = !activeFilters.status || admission.status === activeFilters.status;
       const matchesType = !activeFilters.type || admission.admissionType === activeFilters.type;
-      
+
       return matchesSearch && matchesStatus && matchesType;
     })
     .sort((a, b) => {
       if (!currentSort.sortBy) return 0;
       let comparison = 0;
-      switch(currentSort.sortBy) {
+      switch (currentSort.sortBy) {
         case 'date':
           comparison = new Date(a.admissionDate) - new Date(b.admissionDate);
           break;
         case 'patient':
           comparison = (a.patient?.lastName || '').localeCompare(b.patient?.lastName || '');
-          break;
         case 'room':
           comparison = (a.room?.roomNumber || '').localeCompare(b.room?.roomNumber || '');
           break;
@@ -255,6 +255,18 @@ const Admissions = () => {
       }
       return currentSort.sortDirection === 'desc' ? -comparison : comparison;
     });
+
+  // Pagination calculation
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const paginatedAdmissions = filteredAdmissions.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeFilters, currentSort]);
 
   const filterConfig = [
     {
@@ -289,11 +301,11 @@ const Admissions = () => {
 
   // Calculate stats
   const currentlyAdmitted = admissions.filter(a => a.status === 'ADMITTED').length;
-  const dischargedToday = admissions.filter(a => 
-    a.status === 'DISCHARGED' && 
+  const dischargedToday = admissions.filter(a =>
+    a.status === 'DISCHARGED' &&
     a.actualDischargeDate === new Date().toISOString().split('T')[0]
   ).length;
-  const emergencyAdmissions = admissions.filter(a => 
+  const emergencyAdmissions = admissions.filter(a =>
     a.admissionType === 'EMERGENCY' && a.status === 'ADMITTED'
   ).length;
 
@@ -302,7 +314,7 @@ const Admissions = () => {
       <div className="dashboard">
         <Sidebar />
         <div className="main-content">
-          <Header title="Inpatient Admissions" />
+          <Header pageTitle="Inpatient Admissions" />
           <div className="loading">Loading...</div>
         </div>
       </div>
@@ -313,7 +325,7 @@ const Admissions = () => {
     <div className="dashboard">
       <Sidebar />
       <div className="main-content">
-        <Header title="Inpatient Admissions" />
+        <Header pageTitle="Inpatient Admissions" />
 
         {/* Stats Cards */}
         <div className="stats-row">
@@ -376,7 +388,7 @@ const Admissions = () => {
         </div>
 
         {/* Admissions Table */}
-        <div className="page-content">
+        <div className="table-container">
           <table className="data-table">
             <thead>
               <tr>
@@ -391,7 +403,7 @@ const Admissions = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredAdmissions.map(admission => (
+              {paginatedAdmissions.map(admission => (
                 <tr key={admission.id}>
                   <td>ADM-{String(admission.id).padStart(4, '0')}</td>
                   <td>{admission.patient?.firstName} {admission.patient?.lastName}</td>
@@ -417,8 +429,8 @@ const Admissions = () => {
                   <td>
                     <div className="action-buttons">
                       {admission.status === 'ADMITTED' && (isAdmin() || isDoctor()) && (
-                        <button 
-                          className="action-btn discharge" 
+                        <button
+                          className="action-btn discharge"
                           onClick={() => openDischargeModal(admission)}
                           title="Discharge Patient"
                         >
@@ -426,8 +438,8 @@ const Admissions = () => {
                         </button>
                       )}
                       {admission.status === 'DISCHARGED' && (
-                        <button 
-                          className="action-btn download" 
+                        <button
+                          className="action-btn download"
                           onClick={() => downloadAdmissionReport(admission.id)}
                           title="Download Summary"
                         >
@@ -450,6 +462,16 @@ const Admissions = () => {
               ))}
             </tbody>
           </table>
+          {/* Pagination */}
+          {!loading && filteredAdmissions.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredAdmissions.length / itemsPerPage)}
+              onPageChange={setCurrentPage}
+              totalItems={filteredAdmissions.length}
+              itemsPerPage={itemsPerPage}
+            />
+          )}
           {filteredAdmissions.length === 0 && (
             <div className="empty-state">No admissions found</div>
           )}
@@ -471,10 +493,10 @@ const Admissions = () => {
         {/* New/Edit Admission Modal */}
         {showModal && (
           <div className="modal-overlay" onClick={closeModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>{editingAdmission ? 'Edit Admission' : 'New Admission'}</h2>
-                <button className="close-btn" onClick={closeModal}><FiX /></button>
+                <button className="btn-close" onClick={closeModal}><FiX /></button>
               </div>
               <form onSubmit={handleSubmit}>
                 <div className="form-grid">
@@ -484,7 +506,7 @@ const Admissions = () => {
                         <label>Patient *</label>
                         <select
                           value={formData.patientId}
-                          onChange={(e) => setFormData({...formData, patientId: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
                           required
                         >
                           <option value="">Select Patient</option>
@@ -499,7 +521,7 @@ const Admissions = () => {
                         <label>Attending Doctor *</label>
                         <select
                           value={formData.doctorId}
-                          onChange={(e) => setFormData({...formData, doctorId: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}
                           required
                         >
                           <option value="">Select Doctor</option>
@@ -514,7 +536,7 @@ const Admissions = () => {
                         <label>Room *</label>
                         <select
                           value={formData.roomId}
-                          onChange={(e) => setFormData({...formData, roomId: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, roomId: e.target.value })}
                           required
                         >
                           <option value="">Select Room</option>
@@ -532,7 +554,7 @@ const Admissions = () => {
                     <input
                       type="text"
                       value={formData.bedNumber}
-                      onChange={(e) => setFormData({...formData, bedNumber: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, bedNumber: e.target.value })}
                       placeholder="e.g., A1"
                     />
                   </div>
@@ -541,7 +563,7 @@ const Admissions = () => {
                     <input
                       type="date"
                       value={formData.admissionDate}
-                      onChange={(e) => setFormData({...formData, admissionDate: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, admissionDate: e.target.value })}
                       required
                     />
                   </div>
@@ -550,14 +572,14 @@ const Admissions = () => {
                     <input
                       type="time"
                       value={formData.admissionTime}
-                      onChange={(e) => setFormData({...formData, admissionTime: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, admissionTime: e.target.value })}
                     />
                   </div>
                   <div className="form-group">
                     <label>Admission Type *</label>
                     <select
                       value={formData.admissionType}
-                      onChange={(e) => setFormData({...formData, admissionType: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, admissionType: e.target.value })}
                       required
                     >
                       <option value="MEDICAL">Medical</option>
@@ -571,7 +593,7 @@ const Admissions = () => {
                     <label>Diagnosis</label>
                     <textarea
                       value={formData.diagnosis}
-                      onChange={(e) => setFormData({...formData, diagnosis: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
                       rows={2}
                       placeholder="Primary diagnosis..."
                     />
@@ -580,14 +602,14 @@ const Admissions = () => {
                     <label>Notes</label>
                     <textarea
                       value={formData.notes}
-                      onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       rows={2}
                     />
                   </div>
                 </div>
-                <div className="form-actions">
-                  <button type="button" className="cancel-btn" onClick={closeModal}>Cancel</button>
-                  <button type="submit" className="submit-btn">
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={closeModal}>Cancel</button>
+                  <button type="submit" className="btn-primary">
                     {editingAdmission ? 'Update' : 'Admit Patient'}
                   </button>
                 </div>
@@ -599,10 +621,10 @@ const Admissions = () => {
         {/* Discharge Modal */}
         {showDischargeModal && dischargingAdmission && (
           <div className="modal-overlay" onClick={closeDischargeModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal modal-large" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2>Discharge Patient</h2>
-                <button className="close-btn" onClick={closeDischargeModal}><FiX /></button>
+                <button className="btn-close" onClick={closeDischargeModal}><FiX /></button>
               </div>
               <div className="discharge-info">
                 <p><strong>Patient:</strong> {dischargingAdmission.patient?.firstName} {dischargingAdmission.patient?.lastName}</p>
@@ -615,16 +637,16 @@ const Admissions = () => {
                     <label>Discharge Summary *</label>
                     <textarea
                       value={dischargeData.dischargeSummary}
-                      onChange={(e) => setDischargeData({...dischargeData, dischargeSummary: e.target.value})}
+                      onChange={(e) => setDischargeData({ ...dischargeData, dischargeSummary: e.target.value })}
                       rows={4}
                       required
                       placeholder="Enter discharge summary, instructions, and follow-up notes..."
                     />
                   </div>
                 </div>
-                <div className="form-actions">
-                  <button type="button" className="cancel-btn" onClick={closeDischargeModal}>Cancel</button>
-                  <button type="submit" className="submit-btn">Discharge Patient</button>
+                <div className="modal-footer">
+                  <button type="button" className="btn-secondary" onClick={closeDischargeModal}>Cancel</button>
+                  <button type="submit" className="btn-primary">Discharge Patient</button>
                 </div>
               </form>
             </div>

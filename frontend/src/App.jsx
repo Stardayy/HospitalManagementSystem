@@ -19,10 +19,15 @@ import Lab from './pages/Lab';
 import VitalSigns from './pages/VitalSigns';
 import Admissions from './pages/Admissions';
 import Documents from './pages/Documents';
+import Prescriptions from './pages/Prescriptions';
+import Staff from './pages/Staff';
+import Insurance from './pages/Insurance';
+import Emergency from './pages/Emergency';
 import Notifications from './pages/Notifications';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Unauthorized from './pages/Unauthorized';
+import AuditLogs from './pages/AuditLogs';
 
 function App() {
   return (
@@ -65,7 +70,7 @@ function App() {
 
           {/* Admin and Doctor routes */}
           <Route path="/patients" element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'NURSE']}>
               <Patients />
             </ProtectedRoute>
           } />
@@ -105,17 +110,17 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/lab" element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'NURSE']}>
               <Lab />
             </ProtectedRoute>
           } />
           <Route path="/vitals" element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'PATIENT']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'PATIENT', 'NURSE']}>
               <VitalSigns />
             </ProtectedRoute>
           } />
           <Route path="/admissions" element={
-            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']}>
+            <ProtectedRoute allowedRoles={['ADMIN', 'NURSE']}>
               <Admissions />
             </ProtectedRoute>
           } />
@@ -124,11 +129,37 @@ function App() {
               <Documents />
             </ProtectedRoute>
           } />
+          <Route path="/prescriptions" element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'PATIENT', 'PHARMACIST']}>
+              <Prescriptions />
+            </ProtectedRoute>
+          } />
+          <Route path="/staff" element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <Staff />
+            </ProtectedRoute>
+          } />
+          <Route path="/insurance" element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <Insurance />
+            </ProtectedRoute>
+          } />
+          <Route path="/emergency" element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'NURSE']}>
+              <Emergency />
+            </ProtectedRoute>
+          } />
           <Route path="/notifications" element={
             <ProtectedRoute>
               <Notifications />
             </ProtectedRoute>
           } />
+          <Route path="/audit-logs" element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AuditLogs />
+            </ProtectedRoute>
+          } />
+
         </Routes>
       </Router>
     </AuthProvider>
