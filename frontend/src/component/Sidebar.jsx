@@ -1,14 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { FiGrid, FiCalendar, FiUsers, FiActivity, FiMessageSquare, FiDollarSign, FiPackage, FiClock, FiLayers, FiLogOut, FiFileText, FiHome, FiHeart, FiBell, FiFile, FiUserPlus, FiDroplet, FiClipboard, FiShield } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/api';
+import '../styles/NavigationFix.css';
 
 const Sidebar = () => {
   const { user, logout, isAdmin, isDoctor, isPatient, isPharmacist, isNurse } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationCount, setNotificationCount] = useState(0);
+
+  // Refs to track scroll positions
+  const sidebarRef = useRef(null);
+  const navLinksRef = useRef(null);
+  const savedScrollPosition = useRef(0);
 
   useEffect(() => {
     const fetchUnreadCount = async () => {
@@ -41,155 +48,172 @@ const Sidebar = () => {
     }
   }, [user]);
 
+  // Restore scroll position after route change
+  useEffect(() => {
+    if (navLinksRef.current && savedScrollPosition.current > 0) {
+      navLinksRef.current.scrollTop = savedScrollPosition.current;
+    }
+  }, [location.pathname]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  // Save scroll position before navigation
+  const handleNavClick = (e) => {
+    if (navLinksRef.current) {
+      savedScrollPosition.current = navLinksRef.current.scrollTop;
+    }
+    // Blur to prevent focus scroll
+    e.currentTarget.blur();
+  };
+
   return (
-    <div className="sidebar">
+    <div className="sidebar" ref={sidebarRef}>
       <div className="logo">
         <div className="logo-icon">+</div>
         <h2>WellNest</h2>
       </div>
 
-      <ul className="nav-links">
+      <ul className="nav-links" ref={navLinksRef}>
         <li>
-          <NavLink to="/" className={({ isActive }) => isActive ? 'active' : ''}>
+
+          <NavLink to="/" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
             <FiGrid /> Dashboard
           </NavLink>
         </li>
         <li>
-          <NavLink to="/appointments" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/appointments" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
             <FiCalendar /> Appointments
           </NavLink>
         </li>
         {(isAdmin() || isDoctor() || isNurse()) && (
           <li>
-            <NavLink to="/patients" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/patients" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiUsers /> Patients
             </NavLink>
           </li>
         )}
         {(isAdmin() || isDoctor() || isPatient()) && (
           <li>
-            <NavLink to="/medical-records" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/medical-records" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiFileText /> Medical Records
             </NavLink>
           </li>
         )}
         {(isAdmin() || isDoctor() || isPatient() || isNurse()) && (
           <li>
-            <NavLink to="/vitals" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/vitals" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiHeart /> {isPatient() ? 'My Vitals' : 'Vital Signs'}
             </NavLink>
           </li>
         )}
         {(isAdmin() || isDoctor() || isNurse()) && (
           <li>
-            <NavLink to="/lab" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/lab" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiDroplet /> Lab Management
             </NavLink>
           </li>
         )}
         {(isAdmin() || isNurse()) && (
           <li>
-            <NavLink to="/admissions" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/admissions" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiUserPlus /> Admissions
             </NavLink>
           </li>
         )}
         {(isAdmin() || isDoctor() || isPatient()) && (
           <li>
-            <NavLink to="/documents" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/documents" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiFile /> {isPatient() ? 'My Documents' : 'Documents'}
             </NavLink>
           </li>
         )}
         {(isAdmin() || isDoctor() || isPatient() || isPharmacist()) && (
           <li>
-            <NavLink to="/prescriptions" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/prescriptions" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiClipboard /> {isPatient() ? 'My Prescriptions' : 'Prescriptions'}
             </NavLink>
           </li>
         )}
         {(isAdmin() || isPatient()) && (
           <li>
-            <NavLink to="/doctors" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/doctors" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiActivity /> {isPatient() ? 'My Doctors' : 'Doctors'}
             </NavLink>
           </li>
         )}
         {isAdmin() && (
           <li>
-            <NavLink to="/departments" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/departments" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiLayers /> Departments
             </NavLink>
           </li>
         )}
         {isAdmin() && (
           <li>
-            <NavLink to="/rooms" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/rooms" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiHome /> Rooms
             </NavLink>
           </li>
         )}
         {isAdmin() && (
           <li>
-            <NavLink to="/staff" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/staff" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiUsers /> Staff Management
             </NavLink>
           </li>
         )}
         {isAdmin() && (
           <li>
-            <NavLink to="/insurance" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/insurance" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiDollarSign /> Insurance Claims
             </NavLink>
           </li>
         )}
         {(isAdmin() || isDoctor() || isNurse()) && (
           <li>
-            <NavLink to="/emergency" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/emergency" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiHeart /> Emergency
             </NavLink>
           </li>
         )}
         {(isAdmin() || isDoctor() || isPatient()) && (
           <li>
-            <NavLink to="/schedule" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/schedule" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiClock /> {isPatient() ? 'My Schedule' : "Doctors' Schedule"}
             </NavLink>
           </li>
         )}
         {(isAdmin() || isPatient()) && (
           <li>
-            <NavLink to="/payments" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/payments" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiDollarSign /> {isPatient() ? 'My Payments' : 'Payments'}
             </NavLink>
           </li>
         )}
         {isAdmin() && (
           <li>
-            <NavLink to="/inventory" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/inventory" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiPackage /> Inventory
             </NavLink>
           </li>
         )}
         {isAdmin() && (
           <li>
-            <NavLink to="/audit-logs" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/audit-logs" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               <FiShield /> Audit Logs
             </NavLink>
           </li>
         )}
         <li>
-          <NavLink to="/notifications" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/notifications" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
             <FiBell /> Notifications {notificationCount > 0 && <span className="badge">{notificationCount}</span>}
           </NavLink>
         </li>
         <li>
-          <NavLink to="/messages" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/messages" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
             <FiMessageSquare /> Messages {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
           </NavLink>
         </li>

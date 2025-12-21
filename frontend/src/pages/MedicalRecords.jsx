@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { FiPlus, FiEdit2, FiTrash2, FiEye, FiX, FiFileText, FiCalendar, FiUser, FiFilter, FiSearch } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiEye, FiX, FiFileText, FiCalendar, FiUser, FiFilter, FiSearch, FiDownload } from 'react-icons/fi';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
@@ -9,6 +9,7 @@ import Pagination from '../component/Pagination';
 import api from '../api/api';
 import '../styles/Pages.css';
 import '../styles/FilterModal.css';
+import '../styles/DropdownFix.css';
 import '../styles/SortDropdown.css';
 
 const MedicalRecords = () => {
@@ -110,6 +111,35 @@ const MedicalRecords = () => {
         console.error('Error deleting medical record:', error);
         toast.error('Failed to delete medical record');
       }
+    }
+  };
+
+  const handleDownloadPDF = async (recordId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:8080/api/reports/medical-record/${recordId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `medical_record_${recordId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('PDF downloaded successfully');
+    } catch (error) {
+      console.error('Failed to download PDF:', error);
+      toast.error('Failed to download PDF');
     }
   };
 
@@ -321,6 +351,9 @@ const MedicalRecords = () => {
                       <td className="actions-cell">
                         <button className="btn-icon btn-view" onClick={() => handleView(record)} title="View">
                           <FiEye />
+                        </button>
+                        <button className="btn-icon btn-info" onClick={() => handleDownloadPDF(record.id)} title="Download PDF">
+                          <FiDownload />
                         </button>
                         <button className="btn-icon btn-edit" onClick={() => handleEdit(record)} title="Edit">
                           <FiEdit2 />

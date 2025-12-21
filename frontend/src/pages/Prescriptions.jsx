@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiTrash2, FiX, FiSearch, FiEdit2, FiEye, FiCheck, FiFilter } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiX, FiSearch, FiEdit2, FiEye, FiCheck, FiFilter, FiDownload } from 'react-icons/fi';
 import api from '../api/api';
 import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
@@ -129,6 +129,34 @@ const Prescriptions = () => {
             fetchPrescriptions();
         } catch (error) {
             console.error('Error updating status:', error);
+        }
+    };
+
+    const handleDownloadPDF = async (prescriptionId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:8080/api/reports/prescription/${prescriptionId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to download PDF');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `prescription_${prescriptionId}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Failed to download PDF:', error);
+            alert('Failed to download prescription PDF');
         }
     };
 
@@ -324,6 +352,9 @@ const Prescriptions = () => {
                                         <div className="action-buttons">
                                             <button className="action-btn view" onClick={() => viewPrescription(prescription)} title="View">
                                                 <FiEye />
+                                            </button>
+                                            <button className="action-btn download" onClick={() => handleDownloadPDF(prescription.id)} title="Download PDF">
+                                                <FiDownload />
                                             </button>
                                             {(isAdmin() || isDoctor() || isPharmacist()) && prescription.status === 'ACTIVE' && (
                                                 <>

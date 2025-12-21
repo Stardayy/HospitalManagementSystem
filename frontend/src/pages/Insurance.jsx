@@ -5,8 +5,10 @@ import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
+import SortDropdown from '../component/SortDropdown';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Pages.css';
+import '../styles/SortDropdown.css';
 
 const Insurance = () => {
     const { isAdmin } = useAuth();
@@ -17,6 +19,7 @@ const Insurance = () => {
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilters, setActiveFilters] = useState({});
+    const [currentSort, setCurrentSort] = useState({ sortBy: '', sortDirection: 'asc' });
     const [editingClaim, setEditingClaim] = useState(null);
 
     const [formData, setFormData] = useState({
@@ -165,12 +168,34 @@ const Insurance = () => {
         }
     };
 
-    const filteredClaims = claims.filter(c =>
-        c.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.insuranceProvider?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.claimNumber?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredClaims = claims
+        .filter(c =>
+            c.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.insuranceProvider?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.claimNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) => {
+            if (!currentSort.sortBy) return 0;
+            let comparison = 0;
+            switch (currentSort.sortBy) {
+                case 'claimNumber':
+                    comparison = (a.claimNumber || '').localeCompare(b.claimNumber || '');
+                    break;
+                case 'patient':
+                    comparison = `${a.patient?.firstName} ${a.patient?.lastName}`.localeCompare(`${b.patient?.firstName} ${b.patient?.lastName}`);
+                    break;
+                case 'status':
+                    comparison = (a.status || '').localeCompare(b.status || '');
+                    break;
+                case 'amount':
+                    comparison = (a.claimAmount || 0) - (b.claimAmount || 0);
+                    break;
+                default:
+                    return 0;
+            }
+            return currentSort.sortDirection === 'desc' ? -comparison : comparison;
+        });
 
     // Pagination calculation
     const [currentPage, setCurrentPage] = useState(1);
@@ -185,7 +210,14 @@ const Insurance = () => {
     }, [searchTerm, activeFilters]);
 
     const filterConfig = [
-        { name: 'status', label: 'Status', type: 'select', options: claimStatuses.map(s => ({ value: s, label: s.replace('_', ' ') })) }
+        { key: 'status', label: 'Status', type: 'select', options: claimStatuses.map(s => ({ value: s, label: s.replace('_', ' ') })) }
+    ];
+
+    const sortOptions = [
+        { value: 'claimNumber', label: 'Claim Number' },
+        { value: 'patient', label: 'Patient Name' },
+        { value: 'status', label: 'Status' },
+        { value: 'amount', label: 'Amount' }
     ];
 
     if (loading) {
@@ -213,6 +245,11 @@ const Insurance = () => {
                             <input type="text" placeholder="Search claims..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                         </div>
                         <button className="filter-btn" onClick={() => setShowFilterModal(true)}><FiFilter /> Filter</button>
+                        <SortDropdown
+                            sortOptions={sortOptions}
+                            currentSort={currentSort}
+                            onSort={setCurrentSort}
+                        />
                     </div>
                     {isAdmin() && (
                         <button className="add-btn" onClick={() => openModal()}><FiPlus /> New Claim</button>
@@ -276,7 +313,13 @@ const Insurance = () => {
                     {filteredClaims.length === 0 && <div className="empty-state">No claims found</div>}
                 </div>
 
-                {showFilterModal && <FilterModal filters={filterConfig} activeFilters={activeFilters} onApply={(f) => { setActiveFilters(f); setShowFilterModal(false); }} onClose={() => setShowFilterModal(false)} />}
+                <FilterModal
+                    isOpen={showFilterModal}
+                    filterConfig={filterConfig}
+                    onApply={(f) => { setActiveFilters(f); setShowFilterModal(false); }}
+                    onClose={() => setShowFilterModal(false)}
+                    title="Filter Insurance Claims"
+                />
 
                 {showModal && (
                     <div className="modal-overlay" onClick={closeModal}>

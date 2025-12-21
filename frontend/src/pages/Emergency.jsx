@@ -5,8 +5,10 @@ import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
+import SortDropdown from '../component/SortDropdown';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Pages.css';
+import '../styles/SortDropdown.css';
 
 const Emergency = () => {
     const { isAdmin, isDoctor } = useAuth();
@@ -18,6 +20,7 @@ const Emergency = () => {
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilters, setActiveFilters] = useState({});
+    const [currentSort, setCurrentSort] = useState({ sortBy: '', sortDirection: 'asc' });
     const [editingCase, setEditingCase] = useState(null);
 
     const [formData, setFormData] = useState({
@@ -207,11 +210,30 @@ const Emergency = () => {
         }
     };
 
-    const filteredCases = cases.filter(c =>
-        c.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.chiefComplaint?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredCases = cases
+        .filter(c =>
+            c.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.chiefComplaint?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) => {
+            if (!currentSort.sortBy) return 0;
+            let comparison = 0;
+            switch (currentSort.sortBy) {
+                case 'triage':
+                    comparison = (a.triageLevel || '').localeCompare(b.triageLevel || '');
+                    break;
+                case 'arrivalTime':
+                    comparison = new Date(a.arrivalTime) - new Date(b.arrivalTime);
+                    break;
+                case 'status':
+                    comparison = (a.status || '').localeCompare(b.status || '');
+                    break;
+                default:
+                    return 0;
+            }
+            return currentSort.sortDirection === 'desc' ? -comparison : comparison;
+        });
 
     // Pagination calculation
     const [currentPage, setCurrentPage] = useState(1);
@@ -226,8 +248,14 @@ const Emergency = () => {
     }, [searchTerm, activeFilters]);
 
     const filterConfig = [
-        { name: 'status', label: 'Status', type: 'select', options: statuses.map(s => ({ value: s, label: s.replace('_', ' ') })) },
-        { name: 'triageLevel', label: 'Triage Level', type: 'select', options: triageLevels }
+        { key: 'status', label: 'Status', type: 'select', options: statuses.map(s => ({ value: s, label: s.replace('_', ' ') })) },
+        { key: 'triageLevel', label: 'Triage Level', type: 'select', options: triageLevels }
+    ];
+
+    const sortOptions = [
+        { value: 'triage', label: 'Triage Level' },
+        { value: 'arrivalTime', label: 'Arrival Time' },
+        { value: 'status', label: 'Status' }
     ];
 
     if (loading) {
@@ -255,6 +283,11 @@ const Emergency = () => {
                             <input type="text" placeholder="Search cases..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                         </div>
                         <button className="filter-btn" onClick={() => setShowFilterModal(true)}><FiFilter /> Filter</button>
+                        <SortDropdown
+                            sortOptions={sortOptions}
+                            currentSort={currentSort}
+                            onSort={setCurrentSort}
+                        />
                     </div>
                     {(isAdmin() || isDoctor()) && (
                         <button className="add-btn" onClick={() => openModal()}><FiPlus /> New Case</button>
@@ -333,7 +366,13 @@ const Emergency = () => {
                     {filteredCases.length === 0 && <div className="empty-state">No active emergency cases</div>}
                 </div>
 
-                {showFilterModal && <FilterModal filters={filterConfig} activeFilters={activeFilters} onApply={(f) => { setActiveFilters(f); setShowFilterModal(false); }} onClose={() => setShowFilterModal(false)} />}
+                <FilterModal
+                    isOpen={showFilterModal}
+                    filterConfig={filterConfig}
+                    onApply={(f) => { setActiveFilters(f); setShowFilterModal(false); }}
+                    onClose={() => setShowFilterModal(false)}
+                    title="Filter Emergency Cases"
+                />
 
                 {showModal && (
                     <div className="modal-overlay" onClick={closeModal}>

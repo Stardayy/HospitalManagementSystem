@@ -9,7 +9,9 @@ import SortDropdown from '../component/SortDropdown';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Pages.css';
 import '../styles/FilterModal.css';
+import '../styles/DropdownFix.css';
 import '../styles/SortDropdown.css';
+import '../styles/TabButtons.css';
 
 const Lab = () => {
   const { isAdmin, isDoctor, isPatient } = useAuth();
@@ -366,7 +368,7 @@ const Lab = () => {
 
   const filterConfig = [
     {
-      name: 'status',
+      key: 'status',
       label: 'Status',
       type: 'select',
       options: [
@@ -378,7 +380,7 @@ const Lab = () => {
       ]
     },
     {
-      name: 'priority',
+      key: 'priority',
       label: 'Priority',
       type: 'select',
       options: [
@@ -598,17 +600,16 @@ const Lab = () => {
           )}
 
         {/* Filter Modal */}
-        {showFilterModal && (
-          <FilterModal
-            filters={filterConfig}
-            activeFilters={activeFilters}
-            onApply={(filters) => {
-              setActiveFilters(filters);
-              setShowFilterModal(false);
-            }}
-            onClose={() => setShowFilterModal(false)}
-          />
-        )}
+        <FilterModal
+          isOpen={showFilterModal}
+          filterConfig={filterConfig}
+          onApply={(filters) => {
+            setActiveFilters(filters);
+            setShowFilterModal(false);
+          }}
+          onClose={() => setShowFilterModal(false)}
+          title="Filter Lab Orders"
+        />
 
         {/* New/Edit Lab Order Modal */}
         {showModal && (

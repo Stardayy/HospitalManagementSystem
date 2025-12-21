@@ -6,6 +6,7 @@ import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import CustomSelect from '../component/CustomSelect';
 import '../styles/Pages.css';
+import '../styles/DropdownFix.css';
 
 const Departments = () => {
   const [departments, setDepartments] = useState([]);
@@ -40,7 +41,7 @@ const Departments = () => {
     e.preventDefault();
     try {
       if (editingDepartment) {
-        await api.put(`/departments/${editingDepartment.id}`, formData);
+        await api.put(`/ departments / ${editingDepartment.id} `, formData);
       } else {
         await api.post('/departments', formData);
       }
@@ -54,7 +55,7 @@ const Departments = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this department?')) {
       try {
-        await api.delete(`/departments/${id}`);
+        await api.delete(`/ departments / ${id} `);
         fetchDepartments();
       } catch (error) {
         console.error('Error deleting department:', error);

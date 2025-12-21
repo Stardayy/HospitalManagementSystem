@@ -5,8 +5,11 @@ import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
+import SortDropdown from '../component/SortDropdown';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Pages.css';
+import '../styles/SortDropdown.css';
+import '../styles/TabButtons.css';
 
 const Staff = () => {
     const { isAdmin } = useAuth();
@@ -20,6 +23,7 @@ const Staff = () => {
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilters, setActiveFilters] = useState({});
+    const [currentSort, setCurrentSort] = useState({ sortBy: '', sortDirection: 'asc' });
     const [editingStaff, setEditingStaff] = useState(null);
     const [editingShift, setEditingShift] = useState(null);
 
@@ -230,11 +234,33 @@ const Staff = () => {
         }
     };
 
-    const filteredStaff = staff.filter(s =>
-        s.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.role?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredStaff = staff
+        .filter(s =>
+            s.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            s.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            s.role?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .sort((a, b) => {
+            if (!currentSort.sortBy) return 0;
+            let comparison = 0;
+            switch (currentSort.sortBy) {
+                case 'name':
+                    comparison = `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+                    break;
+                case 'role':
+                    comparison = (a.role || '').localeCompare(b.role || '');
+                    break;
+                case 'department':
+                    comparison = (a.department?.name || '').localeCompare(b.department?.name || '');
+                    break;
+                case 'status':
+                    comparison = (a.status || '').localeCompare(b.status || '');
+                    break;
+                default:
+                    return 0;
+            }
+            return currentSort.sortDirection === 'desc' ? -comparison : comparison;
+        });
 
     const filteredShifts = shifts.filter(s =>
         s.staff?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -257,7 +283,14 @@ const Staff = () => {
     }, [searchTerm, activeFilters, activeTab]);
 
     const filterConfig = [
-        { name: 'role', label: 'Role', type: 'select', options: staffRoles.map(r => ({ value: r, label: r.replace('_', ' ') })) }
+        { key: 'role', label: 'Role', type: 'select', options: staffRoles.map(r => ({ value: r, label: r.replace('_', ' ') })) }
+    ];
+
+    const sortOptions = [
+        { value: 'name', label: 'Name' },
+        { value: 'role', label: 'Role' },
+        { value: 'department', label: 'Department' },
+        { value: 'status', label: 'Status' }
     ];
 
     if (loading) {
@@ -278,9 +311,10 @@ const Staff = () => {
             <div className="main-content">
                 <Header pageTitle="Staff Management" />
 
+                {/* Tab Navigation */}
                 <div className="page-tabs">
-                    <button className={activeTab === 'staff' ? 'active' : ''} onClick={() => setActiveTab('staff')}>Staff List</button>
-                    <button className={activeTab === 'shifts' ? 'active' : ''} onClick={() => setActiveTab('shifts')}>Shift Schedule</button>
+                    <button className={`tab-btn ${activeTab === 'staff' ? 'active' : ''}`} onClick={() => setActiveTab('staff')}>Staff List</button>
+                    <button className={`tab-btn ${activeTab === 'shifts' ? 'active' : ''}`} onClick={() => setActiveTab('shifts')}>Shift Schedule</button>
                 </div>
 
                 <div className="page-toolbar">
@@ -290,6 +324,11 @@ const Staff = () => {
                             <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                         </div>
                         <button className="filter-btn" onClick={() => setShowFilterModal(true)}><FiFilter /> Filter</button>
+                        <SortDropdown
+                            sortOptions={sortOptions}
+                            currentSort={currentSort}
+                            onSort={setCurrentSort}
+                        />
                     </div>
                     {isAdmin() && (
                         <button className="add-btn" onClick={() => activeTab === 'staff' ? openModal() : openShiftModal()}>
@@ -391,7 +430,13 @@ const Staff = () => {
                     />
                 )}
 
-                {showFilterModal && <FilterModal filters={filterConfig} activeFilters={activeFilters} onApply={(f) => { setActiveFilters(f); setShowFilterModal(false); }} onClose={() => setShowFilterModal(false)} />}
+                <FilterModal
+                    isOpen={showFilterModal}
+                    filterConfig={filterConfig}
+                    onApply={(f) => { setActiveFilters(f); setShowFilterModal(false); }}
+                    onClose={() => setShowFilterModal(false)}
+                    title="Filter Staff"
+                />
 
                 {showModal && (
                     <div className="modal-overlay" onClick={closeModal}>

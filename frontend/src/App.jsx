@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext';
@@ -29,10 +29,36 @@ import Register from './pages/Register';
 import Unauthorized from './pages/Unauthorized';
 import AuditLogs from './pages/AuditLogs';
 
+// Component to prevent scroll restoration on navigation
+function ScrollHandler() {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Disable browser's automatic scroll restoration
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
+
+  useEffect(() => {
+    // Save current scroll position before route change
+    const scrollY = window.scrollY;
+
+    // Restore scroll position after route change
+    // Use requestAnimationFrame to ensure DOM is updated
+    requestAnimationFrame(() => {
+      window.scrollTo(0, scrollY);
+    });
+  }, [location.pathname]);
+
+  return null;
+}
+
 function App() {
   return (
     <AuthProvider>
       <Router>
+        <ScrollHandler />
         <ToastContainer
           position="top-right"
           autoClose={3000}

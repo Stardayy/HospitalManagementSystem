@@ -25,6 +25,7 @@ com\hms\hospital_management_system\entity\Staff$StaffRole.class
 com\hms\hospital_management_system\entity\InsuranceClaim$ClaimStatus.class
 com\hms\hospital_management_system\dto\MessageDTO$ConversationDTO$ConversationDTOBuilder.class
 com\hms\hospital_management_system\util\PasswordGenerator.class
+com\hms\hospital_management_system\aspect\AuditLogAspectRemoved.class
 com\hms\hospital_management_system\dto\DashboardStats$DoctorScheduleInfo.class
 com\hms\hospital_management_system\entity\Bill$PaymentStatus.class
 com\hms\hospital_management_system\repository\StaffRepository.class
@@ -51,6 +52,7 @@ com\hms\hospital_management_system\repository\InsuranceClaimRepository.class
 com\hms\hospital_management_system\repository\AuditLogRepository.class
 com\hms\hospital_management_system\dto\PasswordDTO$ResetPasswordRequest$ResetPasswordRequestBuilder.class
 com\hms\hospital_management_system\repository\MedicalRecordRepository.class
+com\hms\hospital_management_system\util\AuditHelper.class
 com\hms\hospital_management_system\dto\PasswordDTO$ForgotPasswordRequest.class
 com\hms\hospital_management_system\controller\StaffController.class
 com\hms\hospital_management_system\entity\Room.class

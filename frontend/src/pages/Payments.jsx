@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiDollarSign, FiCreditCard, FiCheckCircle, FiFilter, FiSearch } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiDollarSign, FiCreditCard, FiCheckCircle, FiFilter, FiSearch, FiDownload } from 'react-icons/fi';
 import api from '../api/api';
 import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
@@ -8,6 +8,7 @@ import FilterModal from '../component/FilterModal';
 import SortDropdown from '../component/SortDropdown';
 import '../styles/Pages.css';
 import '../styles/FilterModal.css';
+import '../styles/DropdownFix.css';
 import '../styles/SortDropdown.css';
 
 const Payments = () => {
@@ -77,9 +78,9 @@ const Payments = () => {
       };
 
       if (editingBill) {
-        await api.put(`/bills/${editingBill.id}`, billData);
+        await api.put(`/ bills / ${editingBill.id} `, billData);
       } else {
-        await api.post(`/bills?patientId=${formData.patientId}`, billData);
+        await api.post(`/ bills ? patientId = ${formData.patientId} `, billData);
       }
       fetchBills();
       closeModal();
@@ -96,6 +97,34 @@ const Payments = () => {
       setSelectedBill(null);
     } catch (error) {
       console.error('Error processing payment:', error);
+    }
+  };
+
+  const handleDownloadPDF = async (billId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:8080/api/reports/bill/${billId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice_${billId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download PDF:', error);
+      alert('Failed to download invoice PDF');
     }
   };
 
@@ -409,6 +438,13 @@ const Payments = () => {
                     <td>{bill.notes || '-'}</td>
                     <td>
                       <div className="action-buttons">
+                        <button
+                          className="btn-icon btn-info"
+                          onClick={() => handleDownloadPDF(bill.id)}
+                          title="Download PDF"
+                        >
+                          <FiDownload />
+                        </button>
                         {bill.paymentStatus === 'PENDING' && (
                           <button
                             className="btn-icon btn-success"

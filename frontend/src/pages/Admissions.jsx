@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiSearch, FiUserCheck, FiUserX, FiDownload, FiFilter, FiHome } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiSearch, FiFilter, FiHome, FiCheck, FiUserCheck, FiUserX, FiDownload } from 'react-icons/fi';
 import api from '../api/api';
+import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
 import SortDropdown from '../component/SortDropdown';
-import Pagination from '../component/Pagination';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Pages.css';
 import '../styles/FilterModal.css';
 import '../styles/SortDropdown.css';
+import '../styles/DropdownFix.css';
 
 const Admissions = () => {
   const { isAdmin, isDoctor } = useAuth();
@@ -228,8 +229,7 @@ const Admissions = () => {
 
   const filteredAdmissions = admissions
     .filter(admission => {
-      const matchesSearch =
-        admission.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = admission.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         admission.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         admission.room?.roomNumber?.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -242,13 +242,20 @@ const Admissions = () => {
       if (!currentSort.sortBy) return 0;
       let comparison = 0;
       switch (currentSort.sortBy) {
-        case 'date':
+        case 'admissionDate':
           comparison = new Date(a.admissionDate) - new Date(b.admissionDate);
           break;
         case 'patient':
-          comparison = (a.patient?.lastName || '').localeCompare(b.patient?.lastName || '');
-        case 'room':
-          comparison = (a.room?.roomNumber || '').localeCompare(b.room?.roomNumber || '');
+          comparison = `${a.patient?.firstName} ${a.patient?.lastName}`.localeCompare(`${b.patient?.firstName} ${b.patient?.lastName}`);
+          break;
+        case 'status':
+          comparison = (a.status || '').localeCompare(b.status || '');
+          break;
+        case 'dischargeDate':
+          if (!a.dischargeDate && !b.dischargeDate) return 0;
+          if (!a.dischargeDate) return 1;
+          if (!b.dischargeDate) return -1;
+          comparison = new Date(a.dischargeDate) - new Date(b.dischargeDate);
           break;
         default:
           return 0;
@@ -270,7 +277,7 @@ const Admissions = () => {
 
   const filterConfig = [
     {
-      name: 'status',
+      key: 'status',
       label: 'Status',
       type: 'select',
       options: [
@@ -280,7 +287,7 @@ const Admissions = () => {
       ]
     },
     {
-      name: 'type',
+      key: 'type',
       label: 'Admission Type',
       type: 'select',
       options: [
@@ -294,9 +301,10 @@ const Admissions = () => {
   ];
 
   const sortOptions = [
-    { value: 'date', label: 'Admission Date' },
+    { value: 'admissionDate', label: 'Admission Date' },
     { value: 'patient', label: 'Patient Name' },
-    { value: 'room', label: 'Room Number' }
+    { value: 'status', label: 'Status' },
+    { value: 'dischargeDate', label: 'Discharge Date' }
   ];
 
   // Calculate stats
@@ -375,9 +383,9 @@ const Admissions = () => {
               <FiFilter /> Filter
             </button>
             <SortDropdown
-              options={sortOptions}
+              sortOptions={sortOptions}
               currentSort={currentSort}
-              onSortChange={setCurrentSort}
+              onSort={setCurrentSort}
             />
           </div>
           {(isAdmin() || isDoctor()) && (
@@ -478,17 +486,16 @@ const Admissions = () => {
         </div>
 
         {/* Filter Modal */}
-        {showFilterModal && (
-          <FilterModal
-            filters={filterConfig}
-            activeFilters={activeFilters}
-            onApply={(filters) => {
-              setActiveFilters(filters);
-              setShowFilterModal(false);
-            }}
-            onClose={() => setShowFilterModal(false)}
-          />
-        )}
+        <FilterModal
+          isOpen={showFilterModal}
+          filterConfig={filterConfig}
+          onApply={(filters) => {
+            setActiveFilters(filters);
+            setShowFilterModal(false);
+          }}
+          onClose={() => setShowFilterModal(false)}
+          title="Filter Admissions"
+        />
 
         {/* New/Edit Admission Modal */}
         {showModal && (

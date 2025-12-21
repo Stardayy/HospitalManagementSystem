@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Document {
 
     @Id
@@ -37,7 +37,7 @@ public class Document {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Patient patient;
 
     @Column(name = "file_name", nullable = false)
@@ -52,7 +52,7 @@ public class Document {
     @Column(name = "file_size")
     private Long fileSize; // in bytes
 
-    @Column(name = "file_path", nullable = false)
+    @Column(name = "file_path", nullable = false, length = 500)
     private String filePath;
 
     @Enumerated(EnumType.STRING)
@@ -60,7 +60,7 @@ public class Document {
     private DocumentType documentType;
 
     public enum DocumentType {
-        LAB_REPORT, PRESCRIPTION, IMAGING, DISCHARGE_SUMMARY, 
+        LAB_REPORT, PRESCRIPTION, IMAGING, DISCHARGE_SUMMARY,
         CONSENT_FORM, INSURANCE, OTHER
     }
 

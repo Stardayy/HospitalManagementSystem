@@ -21,6 +21,11 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.lowagie.text.pdf.draw.LineSeparator;
+import com.hms.hospital_management_system.entity.Prescription;
+import com.hms.hospital_management_system.entity.PrescriptionItem;
+import com.hms.hospital_management_system.repository.PrescriptionRepository;
+import com.hms.hospital_management_system.repository.MedicalRecordRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
@@ -29,7 +34,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class PdfService {
+
+    private final PrescriptionRepository prescriptionRepository;
+    private final MedicalRecordRepository medicalRecordRepository;
 
     private static final Font TITLE_FONT = new Font(Font.HELVETICA, 18, Font.BOLD, Color.DARK_GRAY);
     private static final Font HEADER_FONT = new Font(Font.HELVETICA, 12, Font.BOLD, Color.WHITE);
@@ -39,25 +48,27 @@ public class PdfService {
     private static final Color HEADER_BG_COLOR = new Color(41, 128, 185);
     private static final Color ALTERNATE_ROW_COLOR = new Color(245, 245, 245);
 
-    public byte[] generatePatientReport(Patient patient, List<MedicalRecord> medicalRecords, 
-                                         List<Appointment> appointments, List<VitalSigns> vitalSigns) {
+    public byte[] generatePatientReport(Patient patient, List<MedicalRecord> medicalRecords,
+            List<Appointment> appointments, List<VitalSigns> vitalSigns) {
         Document document = new Document(PageSize.A4);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        
+
         try {
             PdfWriter.getInstance(document, baos);
             document.open();
-            
+
             // Header
             addHeader(document, "Patient Medical Report");
-            
+
             // Patient Information
             addSectionTitle(document, "Patient Information");
             PdfPTable patientTable = new PdfPTable(2);
             patientTable.setWidthPercentage(100);
             addTableRow(patientTable, "Name:", patient.getFirstName() + " " + patient.getLastName());
-            addTableRow(patientTable, "Date of Birth:", patient.getDateOfBirth() != null ? 
-                patient.getDateOfBirth().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) : "N/A");
+            addTableRow(patientTable, "Date of Birth:",
+                    patient.getDateOfBirth() != null
+                            ? patient.getDateOfBirth().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                            : "N/A");
             addTableRow(patientTable, "Gender:", patient.getGender() != null ? patient.getGender() : "N/A");
             addTableRow(patientTable, "Blood Type:", patient.getBloodType() != null ? patient.getBloodType() : "N/A");
             addTableRow(patientTable, "Phone:", patient.getPhone() != null ? patient.getPhone() : "N/A");
@@ -65,142 +76,166 @@ public class PdfService {
             addTableRow(patientTable, "Address:", patient.getAddress() != null ? patient.getAddress() : "N/A");
             document.add(patientTable);
             document.add(Chunk.NEWLINE);
-            
+
             // Vital Signs (Latest)
             if (vitalSigns != null && !vitalSigns.isEmpty()) {
                 addSectionTitle(document, "Latest Vital Signs");
                 VitalSigns latest = vitalSigns.get(0);
                 PdfPTable vitalsTable = new PdfPTable(4);
                 vitalsTable.setWidthPercentage(100);
-                addVitalCell(vitalsTable, "Temperature", latest.getTemperature() != null ? latest.getTemperature() + "°C" : "N/A");
-                addVitalCell(vitalsTable, "Blood Pressure", latest.getBloodPressureSystolic() + "/" + latest.getBloodPressureDiastolic() + " mmHg");
-                addVitalCell(vitalsTable, "Heart Rate", latest.getHeartRate() != null ? latest.getHeartRate() + " bpm" : "N/A");
-                addVitalCell(vitalsTable, "SpO2", latest.getOxygenSaturation() != null ? latest.getOxygenSaturation() + "%" : "N/A");
+                addVitalCell(vitalsTable, "Temperature",
+                        latest.getTemperature() != null ? latest.getTemperature() + "°C" : "N/A");
+                addVitalCell(vitalsTable, "Blood Pressure",
+                        latest.getBloodPressureSystolic() + "/" + latest.getBloodPressureDiastolic() + " mmHg");
+                addVitalCell(vitalsTable, "Heart Rate",
+                        latest.getHeartRate() != null ? latest.getHeartRate() + " bpm" : "N/A");
+                addVitalCell(vitalsTable, "SpO2",
+                        latest.getOxygenSaturation() != null ? latest.getOxygenSaturation() + "%" : "N/A");
                 document.add(vitalsTable);
                 document.add(Chunk.NEWLINE);
             }
-            
+
             // Medical Records
             if (medicalRecords != null && !medicalRecords.isEmpty()) {
                 addSectionTitle(document, "Medical History");
-                PdfPTable recordsTable = new PdfPTable(new float[]{1, 2, 2, 3});
+                PdfPTable recordsTable = new PdfPTable(new float[] { 1, 2, 2, 3 });
                 recordsTable.setWidthPercentage(100);
                 addHeaderCell(recordsTable, "Date");
                 addHeaderCell(recordsTable, "Diagnosis");
                 addHeaderCell(recordsTable, "Doctor");
                 addHeaderCell(recordsTable, "Notes");
-                
+
                 boolean alternate = false;
                 for (MedicalRecord record : medicalRecords) {
                     Color bgColor = alternate ? ALTERNATE_ROW_COLOR : Color.WHITE;
-                    addDataCell(recordsTable, record.getRecordDate() != null ? 
-                        record.getRecordDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) : "N/A", bgColor);
+                    addDataCell(recordsTable,
+                            record.getRecordDate() != null
+                                    ? record.getRecordDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                                    : "N/A",
+                            bgColor);
                     addDataCell(recordsTable, record.getDiagnosis() != null ? record.getDiagnosis() : "N/A", bgColor);
-                    addDataCell(recordsTable, record.getDoctor() != null ? 
-                        "Dr. " + record.getDoctor().getFirstName() + " " + record.getDoctor().getLastName() : "N/A", bgColor);
+                    addDataCell(recordsTable,
+                            record.getDoctor() != null
+                                    ? "Dr. " + record.getDoctor().getFirstName() + " "
+                                            + record.getDoctor().getLastName()
+                                    : "N/A",
+                            bgColor);
                     addDataCell(recordsTable, record.getNotes() != null ? record.getNotes() : "N/A", bgColor);
                     alternate = !alternate;
                 }
                 document.add(recordsTable);
                 document.add(Chunk.NEWLINE);
             }
-            
+
             // Appointments
             if (appointments != null && !appointments.isEmpty()) {
                 addSectionTitle(document, "Appointment History");
-                PdfPTable apptTable = new PdfPTable(new float[]{1.5f, 1, 1.5f, 1, 2});
+                PdfPTable apptTable = new PdfPTable(new float[] { 1.5f, 1, 1.5f, 1, 2 });
                 apptTable.setWidthPercentage(100);
                 addHeaderCell(apptTable, "Date");
                 addHeaderCell(apptTable, "Time");
                 addHeaderCell(apptTable, "Doctor");
                 addHeaderCell(apptTable, "Status");
                 addHeaderCell(apptTable, "Reason");
-                
+
                 boolean alternate = false;
                 for (Appointment appt : appointments) {
                     Color bgColor = alternate ? ALTERNATE_ROW_COLOR : Color.WHITE;
-                    addDataCell(apptTable, appt.getAppointmentDate() != null ? 
-                        appt.getAppointmentDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) : "N/A", bgColor);
-                    addDataCell(apptTable, appt.getAppointmentTime() != null ? 
-                        appt.getAppointmentTime().format(DateTimeFormatter.ofPattern("HH:mm")) : "N/A", bgColor);
-                    addDataCell(apptTable, appt.getDoctor() != null ? 
-                        "Dr. " + appt.getDoctor().getFirstName() + " " + appt.getDoctor().getLastName() : "N/A", bgColor);
+                    addDataCell(apptTable,
+                            appt.getAppointmentDate() != null
+                                    ? appt.getAppointmentDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                                    : "N/A",
+                            bgColor);
+                    addDataCell(apptTable,
+                            appt.getAppointmentTime() != null
+                                    ? appt.getAppointmentTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+                                    : "N/A",
+                            bgColor);
+                    addDataCell(apptTable,
+                            appt.getDoctor() != null
+                                    ? "Dr. " + appt.getDoctor().getFirstName() + " " + appt.getDoctor().getLastName()
+                                    : "N/A",
+                            bgColor);
                     addDataCell(apptTable, appt.getStatus() != null ? appt.getStatus().toString() : "N/A", bgColor);
                     addDataCell(apptTable, appt.getReason() != null ? appt.getReason() : "N/A", bgColor);
                     alternate = !alternate;
                 }
                 document.add(apptTable);
             }
-            
+
             // Footer
             addFooter(document);
-            
+
         } catch (DocumentException e) {
             throw new RuntimeException("Error generating PDF", e);
         } finally {
             document.close();
         }
-        
+
         return baos.toByteArray();
     }
 
     public byte[] generateBillReport(Bill bill) {
         Document document = new Document(PageSize.A4);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        
+
         try {
             PdfWriter.getInstance(document, baos);
             document.open();
-            
+
             // Header
             addHeader(document, "Invoice / Bill");
-            
+
             // Bill Information
             Paragraph billInfo = new Paragraph();
             billInfo.add(new Chunk("Bill #: " + bill.getId() + "\n", SUBHEADER_FONT));
-            billInfo.add(new Chunk("Date: " + (bill.getBillDate() != null ? 
-                bill.getBillDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) : "N/A") + "\n", NORMAL_FONT));
-            billInfo.add(new Chunk("Status: " + (bill.getPaymentStatus() != null ? bill.getPaymentStatus() : "N/A") + "\n", NORMAL_FONT));
+            billInfo.add(new Chunk("Date: " + (bill.getBillDate() != null
+                    ? bill.getBillDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                    : "N/A") + "\n", NORMAL_FONT));
+            billInfo.add(
+                    new Chunk("Status: " + (bill.getPaymentStatus() != null ? bill.getPaymentStatus() : "N/A") + "\n",
+                            NORMAL_FONT));
             billInfo.setSpacingAfter(20);
             document.add(billInfo);
-            
+
             // Patient Information
             addSectionTitle(document, "Patient Details");
             PdfPTable patientTable = new PdfPTable(2);
             patientTable.setWidthPercentage(100);
             if (bill.getPatient() != null) {
-                addTableRow(patientTable, "Patient Name:", 
-                    bill.getPatient().getFirstName() + " " + bill.getPatient().getLastName());
-                addTableRow(patientTable, "Phone:", 
-                    bill.getPatient().getPhone() != null ? bill.getPatient().getPhone() : "N/A");
+                addTableRow(patientTable, "Patient Name:",
+                        bill.getPatient().getFirstName() + " " + bill.getPatient().getLastName());
+                addTableRow(patientTable, "Phone:",
+                        bill.getPatient().getPhone() != null ? bill.getPatient().getPhone() : "N/A");
             }
             document.add(patientTable);
             document.add(Chunk.NEWLINE);
-            
+
             // Charges Table
             addSectionTitle(document, "Charges");
-            PdfPTable chargesTable = new PdfPTable(new float[]{3, 1});
+            PdfPTable chargesTable = new PdfPTable(new float[] { 3, 1 });
             chargesTable.setWidthPercentage(100);
             addHeaderCell(chargesTable, "Description");
             addHeaderCell(chargesTable, "Amount");
-            
+
             addDataCell(chargesTable, "Medical Services", Color.WHITE);
             addDataCell(chargesTable, String.format("$%.2f", bill.getTotalAmount()), Color.WHITE);
-            
+
             // Total Row
             PdfPCell totalLabelCell = new PdfPCell(new Phrase("Total Amount", SUBHEADER_FONT));
             totalLabelCell.setBackgroundColor(new Color(230, 230, 230));
             totalLabelCell.setPadding(8);
             chargesTable.addCell(totalLabelCell);
-            
-            PdfPCell totalAmountCell = new PdfPCell(new Phrase(String.format("$%.2f", bill.getTotalAmount()), SUBHEADER_FONT));
+
+            PdfPCell totalAmountCell = new PdfPCell(
+                    new Phrase(String.format("$%.2f", bill.getTotalAmount()), SUBHEADER_FONT));
             totalAmountCell.setBackgroundColor(new Color(230, 230, 230));
             totalAmountCell.setPadding(8);
             chargesTable.addCell(totalAmountCell);
-            
+
             document.add(chargesTable);
             document.add(Chunk.NEWLINE);
-            
+
             // Payment Information
             if (bill.getPaymentMethod() != null) {
                 addSectionTitle(document, "Payment Information");
@@ -208,98 +243,106 @@ public class PdfService {
                 paymentTable.setWidthPercentage(100);
                 addTableRow(paymentTable, "Payment Method:", bill.getPaymentMethod().toString());
                 if (bill.getPaymentDate() != null) {
-                    addTableRow(paymentTable, "Payment Date:", 
-                        bill.getPaymentDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
+                    addTableRow(paymentTable, "Payment Date:",
+                            bill.getPaymentDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
                 }
                 document.add(paymentTable);
             }
-            
+
             // Footer
             addFooter(document);
-            
+
         } catch (DocumentException e) {
             throw new RuntimeException("Error generating PDF", e);
         } finally {
             document.close();
         }
-        
+
         return baos.toByteArray();
     }
 
     public byte[] generateLabReport(LabOrder labOrder, List<LabResult> results) {
         Document document = new Document(PageSize.A4);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        
+
         try {
             PdfWriter.getInstance(document, baos);
             document.open();
-            
+
             // Header
             addHeader(document, "Laboratory Report");
-            
+
             // Order Information
             addSectionTitle(document, "Order Information");
             PdfPTable orderTable = new PdfPTable(2);
             orderTable.setWidthPercentage(100);
             addTableRow(orderTable, "Order #:", labOrder.getId().toString());
-            addTableRow(orderTable, "Order Date:", labOrder.getOrderDate() != null ? 
-                labOrder.getOrderDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm")) : "N/A");
+            addTableRow(orderTable, "Order Date:",
+                    labOrder.getOrderDate() != null
+                            ? labOrder.getOrderDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm"))
+                            : "N/A");
             addTableRow(orderTable, "Status:", labOrder.getStatus() != null ? labOrder.getStatus().toString() : "N/A");
             addTableRow(orderTable, "Priority:", labOrder.getPriority() != null ? labOrder.getPriority() : "NORMAL");
             document.add(orderTable);
             document.add(Chunk.NEWLINE);
-            
+
             // Patient Information
             addSectionTitle(document, "Patient Information");
             PdfPTable patientTable = new PdfPTable(2);
             patientTable.setWidthPercentage(100);
             if (labOrder.getPatient() != null) {
-                addTableRow(patientTable, "Patient Name:", 
-                    labOrder.getPatient().getFirstName() + " " + labOrder.getPatient().getLastName());
-                addTableRow(patientTable, "Date of Birth:", labOrder.getPatient().getDateOfBirth() != null ?
-                    labOrder.getPatient().getDateOfBirth().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) : "N/A");
-                addTableRow(patientTable, "Gender:", labOrder.getPatient().getGender() != null ? 
-                    labOrder.getPatient().getGender() : "N/A");
+                addTableRow(patientTable, "Patient Name:",
+                        labOrder.getPatient().getFirstName() + " " + labOrder.getPatient().getLastName());
+                addTableRow(patientTable, "Date of Birth:", labOrder.getPatient().getDateOfBirth() != null
+                        ? labOrder.getPatient().getDateOfBirth().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                        : "N/A");
+                addTableRow(patientTable, "Gender:",
+                        labOrder.getPatient().getGender() != null ? labOrder.getPatient().getGender() : "N/A");
             }
             if (labOrder.getDoctor() != null) {
-                addTableRow(patientTable, "Ordering Physician:", 
-                    "Dr. " + labOrder.getDoctor().getFirstName() + " " + labOrder.getDoctor().getLastName());
+                addTableRow(patientTable, "Ordering Physician:",
+                        "Dr. " + labOrder.getDoctor().getFirstName() + " " + labOrder.getDoctor().getLastName());
             }
             document.add(patientTable);
             document.add(Chunk.NEWLINE);
-            
+
             // Test Results
             if (results != null && !results.isEmpty()) {
                 addSectionTitle(document, "Test Results");
-                PdfPTable resultsTable = new PdfPTable(new float[]{2, 1.5f, 1, 1.5f, 1});
+                PdfPTable resultsTable = new PdfPTable(new float[] { 2, 1.5f, 1, 1.5f, 1 });
                 resultsTable.setWidthPercentage(100);
                 addHeaderCell(resultsTable, "Test Name");
                 addHeaderCell(resultsTable, "Result");
                 addHeaderCell(resultsTable, "Unit");
                 addHeaderCell(resultsTable, "Reference Range");
                 addHeaderCell(resultsTable, "Status");
-                
+
                 boolean alternate = false;
                 for (LabResult result : results) {
                     Color bgColor = alternate ? ALTERNATE_ROW_COLOR : Color.WHITE;
-                    
+
                     // Highlight abnormal results
-                    if (result.getResultStatus() != null && 
-                        (result.getResultStatus().toString().contains("ABNORMAL") || 
-                         result.getResultStatus().toString().equals("CRITICAL"))) {
+                    if (result.getResultStatus() != null &&
+                            (result.getResultStatus().toString().contains("ABNORMAL") ||
+                                    result.getResultStatus().toString().equals("CRITICAL"))) {
                         bgColor = new Color(255, 235, 235); // Light red for abnormal
                     }
-                    
-                    addDataCell(resultsTable, result.getLabTest() != null ? result.getLabTest().getName() : "N/A", bgColor);
-                    addDataCell(resultsTable, result.getResultValue() != null ? result.getResultValue() : "N/A", bgColor);
+
+                    addDataCell(resultsTable, result.getLabTest() != null ? result.getLabTest().getName() : "N/A",
+                            bgColor);
+                    addDataCell(resultsTable, result.getResultValue() != null ? result.getResultValue() : "N/A",
+                            bgColor);
                     addDataCell(resultsTable, result.getUnit() != null ? result.getUnit() : "N/A", bgColor);
-                    addDataCell(resultsTable, result.getReferenceRange() != null ? result.getReferenceRange() : "N/A", bgColor);
-                    addDataCell(resultsTable, result.getResultStatus() != null ? result.getResultStatus().toString() : "PENDING", bgColor);
+                    addDataCell(resultsTable, result.getReferenceRange() != null ? result.getReferenceRange() : "N/A",
+                            bgColor);
+                    addDataCell(resultsTable,
+                            result.getResultStatus() != null ? result.getResultStatus().toString() : "PENDING",
+                            bgColor);
                     alternate = !alternate;
                 }
                 document.add(resultsTable);
             }
-            
+
             // Notes
             if (labOrder.getNotes() != null && !labOrder.getNotes().isEmpty()) {
                 document.add(Chunk.NEWLINE);
@@ -307,72 +350,80 @@ public class PdfService {
                 Paragraph notes = new Paragraph(labOrder.getNotes(), NORMAL_FONT);
                 document.add(notes);
             }
-            
+
             // Footer
             addFooter(document);
-            
+
         } catch (DocumentException e) {
             throw new RuntimeException("Error generating PDF", e);
         } finally {
             document.close();
         }
-        
+
         return baos.toByteArray();
     }
 
-    public byte[] generateAdmissionSummary(Admission admission, List<VitalSigns> vitalSigns, 
-                                           List<MedicalRecord> records) {
+    public byte[] generateAdmissionSummary(Admission admission, List<VitalSigns> vitalSigns,
+            List<MedicalRecord> records) {
         Document document = new Document(PageSize.A4);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        
+
         try {
             PdfWriter.getInstance(document, baos);
             document.open();
-            
+
             // Header
             addHeader(document, "Admission Summary Report");
-            
+
             // Admission Information
             addSectionTitle(document, "Admission Details");
             PdfPTable admissionTable = new PdfPTable(2);
             admissionTable.setWidthPercentage(100);
             addTableRow(admissionTable, "Admission #:", admission.getId().toString());
-            addTableRow(admissionTable, "Admission Date:", admission.getAdmissionDate() != null ? 
-                admission.getAdmissionDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) : "N/A");
-            addTableRow(admissionTable, "Admission Time:", admission.getAdmissionTime() != null ? 
-                admission.getAdmissionTime().format(DateTimeFormatter.ofPattern("HH:mm")) : "N/A");
-            addTableRow(admissionTable, "Room:", admission.getRoom() != null ? 
-                admission.getRoom().getRoomNumber() : "N/A");
-            addTableRow(admissionTable, "Bed Number:", admission.getBedNumber() != null ? admission.getBedNumber() : "N/A");
-            addTableRow(admissionTable, "Admission Type:", admission.getAdmissionType() != null ? 
-                admission.getAdmissionType().toString() : "N/A");
-            addTableRow(admissionTable, "Status:", admission.getStatus() != null ? admission.getStatus().toString() : "N/A");
+            addTableRow(admissionTable, "Admission Date:",
+                    admission.getAdmissionDate() != null
+                            ? admission.getAdmissionDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                            : "N/A");
+            addTableRow(admissionTable, "Admission Time:",
+                    admission.getAdmissionTime() != null
+                            ? admission.getAdmissionTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+                            : "N/A");
+            addTableRow(admissionTable, "Room:",
+                    admission.getRoom() != null ? admission.getRoom().getRoomNumber() : "N/A");
+            addTableRow(admissionTable, "Bed Number:",
+                    admission.getBedNumber() != null ? admission.getBedNumber() : "N/A");
+            addTableRow(admissionTable, "Admission Type:",
+                    admission.getAdmissionType() != null ? admission.getAdmissionType().toString() : "N/A");
+            addTableRow(admissionTable, "Status:",
+                    admission.getStatus() != null ? admission.getStatus().toString() : "N/A");
             if (admission.getActualDischargeDate() != null) {
-                addTableRow(admissionTable, "Discharge Date:", 
-                    admission.getActualDischargeDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
+                addTableRow(admissionTable, "Discharge Date:",
+                        admission.getActualDischargeDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
             }
             document.add(admissionTable);
             document.add(Chunk.NEWLINE);
-            
+
             // Patient Information
             addSectionTitle(document, "Patient Information");
             PdfPTable patientTable = new PdfPTable(2);
             patientTable.setWidthPercentage(100);
             if (admission.getPatient() != null) {
-                addTableRow(patientTable, "Patient Name:", 
-                    admission.getPatient().getFirstName() + " " + admission.getPatient().getLastName());
-                addTableRow(patientTable, "Date of Birth:", admission.getPatient().getDateOfBirth() != null ?
-                    admission.getPatient().getDateOfBirth().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) : "N/A");
-                addTableRow(patientTable, "Blood Type:", admission.getPatient().getBloodType() != null ? 
-                    admission.getPatient().getBloodType() : "N/A");
+                addTableRow(patientTable, "Patient Name:",
+                        admission.getPatient().getFirstName() + " " + admission.getPatient().getLastName());
+                addTableRow(patientTable, "Date of Birth:", admission.getPatient().getDateOfBirth() != null
+                        ? admission.getPatient().getDateOfBirth().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                        : "N/A");
+                addTableRow(patientTable, "Blood Type:",
+                        admission.getPatient().getBloodType() != null ? admission.getPatient().getBloodType() : "N/A");
             }
             if (admission.getAdmittingDoctor() != null) {
-                addTableRow(patientTable, "Attending Physician:", 
-                    "Dr. " + admission.getAdmittingDoctor().getFirstName() + " " + admission.getAdmittingDoctor().getLastName());
+                addTableRow(patientTable, "Attending Physician:",
+                        "Dr. " + admission.getAdmittingDoctor().getFirstName() + " "
+                                + admission.getAdmittingDoctor().getLastName());
             }
             document.add(patientTable);
             document.add(Chunk.NEWLINE);
-            
+
             // Diagnosis
             if (admission.getDiagnosis() != null) {
                 addSectionTitle(document, "Diagnosis");
@@ -380,11 +431,11 @@ public class PdfService {
                 document.add(diagnosis);
                 document.add(Chunk.NEWLINE);
             }
-            
+
             // Vital Signs History
             if (vitalSigns != null && !vitalSigns.isEmpty()) {
                 addSectionTitle(document, "Vital Signs History");
-                PdfPTable vitalsTable = new PdfPTable(new float[]{1.5f, 1, 1.5f, 1, 1, 1});
+                PdfPTable vitalsTable = new PdfPTable(new float[] { 1.5f, 1, 1.5f, 1, 1, 1 });
                 vitalsTable.setWidthPercentage(100);
                 addHeaderCell(vitalsTable, "Date/Time");
                 addHeaderCell(vitalsTable, "Temp");
@@ -392,39 +443,254 @@ public class PdfService {
                 addHeaderCell(vitalsTable, "HR");
                 addHeaderCell(vitalsTable, "SpO2");
                 addHeaderCell(vitalsTable, "Resp");
-                
+
                 boolean alternate = false;
                 for (VitalSigns vs : vitalSigns) {
                     Color bgColor = alternate ? ALTERNATE_ROW_COLOR : Color.WHITE;
-                    addDataCell(vitalsTable, vs.getRecordedAt() != null ? 
-                        vs.getRecordedAt().format(DateTimeFormatter.ofPattern("MM/dd HH:mm")) : "N/A", bgColor);
+                    addDataCell(vitalsTable,
+                            vs.getRecordedAt() != null
+                                    ? vs.getRecordedAt().format(DateTimeFormatter.ofPattern("MM/dd HH:mm"))
+                                    : "N/A",
+                            bgColor);
                     addDataCell(vitalsTable, vs.getTemperature() != null ? vs.getTemperature() + "°C" : "N/A", bgColor);
-                    addDataCell(vitalsTable, vs.getBloodPressureSystolic() + "/" + vs.getBloodPressureDiastolic(), bgColor);
+                    addDataCell(vitalsTable, vs.getBloodPressureSystolic() + "/" + vs.getBloodPressureDiastolic(),
+                            bgColor);
                     addDataCell(vitalsTable, vs.getHeartRate() != null ? vs.getHeartRate() + " bpm" : "N/A", bgColor);
-                    addDataCell(vitalsTable, vs.getOxygenSaturation() != null ? vs.getOxygenSaturation() + "%" : "N/A", bgColor);
-                    addDataCell(vitalsTable, vs.getRespiratoryRate() != null ? vs.getRespiratoryRate() + "/min" : "N/A", bgColor);
+                    addDataCell(vitalsTable, vs.getOxygenSaturation() != null ? vs.getOxygenSaturation() + "%" : "N/A",
+                            bgColor);
+                    addDataCell(vitalsTable, vs.getRespiratoryRate() != null ? vs.getRespiratoryRate() + "/min" : "N/A",
+                            bgColor);
                     alternate = !alternate;
                 }
                 document.add(vitalsTable);
                 document.add(Chunk.NEWLINE);
             }
-            
+
             // Discharge Summary
             if (admission.getDischargeSummary() != null) {
                 addSectionTitle(document, "Discharge Summary");
                 Paragraph summary = new Paragraph(admission.getDischargeSummary(), NORMAL_FONT);
                 document.add(summary);
             }
-            
+
             // Footer
             addFooter(document);
-            
+
         } catch (DocumentException e) {
             throw new RuntimeException("Error generating PDF", e);
         } finally {
             document.close();
         }
-        
+
+        return baos.toByteArray();
+    }
+
+    public byte[] generatePrescriptionReport(Long prescriptionId) {
+        Prescription prescription = prescriptionRepository.findById(prescriptionId)
+                .orElseThrow(() -> new RuntimeException("Prescription not found"));
+
+        Document document = new Document(PageSize.A4);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        try {
+            PdfWriter.getInstance(document, baos);
+            document.open();
+
+            // Header
+            addHeader(document, "Prescription");
+
+            // Prescription Information
+            Paragraph prescInfo = new Paragraph();
+            prescInfo.add(new Chunk("Prescription #: " + prescription.getId() + "\n", SUBHEADER_FONT));
+            prescInfo.add(new Chunk("Date: " + (prescription.getPrescriptionDate() != null
+                    ? prescription.getPrescriptionDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                    : "N/A") + "\n", NORMAL_FONT));
+            prescInfo.add(
+                    new Chunk("Status: " + (prescription.getStatus() != null ? prescription.getStatus() : "N/A") + "\n",
+                            NORMAL_FONT));
+            if (prescription.getExpiryDate() != null) {
+                prescInfo.add(new Chunk("Valid Until: " +
+                        prescription.getExpiryDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")) + "\n",
+                        NORMAL_FONT));
+            }
+            prescInfo.setSpacingAfter(20);
+            document.add(prescInfo);
+
+            // Patient Information
+            addSectionTitle(document, "Patient Details");
+            PdfPTable patientTable = new PdfPTable(2);
+            patientTable.setWidthPercentage(100);
+            if (prescription.getPatient() != null) {
+                addTableRow(patientTable, "Patient Name:",
+                        prescription.getPatient().getFirstName() + " " + prescription.getPatient().getLastName());
+                addTableRow(patientTable, "Date of Birth:", prescription.getPatient().getDateOfBirth() != null
+                        ? prescription.getPatient().getDateOfBirth().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                        : "N/A");
+                addTableRow(patientTable, "Phone:",
+                        prescription.getPatient().getPhone() != null ? prescription.getPatient().getPhone() : "N/A");
+            }
+            if (prescription.getDoctor() != null) {
+                addTableRow(patientTable, "Prescribing Doctor:",
+                        "Dr. " + prescription.getDoctor().getFirstName() + " "
+                                + prescription.getDoctor().getLastName());
+            }
+            document.add(patientTable);
+            document.add(Chunk.NEWLINE);
+
+            // Diagnosis
+            if (prescription.getDiagnosis() != null && !prescription.getDiagnosis().isEmpty()) {
+                addSectionTitle(document, "Diagnosis");
+                Paragraph diagnosis = new Paragraph(prescription.getDiagnosis(), NORMAL_FONT);
+                document.add(diagnosis);
+                document.add(Chunk.NEWLINE);
+            }
+
+            // Medications
+            if (prescription.getItems() != null && !prescription.getItems().isEmpty()) {
+                addSectionTitle(document, "Medications");
+                PdfPTable medsTable = new PdfPTable(new float[] { 2, 1.5f, 1.5f, 1, 2 });
+                medsTable.setWidthPercentage(100);
+                addHeaderCell(medsTable, "Medicine");
+                addHeaderCell(medsTable, "Dosage");
+                addHeaderCell(medsTable, "Frequency");
+                addHeaderCell(medsTable, "Duration");
+                addHeaderCell(medsTable, "Instructions");
+
+                boolean alternate = false;
+                for (PrescriptionItem item : prescription.getItems()) {
+                    Color bgColor = alternate ? ALTERNATE_ROW_COLOR : Color.WHITE;
+                    addDataCell(medsTable, item.getMedicine() != null ? item.getMedicine().getName() : "N/A", bgColor);
+                    addDataCell(medsTable, item.getDosage() != null ? item.getDosage() : "N/A", bgColor);
+                    addDataCell(medsTable, item.getFrequency() != null ? item.getFrequency() : "N/A", bgColor);
+                    addDataCell(medsTable, item.getDuration() != null ? item.getDuration() : "N/A", bgColor);
+                    addDataCell(medsTable, item.getInstructions() != null ? item.getInstructions() : "N/A", bgColor);
+                    alternate = !alternate;
+                }
+                document.add(medsTable);
+            }
+
+            // Notes
+            if (prescription.getNotes() != null && !prescription.getNotes().isEmpty()) {
+                document.add(Chunk.NEWLINE);
+                addSectionTitle(document, "Additional Notes");
+                Paragraph notes = new Paragraph(prescription.getNotes(), NORMAL_FONT);
+                document.add(notes);
+            }
+
+            // Footer
+            addFooter(document);
+
+        } catch (DocumentException e) {
+            throw new RuntimeException("Error generating PDF", e);
+        } finally {
+            document.close();
+        }
+
+        return baos.toByteArray();
+    }
+
+    public byte[] generateMedicalRecordReport(Long recordId) {
+        MedicalRecord record = medicalRecordRepository.findById(recordId)
+                .orElseThrow(() -> new RuntimeException("Medical Record not found"));
+
+        Document document = new Document(PageSize.A4);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        try {
+            PdfWriter.getInstance(document, baos);
+            document.open();
+
+            // Header
+            addHeader(document, "Medical Record");
+
+            // Record Information
+            Paragraph recordInfo = new Paragraph();
+            recordInfo.add(new Chunk("Record #: " + record.getId() + "\n", SUBHEADER_FONT));
+            recordInfo.add(new Chunk("Date: " + (record.getRecordDate() != null
+                    ? record.getRecordDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                    : "N/A") + "\n", NORMAL_FONT));
+            recordInfo.setSpacingAfter(20);
+            document.add(recordInfo);
+
+            // Patient Information
+            addSectionTitle(document, "Patient Details");
+            PdfPTable patientTable = new PdfPTable(2);
+            patientTable.setWidthPercentage(100);
+            if (record.getPatient() != null) {
+                addTableRow(patientTable, "Patient Name:",
+                        record.getPatient().getFirstName() + " " + record.getPatient().getLastName());
+                addTableRow(patientTable, "Date of Birth:", record.getPatient().getDateOfBirth() != null
+                        ? record.getPatient().getDateOfBirth().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                        : "N/A");
+                addTableRow(patientTable, "Blood Type:",
+                        record.getPatient().getBloodType() != null ? record.getPatient().getBloodType() : "N/A");
+            }
+            if (record.getDoctor() != null) {
+                addTableRow(patientTable, "Attending Physician:",
+                        "Dr. " + record.getDoctor().getFirstName() + " " + record.getDoctor().getLastName());
+            }
+            document.add(patientTable);
+            document.add(Chunk.NEWLINE);
+
+            // Symptoms
+            if (record.getSymptoms() != null && !record.getSymptoms().isEmpty()) {
+                addSectionTitle(document, "Symptoms");
+                Paragraph symptoms = new Paragraph(record.getSymptoms(), NORMAL_FONT);
+                document.add(symptoms);
+                document.add(Chunk.NEWLINE);
+            }
+
+            // Diagnosis
+            if (record.getDiagnosis() != null && !record.getDiagnosis().isEmpty()) {
+                addSectionTitle(document, "Diagnosis");
+                Paragraph diagnosis = new Paragraph(record.getDiagnosis(), NORMAL_FONT);
+                document.add(diagnosis);
+                document.add(Chunk.NEWLINE);
+            }
+
+            // Treatment
+            if (record.getTreatment() != null && !record.getTreatment().isEmpty()) {
+                addSectionTitle(document, "Treatment Plan");
+                Paragraph treatment = new Paragraph(record.getTreatment(), NORMAL_FONT);
+                document.add(treatment);
+                document.add(Chunk.NEWLINE);
+            }
+
+            // Prescription
+            if (record.getPrescription() != null && !record.getPrescription().isEmpty()) {
+                addSectionTitle(document, "Prescribed Medications");
+                Paragraph prescription = new Paragraph(record.getPrescription(), NORMAL_FONT);
+                document.add(prescription);
+                document.add(Chunk.NEWLINE);
+            }
+
+            // Follow-up
+            if (record.getFollowUpDate() != null) {
+                addSectionTitle(document, "Follow-up Information");
+                PdfPTable followupTable = new PdfPTable(2);
+                followupTable.setWidthPercentage(100);
+                addTableRow(followupTable, "Follow-up Date:",
+                        record.getFollowUpDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")));
+                document.add(followupTable);
+                document.add(Chunk.NEWLINE);
+            }
+
+            // Notes
+            if (record.getNotes() != null && !record.getNotes().isEmpty()) {
+                addSectionTitle(document, "Additional Notes");
+                Paragraph notes = new Paragraph(record.getNotes(), NORMAL_FONT);
+                document.add(notes);
+            }
+
+            // Footer
+            addFooter(document);
+
+        } catch (DocumentException e) {
+            throw new RuntimeException("Error generating PDF", e);
+        } finally {
+            document.close();
+        }
+
         return baos.toByteArray();
     }
 
@@ -435,7 +701,7 @@ public class PdfService {
         header.add(new Chunk(title + "\n\n", TITLE_FONT));
         header.setAlignment(Element.ALIGN_CENTER);
         document.add(header);
-        
+
         // Add a horizontal line
         LineSeparator line = new LineSeparator();
         line.setLineColor(HEADER_BG_COLOR);
@@ -455,7 +721,7 @@ public class PdfService {
         labelCell.setBorder(Rectangle.NO_BORDER);
         labelCell.setPadding(5);
         table.addCell(labelCell);
-        
+
         PdfPCell valueCell = new PdfPCell(new Phrase(value, NORMAL_FONT));
         valueCell.setBorder(Rectangle.NO_BORDER);
         valueCell.setPadding(5);
@@ -482,13 +748,13 @@ public class PdfService {
         cell.setBorder(Rectangle.BOX);
         cell.setPadding(10);
         cell.setBackgroundColor(new Color(245, 250, 255));
-        
+
         Paragraph p = new Paragraph();
         p.add(new Chunk(label + "\n", LABEL_FONT));
         p.add(new Chunk(value, new Font(Font.HELVETICA, 14, Font.BOLD, Color.BLACK)));
         p.setAlignment(Element.ALIGN_CENTER);
         cell.addElement(p);
-        
+
         table.addCell(cell);
     }
 
@@ -497,12 +763,12 @@ public class PdfService {
         LineSeparator line = new LineSeparator();
         line.setLineColor(Color.LIGHT_GRAY);
         document.add(new Chunk(line));
-        
+
         Paragraph footer = new Paragraph();
-        footer.add(new Chunk("\nGenerated by Hospital Management System\n", 
-            new Font(Font.HELVETICA, 8, Font.ITALIC, Color.GRAY)));
-        footer.add(new Chunk("This document is confidential and intended for authorized personnel only.", 
-            new Font(Font.HELVETICA, 8, Font.NORMAL, Color.GRAY)));
+        footer.add(new Chunk("\nGenerated by Hospital Management System\n",
+                new Font(Font.HELVETICA, 8, Font.ITALIC, Color.GRAY)));
+        footer.add(new Chunk("This document is confidential and intended for authorized personnel only.",
+                new Font(Font.HELVETICA, 8, Font.NORMAL, Color.GRAY)));
         footer.setAlignment(Element.ALIGN_CENTER);
         document.add(footer);
     }

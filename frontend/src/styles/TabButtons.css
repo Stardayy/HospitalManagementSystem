@@ -1,0 +1,130 @@
+/* Enhanced Tab Button Styling for Lab & Staff Management */
+\n\n.page-tabs {
+    \n display: flex;
+    \n gap: 8px;
+    \n margin-bottom: 20px;
+    \n padding: 4px;
+    \n background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    \n border-radius: 12px;
+    \n box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+    \n
+}
+
+\n\n.page-tabs button,
+\n.page-tabs .tab-btn {
+    \n position: relative;
+    \n flex: 1;
+    \n padding: 12px 24px;
+    \n border: none;
+    \n background: transparent;
+    \n color: #6c757d;
+    \n font-size: 14px;
+    \n font-weight: 500;
+    \n border-radius: 8px;
+    \n cursor: pointer;
+    \n transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    \n overflow: hidden;
+    \n
+}
+
+\n\n.page-tabs button::before,
+\n.page-tabs .tab-btn::before {
+    \n content: '';
+    \n position: absolute;
+    \n top: 0;
+    \n left: 0;
+    \n right: 0;
+    \n bottom: 0;
+    \n background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    \n opacity: 0;
+    \n transition: opacity 0.3s ease;
+    \n border-radius: 8px;
+    \n z-index: -1;
+    \n
+}
+
+\n\n.page-tabs button:hover::before,
+\n.page-tabs .tab-btn:hover::before {
+    \n opacity: 0.08;
+    \n
+}
+
+\n\n.page-tabs button.active,
+\n.page-tabs .tab-btn.active {
+    \n background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    \n color: white;
+    \n box-shadow: \n 0 4px 6px -1px rgba(102, 126, 234, 0.3), \n 0 2px 4px -1px rgba(102, 126, 234, 0.2), \n inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    \n transform: translateY(-1px);
+    \n
+}
+
+\n\n.page-tabs button.active::before,
+\n.page-tabs .tab-btn.active::before {
+    \n opacity: 1;
+    \n
+}
+
+\n\n.page-tabs button:active,
+\n.page-tabs .tab-btn:active {
+    \n transform: translateY(0);
+    \n
+}
+
+\n\n
+
+/* Add subtle icon support if buttons contain icons */
+\n.page-tabs button svg,
+\n.page-tabs .tab-btn svg {
+    \n margin-right: 6px;
+    \n vertical-align: middle;
+    \n transition: transform 0.3s ease;
+    \n
+}
+
+\n\n.page-tabs button.active svg,
+\n.page-tabs .tab-btn.active svg {
+    \n transform: scale(1.1);
+    \n
+}
+
+\n\n
+/* Responsive design */
+\n@media (max-width: 768px) {
+    \n .page-tabs {
+        \n flex-direction: column;
+        \n gap: 6px;
+        \n
+    }
+
+    \n \n .page-tabs button,
+    \n .page-tabs .tab-btn {
+        \n padding: 10px 16px;
+        \n font-size: 13px;
+        \n
+    }
+
+    \n
+}
+
+\n\n
+/* Dark mode support (optional) */
+\n@media (prefers-color-scheme: dark) {
+    \n .page-tabs {
+        \n background: linear-gradient(135deg, #1a1d29 0%, #2d3748 100%);
+        \n
+    }
+
+    \n \n .page-tabs button,
+    \n .page-tabs .tab-btn {
+        \n color: #a0aec0;
+        \n
+    }
+
+    \n \n .page-tabs button.active,
+    \n .page-tabs .tab-btn.active {
+        \n color: white;
+        \n
+    }
+
+    \n
+}

@@ -9,6 +9,7 @@ import FilterModal from '../component/FilterModal';
 import SortDropdown from '../component/SortDropdown';
 import '../styles/Pages.css';
 import '../styles/FilterModal.css';
+import '../styles/DropdownFix.css';
 import '../styles/SortDropdown.css';
 
 const Appointments = () => {

@@ -5,9 +5,11 @@ import Pagination from '../component/Pagination';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
 import FilterModal from '../component/FilterModal';
+import SortDropdown from '../component/SortDropdown';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Pages.css';
 import '../styles/FilterModal.css';
+import '../styles/SortDropdown.css';
 
 const Documents = () => {
   const { isAdmin, isDoctor, isPatient } = useAuth();
@@ -18,6 +20,7 @@ const Documents = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState({});
+  const [currentSort, setCurrentSort] = useState({ sortBy: '', sortDirection: 'asc' });
   const [selectedPatient, setSelectedPatient] = useState('');
   const [uploading, setUploading] = useState(false);
 
@@ -218,17 +221,36 @@ const Documents = () => {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  const filteredDocuments = documents.filter(doc => {
-    const matchesSearch =
-      doc.originalFileName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredDocuments = documents
+    .filter(doc => {
+      const matchesSearch =
+        doc.originalFileName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.patient?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.patient?.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesType = !activeFilters.documentType || doc.documentType === activeFilters.documentType;
+      const matchesType = !activeFilters.documentType || doc.documentType === activeFilters.documentType;
 
-    return matchesSearch && matchesType;
-  });
+      return matchesSearch && matchesType;
+    })
+    .sort((a, b) => {
+      if (!currentSort.sortBy) return 0;
+      let comparison = 0;
+      switch (currentSort.sortBy) {
+        case 'uploadDate':
+          comparison = new Date(a.uploadedAt) - new Date(b.uploadedAt);
+          break;
+        case 'type':
+          comparison = (a.documentType || '').localeCompare(b.documentType || '');
+          break;
+        case 'patient':
+          comparison = `${a.patient?.firstName} ${a.patient?.lastName}`.localeCompare(`${b.patient?.firstName} ${b.patient?.lastName}`);
+          break;
+        default:
+          return 0;
+      }
+      return currentSort.sortDirection === 'desc' ? -comparison : comparison;
+    });
 
   // Pagination calculation
   const [currentPage, setCurrentPage] = useState(1);
@@ -244,7 +266,7 @@ const Documents = () => {
 
   const filterConfig = [
     {
-      name: 'documentType',
+      key: 'documentType',
       label: 'Document Type',
       type: 'select',
       options: [
@@ -261,6 +283,12 @@ const Documents = () => {
         { value: 'OTHER', label: 'Other' }
       ]
     }
+  ];
+
+  const sortOptions = [
+    { value: 'uploadDate', label: 'Upload Date' },
+    { value: 'type', label: 'Document Type' },
+    { value: 'patient', label: 'Patient Name' }
   ];
 
   if (loading) {
@@ -310,6 +338,11 @@ const Documents = () => {
             <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
               <FiFilter /> Filter
             </button>
+            <SortDropdown
+              sortOptions={sortOptions}
+              currentSort={currentSort}
+              onSort={setCurrentSort}
+            />
           </div>
           {(isAdmin() || isDoctor()) && (
             <button className="add-btn" onClick={openModal}>
@@ -383,17 +416,16 @@ const Documents = () => {
         </div>
 
         {/* Filter Modal */}
-        {showFilterModal && (
-          <FilterModal
-            filters={filterConfig}
-            activeFilters={activeFilters}
-            onApply={(filters) => {
-              setActiveFilters(filters);
-              setShowFilterModal(false);
-            }}
-            onClose={() => setShowFilterModal(false)}
-          />
-        )}
+        <FilterModal
+          isOpen={showFilterModal}
+          filterConfig={filterConfig}
+          onApply={(filters) => {
+            setActiveFilters(filters);
+            setShowFilterModal(false);
+          }}
+          onClose={() => setShowFilterModal(false)}
+          title="Filter Documents"
+        />
 
         {/* Upload Modal */}
         {showModal && (

@@ -61,6 +61,12 @@ public class DocumentController {
     @GetMapping
     public ResponseEntity<List<Document>> getAllDocuments() {
         User currentUser = getCurrentUser();
+
+        // If user is a patient, only return their own documents
+        if (currentUser != null && currentUser.getRole() == User.Role.PATIENT && currentUser.getPatientId() != null) {
+            return ResponseEntity.ok(documentService.getDocumentsByPatient(currentUser.getPatientId()));
+        }
+
         // If user is a doctor, only return documents for their patients
         if (currentUser != null && currentUser.getRole() == User.Role.DOCTOR && currentUser.getDoctorId() != null) {
             List<Patient> doctorPatients = patientService.getPatientsByDoctor(currentUser.getDoctorId());
@@ -71,6 +77,7 @@ public class DocumentController {
                     .toList();
             return ResponseEntity.ok(filteredDocuments);
         }
+
         return ResponseEntity.ok(documentService.getAllDocuments());
     }
 

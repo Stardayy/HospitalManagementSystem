@@ -1,0 +1,59 @@
+/* Dropdown Z-Index Fix for all pages */
+/* This ensures dropdown/select elements appear above tables */
+
+.page-toolbar select,
+.toolbar-actions select,
+.filter-section select,
+.search-filter select,
+.page-filters select {
+    position: relative;
+    z-index: 1000 !important;
+}
+
+/* Ensure parent containers also have appropriate z-index */
+.page-toolbar,
+.toolbar-actions,
+.filter-section,
+.search-filter,
+.page-filters {
+    position: relative;
+    z-index: 100;
+}
+
+/* Table should have lower z-index */
+.table-container {
+    position: relative;
+    z-index: 1;
+}
+
+.data-table {
+    position: relative;
+    z-index: 1;
+}
+
+/* Specific fixes for dropdowns in different page sections */
+.sort-dropdown,
+.filter-dropdown,
+.status-dropdown,
+.priority-dropdown {
+    position: relative;
+    z-index: 1001 !important;
+}
+
+/* React-select specific fixes (if used) */
+.react-select__menu {
+    z-index: 9999 !important;
+}
+
+.react-select__control {
+    z-index: 1000 !important;
+}
+
+/* Ensure modals and overlays still work */
+.modal {
+    z-index: 10000 !important;
+}
+
+.modal-overlay {
+    z-index: 9999 !important;
+}

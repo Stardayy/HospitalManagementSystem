@@ -1,0 +1,33 @@
+/* Prevent navigation links from triggering scroll-into-view */
+.nav-links li a {
+    scroll-margin: 0;
+    scroll-margin-top: 0;
+    scroll-margin-bottom: 0;
+}
+
+/* Prevent sidebar from auto-scrolling when navigation links are focused */
+.sidebar {
+    scroll-behavior: auto !important;
+    overflow-anchor: none;
+    overflow-y: auto !important;
+    /* Allow scrolling but prevent auto-scroll */
+}
+
+.nav-links {
+    overflow-anchor: none;
+    overflow-y: auto !important;
+    /* Enable scrolling so position can be saved/restored */
+    scroll-behavior: auto !important;
+}
+
+/* Prevent focus from causing scroll */
+.nav-links li a:focus {
+    scroll-margin-top: 0;
+    outline: none;
+    /* Remove outline if needed */
+}
+
+/* Prevent any scroll behavior on navigation links */
+.nav-links li {
+    scroll-margin: 0;
+}

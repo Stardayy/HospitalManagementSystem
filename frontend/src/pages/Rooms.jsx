@@ -8,6 +8,7 @@ import SortDropdown from '../component/SortDropdown';
 import api from '../api/api';
 import '../styles/Pages.css';
 import '../styles/FilterModal.css';
+import '../styles/DropdownFix.css';
 import '../styles/SortDropdown.css';
 import Pagination from '../component/Pagination';
 

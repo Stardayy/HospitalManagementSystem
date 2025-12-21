@@ -3,15 +3,21 @@ import { toast } from 'react-toastify';
 import { FiSearch, FiFilter, FiX, FiShield, FiActivity, FiUser, FiCalendar, FiGlobe, FiInfo } from 'react-icons/fi';
 import Sidebar from '../component/Sidebar';
 import Header from '../component/Header';
+import FilterModal from '../component/FilterModal';
+import SortDropdown from '../component/SortDropdown';
 import Pagination from '../component/Pagination';
 import api from '../api/api';
 import '../styles/Pages.css';
 import '../styles/FilterModal.css';
+import '../styles/SortDropdown.css';
 
 const AuditLogs = () => {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showFilterModal, setShowFilterModal] = useState(false);
+    const [activeFilters, setActiveFilters] = useState({});
+    const [currentSort, setCurrentSort] = useState({ sortBy: '', sortDirection: 'asc' });
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -21,13 +27,14 @@ const AuditLogs = () => {
 
     useEffect(() => {
         fetchLogs();
-    }, [currentPage, searchTerm]);
+    }, [currentPage, searchTerm, currentSort]); // Added currentSort to dependencies
 
     const fetchLogs = async () => {
         try {
             setLoading(true);
             // Backend pagination is 0-indexed
-            const response = await api.get(`/audit-logs?page=${currentPage - 1}&size=${itemsPerPage}&search=${searchTerm}`);
+            const sortParam = currentSort.sortBy ? `&sortBy=${currentSort.sortBy}&sortDirection=${currentSort.sortDirection}` : '';
+            const response = await api.get(`/audit-logs?page=${currentPage - 1}&size=${itemsPerPage}&search=${searchTerm}${sortParam}`);
 
             const debugData = response.data || response; // Handle potential axios wrapper differences
             setLogs(debugData.content || []);
@@ -60,6 +67,67 @@ const AuditLogs = () => {
         return '';
     };
 
+    // Filter configuration
+    const filterConfig = [
+        {
+            key: 'action',
+            label: 'Action',
+            type: 'select',
+            options: [
+                { value: 'CREATE', label: 'Create' },
+                { value: 'UPDATE', label: 'Update' },
+                { value: 'DELETE', label: 'Delete' },
+                { value: 'LOGIN', label: 'Login' },
+                { value: 'LOGOUT', label: 'Logout' }
+            ]
+        },
+        {
+            key: 'role',
+            label: 'User Role',
+            type: 'select',
+            options: [
+                { value: 'ADMIN', label: 'Admin' },
+                { value: 'DOCTOR', label: 'Doctor' },
+                { value: 'NURSE', label: 'Nurse' },
+                { value: 'PATIENT', label: 'Patient' },
+                { value: 'PHARMACIST', label: 'Pharmacist' }
+            ]
+        }
+    ];
+
+    // Apply filters to logs
+    const filteredLogs = logs.filter(log => {
+        const matchesAction = !activeFilters.action || (log.action && log.action.includes(activeFilters.action));
+        const matchesRole = !activeFilters.role || (log.userRole === activeFilters.role);
+        return matchesAction && matchesRole;
+    });
+
+    const activeFilterCount = Object.values(activeFilters).filter(v => v !== '' && v !== undefined).length;
+
+    const handleApplyFilters = (filters) => {
+        setActiveFilters(filters);
+        setShowFilterModal(false);
+        setCurrentPage(1);
+    };
+
+    const clearFilters = () => {
+        setActiveFilters({});
+        setCurrentPage(1);
+    };
+
+    const sortOptions = [
+        { value: 'timestamp', label: 'Timestamp' },
+        { value: 'username', label: 'User' }, // Changed from 'user' to 'username' to match backend field
+        { value: 'action', label: 'Action' }
+    ];
+
+    // Sorting is now handled by the backend via fetchLogs, so this client-side sort is no longer strictly needed for `logs`
+    // but `filteredLogs` might still benefit if filters are applied client-side.
+    // However, since `fetchLogs` is triggered by `currentSort`, `logs` will already be sorted.
+    // We can simplify this by just using `filteredLogs` directly if `fetchLogs` handles sorting.
+    // For now, keeping `sortedLogs` but it will effectively be `filteredLogs` if backend sorts.
+    const sortedLogs = [...filteredLogs]; // If backend sorts, this is already sorted.
+
     return (
         <div className="dashboard-container">
             <Sidebar />
@@ -80,6 +148,20 @@ const AuditLogs = () => {
                                 }}
                             />
                         </div>
+                        <button className="filter-btn" onClick={() => setShowFilterModal(true)}>
+                            <FiFilter /> Filter
+                            {activeFilterCount > 0 && <span className="filter-count">{activeFilterCount}</span>}
+                        </button>
+                        <SortDropdown
+                            sortOptions={sortOptions}
+                            currentSort={currentSort}
+                            onSort={setCurrentSort}
+                        />
+                        {activeFilterCount > 0 && (
+                            <button className="btn-clear-filter" onClick={clearFilters}>
+                                <FiX /> Clear Filters
+                            </button>
+                        )}
                     </div>
                     <div className="toolbar-stats" style={{ marginLeft: 'auto', display: 'flex', gap: '20px', color: '#64748b', fontSize: '14px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -104,7 +186,7 @@ const AuditLogs = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {logs.length === 0 ? (
+                                {sortedLogs.length === 0 ? (
                                     <tr>
                                         <td colSpan="6" className="no-data">
                                             <div className="no-data-content">
@@ -114,10 +196,9 @@ const AuditLogs = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    logs.map((log) => (
+                                    sortedLogs.map((log) => (
                                         <tr key={log.id}>
                                             <td style={{ whiteSpace: 'nowrap', fontSize: '13px' }}>
-                                                <FiCalendar style={{ marginRight: '6px', opacity: 0.6 }} />
                                                 {formatDate(log.timestamp)}
                                             </td>
                                             <td>
@@ -161,6 +242,15 @@ const AuditLogs = () => {
                         />
                     </div>
                 )}
+
+                {/* Filter Modal */}
+                <FilterModal
+                    isOpen={showFilterModal}
+                    filterConfig={filterConfig}
+                    onApply={handleApplyFilters}
+                    onClose={() => setShowFilterModal(false)}
+                    title="Filter Audit Logs"
+                />
             </div>
         </div>
     );
