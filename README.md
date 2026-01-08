@@ -1,8 +1,4 @@
-<p align="center">
-  <img src="frontend/src/assets/hospital-logo.png" alt="Hospital Logo" width="120" height="120">
-</p>
-
-<h1 align="center">🏥 Hospital Management System</h1>
+<h1 align="center">🏥 HMS - Hospital Management System</h1>
 
 <p align="center">
   <strong>A comprehensive full-stack web application for modern healthcare management</strong>
@@ -43,9 +39,9 @@
 
 ## 🌟 Overview
 
-**MEDS (Medical Enterprise Digital Solution)** is a comprehensive Hospital Management System designed to digitize and streamline hospital operations. Built with modern web technologies, it provides a secure, scalable, and user-friendly platform for managing all aspects of healthcare facility operations.
+**HMS** is a comprehensive Hospital Management System designed to digitize and streamline hospital operations. Built with modern web technologies, it provides a secure, scalable, and user-friendly platform for managing all aspects of healthcare facility operations.
 
-### Why MEDS?
+### Why HMS?
 
 - 🔒 **Secure**: JWT-based authentication with role-based access control
 - 📱 **Responsive**: Mobile-friendly design for access anywhere
