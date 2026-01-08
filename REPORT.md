@@ -1029,18 +1029,23 @@ Project Timeline (October 2025 - January 2026)
 ═══════════════════════════════════════════════════════════════════════════════
 
 Phase 1: Planning & Requirements
+
 █████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ (Weeks 1-2)
 
 Phase 2: System Design & Architecture
+
 ░░░░░░░░░█████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ (Weeks 3-4)
 
 Phase 3: Core Development
+
 ░░░░░░░░░░░░░░░░░░██████████████████████████████░░░░░░░░░░░░ (Weeks 5-10)
 
 Phase 4: Advanced Features & Frontend
+
 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██████████░░ (Weeks 11-12)
 
 Phase 5: Testing & Documentation
+
 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░███ (Weeks 13-14)
 
 ═══════════════════════════════════════════════════════════════════════════════
@@ -1860,68 +1865,67 @@ The MEDS Hospital Management System implements a comprehensive workflow that orc
 The application follows a three-tier architecture pattern with clear separation of concerns:
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           PRESENTATION LAYER                                 │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                    React Frontend (Vite)                             │    │
-│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐   │    │
-│  │  │Dashboard│  │Patients │  │Doctors  │  │ Appts   │  │  Labs   │   │    │
-│  │  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘   │    │
-│  │       │            │            │            │            │         │    │
-│  │  ┌────▼────────────▼────────────▼────────────▼────────────▼────┐   │    │
-│  │  │                    AuthContext (JWT Token)                   │   │    │
-│  │  └────────────────────────────┬─────────────────────────────────┘   │    │
-│  │                               │                                      │    │
-│  │  ┌────────────────────────────▼─────────────────────────────────┐   │    │
-│  │  │                    API Layer (Axios)                          │   │    │
-│  │  │            HTTP Requests with Bearer Token                    │   │    │
-│  │  └────────────────────────────┬─────────────────────────────────┘   │    │
-│  └───────────────────────────────┼──────────────────────────────────────┘    │
-└──────────────────────────────────┼──────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                           PRESENTATION LAYER                             │
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │                    React Frontend (Vite)                           │  │
+│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐   │  │
+│  │  │Dashboard│  │Patients │  │Doctors  │  │ Appts   │  │  Labs   │   │  │
+│  │  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘   │  │
+│  │       │            │            │            │            │        │  │
+│  │  ┌────▼────────────▼────────────▼────────────▼────────────▼─────┐  │  │
+│  │  │                    AuthContext (JWT Token)                   │  │  │
+│  │  └────────────────────────────┬─────────────────────────────────┘  │  │
+│  │                               │                                    │  │
+│  │  ┌────────────────────────────▼─────────────────────────────────┐  │  │
+│  │  │                    API Layer (Axios)                         │  │  │
+│  │  │            HTTP Requests with Bearer Token                   │  │  │
+│  │  └────────────────────────────┬─────────────────────────────────┘  │  │
+│  └───────────────────────────────┼────────────────────────────────────┘  │
+└──────────────────────────────────┼───────────────────────────────────────┘
                                    │ REST API (JSON)
                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           APPLICATION LAYER                                  │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                 Spring Boot Backend (Port 8080)                      │    │
-│  │                                                                      │    │
-│  │  ┌─────────────────────────────────────────────────────────────┐    │    │
-│  │  │              Security Filter Chain                           │    │    │
-│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │    │    │
-│  │  │  │CORS Filter  │─▶│JWT Filter   │─▶│ Auth Provider       │  │    │    │
-│  │  │  └─────────────┘  └─────────────┘  └─────────────────────┘  │    │    │
-│  │  └─────────────────────────────┬───────────────────────────────┘    │    │
-│  │                                │                                     │    │
-│  │  ┌─────────────────────────────▼───────────────────────────────┐    │    │
-│  │  │                    REST Controllers                          │    │    │
-│  │  │  AuthController │ PatientController │ DoctorController │...  │    │    │
-│  │  └─────────────────────────────┬───────────────────────────────┘    │    │
-│  │                                │                                     │    │
-│  │  ┌─────────────────────────────▼───────────────────────────────┐    │    │
-│  │  │                    Service Layer                             │    │    │
-│  │  │  AuthService │ PatientService │ DoctorService │ ...         │    │    │
-│  │  └─────────────────────────────┬───────────────────────────────┘    │    │
-│  │                                │                                     │    │
-│  │  ┌─────────────────────────────▼───────────────────────────────┐    │    │
-│  │  │                    Repository Layer (JPA)                    │    │    │
-│  │  │  UserRepository │ PatientRepository │ DoctorRepository │... │    │    │
-│  │  └─────────────────────────────┬───────────────────────────────┘    │    │
-│  └────────────────────────────────┼────────────────────────────────────┘    │
-└───────────────────────────────────┼─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           APPLICATION LAYER                             │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │                 Spring Boot Backend (Port 8080)                   │  │
+│  │                                                                   │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐  │  │
+│  │  │  ┌─────────────┐  ┌──────────────┐  ┌─────────────────────┐ │  │  │
+│  │  │  │ CORS Filter │─▶│ JWT Filter  │─▶│ Auth Provider       │ │  │  │
+│  │  │  └─────────────┘  └──────────────┘  └─────────────────────┘ │  │  │
+│  │  └─────────────────────────────┬───────────────────────────────┘  │  │
+│  │                                │                                  │  │
+│  │  ┌─────────────────────────────▼───────────────────────────────┐  │  │
+│  │  │                    REST Controllers                         │  │  │
+│  │  │  AuthController │ PatientController │ DoctorController │... │  │  │
+│  │  └─────────────────────────────┬───────────────────────────────┘  │  │
+│  │                                │                                  │  │
+│  │  ┌─────────────────────────────▼───────────────────────────────┐  │  │
+│  │  │                    Service Layer                            │  │  │
+│  │  │  AuthService │ PatientService │ DoctorService │ ...         │  │  │
+│  │  └─────────────────────────────┬───────────────────────────────┘  │  │
+│  │                                │                                  │  │
+│  │  ┌─────────────────────────────▼───────────────────────────────┐  │  │
+│  │  │                    Repository Layer (JPA)                   │  │  │
+│  │  │  UserRepository │ PatientRepository │ DoctorRepository │... │  │  │
+│  │  └─────────────────────────────┬───────────────────────────────┘  │  │
+│  └────────────────────────────────┼──────────────────────────────────┘  │
+└───────────────────────────────────┼─────────────────────────────────────┘
                                     │ JDBC/Hibernate
                                     ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                             DATA LAYER                                       │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                       MySQL Database                                 │    │
-│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐   │    │
-│  │  │ users   │  │patients │  │ doctors │  │  appts  │  │  bills  │   │    │
-│  │  └─────────┘  └─────────┘  └─────────┘  └─────────┘  └─────────┘   │    │
-│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐   │    │
-│  │  │lab_tests│  │prescripts│ │ rooms   │  │admissions│ │audit_log│   │    │
-│  │  └─────────┘  └─────────┘  └─────────┘  └─────────┘  └─────────┘   │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                             DATA LAYER                                  │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │                       MySQL Database                              │  │
+│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  │  │
+│  │  │ users   │  │patients │  │ doctors │  │  appts  │  │  bills  │  │  │
+│  │  └─────────┘  └─────────┘  └─────────┘  └─────────┘  └─────────┘  │  │
+│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐  │  │
+│  │  │lab_tests│  │prescripts│ │ rooms   │  │admissions│ │audit_log│  │  │
+│  │  └─────────┘  └─────────┘  └─────────┘  └─────────┘  └─────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 #### 3.1.2.2 Authentication Workflow
@@ -1936,12 +1940,12 @@ The authentication process is a critical workflow that establishes user identity
 │ Browser  │    │  (React)     │    │(Spring Boot) │    │   (MySQL)    │
 └────┬─────┘    └──────┬───────┘    └──────┬───────┘    └──────┬───────┘
      │                 │                   │                   │
-     │ 1. Fill Form   │                   │                   │
-     │────────────────▶│                   │                   │
+     │ 1. Fill Form    │                   │                   │
+     │───────────────▶│                   │                   │
      │                 │                   │                   │
-     │                 │ 2. POST /api/auth/register           │
-     │                 │───────────────────▶                   │
-     │                 │   {email, password, firstName,...}   │
+     │                 │ 2. POST /api/auth/register            │
+     │                 │───────────────────▶                  │
+     │                 │   {email, password, firstName,...}    │
      │                 │                   │                   │
      │                 │                   │ 3. Check email    │
      │                 │                   │   uniqueness      │
@@ -1962,7 +1966,7 @@ The authentication process is a critical workflow that establishes user identity
      │                 │                   │ 7. Generate JWT   │
      │                 │                   │                   │
      │                 │◀──────────────────│                   │
-     │                 │   {token, user info}                 │
+     │                 │   {token, user info}                  │
      │                 │                   │                   │
      │                 │ 8. Store token    │                   │
      │                 │   (localStorage)  │                   │
@@ -1983,9 +1987,9 @@ The authentication process is a critical workflow that establishes user identity
      │   credentials   │                   │                   │
      │────────────────▶│                   │                   │
      │                 │                   │                   │
-     │                 │ 2. POST /api/auth/login              │
+     │                 │ 2. POST /api/auth/login               │
      │                 │───────────────────▶                   │
-     │                 │   {email, password}                  │
+     │                 │   {email, password}                   │
      │                 │                   │                   │
      │                 │                   │ 3. Find user by   │
      │                 │                   │   email           │
@@ -2060,81 +2064,81 @@ The core clinical workflow demonstrates how patient care activities flow through
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│                         PATIENT CARE WORKFLOW                                  │
+│                         PATIENT CARE WORKFLOW                                 │
 └───────────────────────────────────────────────────────────────────────────────┘
 
-    ┌─────────────────┐
-    │  1. REGISTRATION │
-    │  Patient creates │
-    │  account or is   │
-    │  registered by   │
-    │  admin           │
-    └────────┬────────┘
+    ┌───────────────────┐
+    │  1. REGISTRATION  │
+    │  Patient creates  │
+    │  account or is    │
+    │  registered by    │
+    │  admin            │
+    └────────┬──────────┘
              │
              ▼
-    ┌─────────────────┐
-    │ 2. APPOINTMENT  │
-    │ Schedule with   │
-    │ available doctor│
-    │ Check time slots│
-    └────────┬────────┘
+    ┌───────────────────┐
+    │ 2. APPOINTMENT    │
+    │ Schedule with     │
+    │ available doctor  │
+    │ Check time slots  │
+    └────────┬──────────┘
              │
              ▼
-    ┌─────────────────┐
-    │  3. CHECK-IN    │
-    │  Appointment    │
-    │  status changes │
-    │  to CONFIRMED   │
-    └────────┬────────┘
+    ┌───────────────────┐
+    │  3. CHECK-IN      │
+    │  Appointment      │
+    │  status changes   │
+    │  to CONFIRMED     │
+    └────────┬──────────┘
              │
              ▼
-    ┌─────────────────┐
-    │ 4. VITAL SIGNS  │◄───────────────────┐
-    │ Nurse records:  │                    │
-    │ - Temperature   │                    │
-    │ - Blood Pressure│                    │
-    │ - Heart Rate    │                    │
-    │ - SpO2, BMI     │                    │
-    └────────┬────────┘                    │
-             │                              │
-             ▼                              │
-    ┌─────────────────┐                    │
-    │ 5. CONSULTATION │                    │
-    │ Doctor examines │                    │
-    │ patient, reviews│                    │
-    │ history         │                    │
-    └────────┬────────┘                    │
-             │                              │
-             ├──────────────────┬──────────┼──────────────────┐
-             │                  │          │                  │
-             ▼                  ▼          │                  ▼
-    ┌─────────────────┐ ┌─────────────────┐│         ┌─────────────────┐
-    │ 6a. LAB ORDER   │ │6b. PRESCRIPTION ││         │6c. ADMISSION    │
-    │ Doctor orders   │ │ Doctor creates  ││         │ If inpatient    │
-    │ tests           │ │ prescription    ││         │ care needed     │
-    └────────┬────────┘ └────────┬────────┘│         └────────┬────────┘
-             │                   │         │                  │
-             ▼                   │         │                  ▼
-    ┌─────────────────┐         │         │         ┌─────────────────┐
-    │ 6a-1. SAMPLE    │         │         │         │ Room/Bed        │
-    │ Nurse collects  │         │         │         │ Assignment      │
-    │ samples         │         │         │         └────────┬────────┘
-    └────────┬────────┘         │         │                  │
-             │                   │         │                  │
-             ▼                   ▼         │                  │
-    ┌─────────────────┐ ┌─────────────────┐│                  │
-    │ 6a-2. RESULTS   │ │ 7. PHARMACY     ││                  │
-    │ Lab processes   │ │ Pharmacist      ││                  │
-    │ and records     │ │ dispenses meds  ││                  │
-    └────────┬────────┘ └────────┬────────┘│                  │
-             │                   │         │                  │
-             └───────────────────┴─────────┘                  │
-                        │                                     │
-                        ▼                                     ▼
-               ┌─────────────────┐                   ┌─────────────────┐
-               │ 8. MEDICAL      │                   │ DISCHARGE       │
-               │ RECORD UPDATED  │◄──────────────────│ When ready      │
-               │ All activities  │                   └─────────────────┘
+    ┌───────────────────┐
+    │ 4. VITAL SIGNS    │◄───────────────────┐
+    │ Nurse records:    │                    │
+    │ - Temperature     │                    │
+    │ - Blood Pressure  │                    │
+    │ - Heart Rate      │                    │
+    │ - SpO2, BMI       │                    │
+    └────────┬──────────┘                    │
+             │                               │
+             ▼                               │
+    ┌───────────────────┐                    │
+    │ 5. CONSULTATION   │                    │
+    │ Doctor examines   │                    │
+    │ patient, reviews  │                    │
+    │ history           │                    │
+    └────────┬──────────┘                    │
+             │                               │
+             ├──────────────────┬────────────┼────────────────┐
+             │                  │            │                │
+             ▼                  ▼            │                  ▼
+    ┌─────────────────┐ ┌─────────────────┐  │         ┌─────────────────┐
+    │ 6a. LAB ORDER   │ │6b. PRESCRIPTION │  │         │6c. ADMISSION    │
+    │ Doctor orders   │ │ Doctor creates  │  │         │ If inpatient    │
+    │ tests           │ │ prescription    │  │         │ care needed     │
+    └────────┬────────┘ └────────┬────────┘  │         └────────┬────────┘
+             │                   │           │                  │
+             ▼                   │           │                  ▼
+    ┌─────────────────┐          │           │         ┌─────────────────┐
+    │ 6a-1. SAMPLE    │          │           │         │ Room/Bed        │
+    │ Nurse collects  │          │           │         │ Assignment      │
+    │ samples         │          │           │         └────────┬────────┘
+    └────────┬────────┘          │           │                  │
+             │                   │           │                  │
+             ▼                   ▼           │                  │
+    ┌─────────────────┐ ┌─────────────────┐  │                  │
+    │ 6a-2. RESULTS   │ │ 7. PHARMACY     │  │                  │
+    │ Lab processes   │ │ Pharmacist      │  │                  │
+    │ and records     │ │ dispenses meds  │  │                  │
+    └────────┬────────┘ └────────┬────────┘  │                  │
+             │                   │           │                  │
+             └───────────────────┴───────────┘                  │
+                        │                                       │
+                        ▼                                       ▼
+               ┌─────────────────┐                     ┌─────────────────┐
+               │ 8. MEDICAL      │                     │ DISCHARGE       │
+               │ RECORD UPDATED  │◄────────────────────│ When ready      │
+               │ All activities  │                     └─────────────────┘
                │ documented      │
                └────────┬────────┘
                         │
@@ -2171,53 +2175,53 @@ Frontend Component (e.g., Patients.jsx)
              │
              │ 2. HTTP Request with Authorization header
              ▼
-    ┌─────────────────────────────────────────────────┐
-    │           Spring Security Filter Chain           │
-    │  ┌────────────┐  ┌────────────┐  ┌────────────┐ │
-    │  │CORS Filter │─▶│JWT Filter  │─▶│ AuthFilter │ │
-    │  └────────────┘  └────────────┘  └────────────┘ │
-    └─────────────────────────┬───────────────────────┘
+    ┌───────────────────────────────────────────────────┐
+    │           Spring Security Filter Chain            │
+    │  ┌────────────┐  ┌─────────────┐  ┌────────────┐  │
+    │  │CORS Filter │─▶│JWT Filter  │─▶│ AuthFilter │  │
+    │  └────────────┘  └─────────────┘  └────────────┘  │
+    └─────────────────────────┬─────────────────────────┘
                               │
                               │ 3. Token validated, User authenticated
                               ▼
-    ┌─────────────────────────────────────────────────┐
+    ┌──────────────────────────────────────────────────┐
     │              REST Controller                     │
-    │  @GetMapping, @PostMapping, @PutMapping, etc.   │
+    │  @GetMapping, @PostMapping, @PutMapping, etc.    │
     │  - Receives HTTP request                         │
     │  - Validates input (@Valid)                      │
     │  - Calls service layer                           │
     │  - Returns ResponseEntity                        │
-    └─────────────────────────┬───────────────────────┘
+    └─────────────────────────┬────────────────────────┘
                               │
                               │ 4. Business logic delegation
                               ▼
-    ┌─────────────────────────────────────────────────┐
+    ┌──────────────────────────────────────────────────┐
     │                Service Layer                     │
-    │  @Service, @Transactional                       │
+    │  @Service, @Transactional                        │
     │  - Business logic implementation                 │
     │  - Validation rules                              │
     │  - Cross-entity operations                       │
     │  - Exception handling                            │
-    └─────────────────────────┬───────────────────────┘
+    └─────────────────────────┬────────────────────────┘
                               │
                               │ 5. Data access
                               ▼
-    ┌─────────────────────────────────────────────────┐
+    ┌──────────────────────────────────────────────────┐
     │              Repository Layer                    │
-    │  JpaRepository<Entity, Long>                    │
+    │  JpaRepository<Entity, Long>                     │
     │  - CRUD operations                               │
     │  - Custom queries (@Query)                       │
     │  - Derived query methods                         │
-    └─────────────────────────┬───────────────────────┘
+    └─────────────────────────┬────────────────────────┘
                               │
                               │ 6. SQL execution
                               ▼
-    ┌─────────────────────────────────────────────────┐
+    ┌──────────────────────────────────────────────────┐
     │                 MySQL Database                   │
     │  - Transactions                                  │
     │  - Foreign key constraints                       │
     │  - Data persistence                              │
-    └─────────────────────────────────────────────────┘
+    └──────────────────────────────────────────────────┘
 ```
 
 #### 3.1.2.5 Emergency Case Workflow
@@ -2226,45 +2230,45 @@ Emergency cases follow a specialized workflow with triage-based prioritization:
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│                        EMERGENCY DEPARTMENT WORKFLOW                           │
+│                        EMERGENCY DEPARTMENT WORKFLOW                          │
 └───────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────┐        ┌─────────────────┐        ┌─────────────────┐
+┌─────────────────┐         ┌─────────────────┐        ┌─────────────────┐
 │ PATIENT ARRIVES │───────▶│    TRIAGE       │───────▶│ CASE CREATED    │
-│ Walk-in or      │        │ Assess severity │        │ Status: WAITING │
-│ Ambulance       │        │ ESI Level 1-5   │        │                 │
-└─────────────────┘        └─────────────────┘        └────────┬────────┘
-                                                               │
-                    ┌──────────────────────────────────────────┤
-                    │                                          │
-                    ▼                                          ▼
-           ┌─────────────────┐                        ┌─────────────────┐
-           │ ESI Level 1-2   │                        │ ESI Level 3-5   │
-           │ IMMEDIATE       │                        │ URGENT/LESS     │
-           │ Resuscitation   │                        │ Wait queue      │
-           └────────┬────────┘                        └────────┬────────┘
-                    │                                          │
-                    ▼                                          ▼
-           ┌─────────────────┐                        ┌─────────────────┐
-           │ IN_TREATMENT    │◄───────────────────────│ Called when     │
-           │ Doctor assigned │                        │ resources       │
-           │ Immediate care  │                        │ available       │
-           └────────┬────────┘                        └─────────────────┘
+│ Walk-in or      │         │ Assess severity │        │ Status: WAITING │
+│ Ambulance       │         │ ESI Level 1-5   │        │                 │
+└─────────────────┘         └─────────────────┘        └────────┬────────┘
+                                                                │
+                    ┌───────────────────────────────────────────┤
+                    │                                           │
+                    ▼                                           ▼
+           ┌─────────────────┐                         ┌─────────────────┐
+           │ ESI Level 1-2   │                         │ ESI Level 3-5   │
+           │ IMMEDIATE       │                         │ URGENT/LESS     │
+           │ Resuscitation   │                         │ Wait queue      │
+           └────────┬────────┘                         └────────┬────────┘
+                    │                                           │
+                    ▼                                           ▼
+           ┌─────────────────┐                         ┌─────────────────┐
+           │ IN_TREATMENT    │◄────────────────────────│ Called when     │
+           │ Doctor assigned │                         │ resources       │
+           │ Immediate care  │                         │ available       │
+           └────────┬────────┘                         └─────────────────┘
                     │
         ┌───────────┼───────────┐
         │           │           │
         ▼           ▼           ▼
-┌───────────┐ ┌───────────┐ ┌───────────┐
-│ STABILIZED│ │ ADMITTED  │ │ DISCHARGED│
+┌───────────┐  ┌───────────┐ ┌───────────┐
+│ STABILIZED│  │ ADMITTED  │ │ DISCHARGED│
 │ Observation│ │ To ward   │ │ Released  │
-└───────────┘ └───────────┘ └───────────┘
+└───────────┘  └───────────┘ └───────────┘
 ```
 
 #### 3.1.2.6 Billing and Payment Workflow
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│                          BILLING WORKFLOW                                      │
+│                          BILLING WORKFLOW                                     │
 └───────────────────────────────────────────────────────────────────────────────┘
 
 Services Rendered
@@ -2272,8 +2276,8 @@ Services Rendered
       ├─── Consultation Fee ──────────────┐
       ├─── Laboratory Tests ──────────────┤
       ├─── Prescription/Medicines ────────┤──────▶ BILL GENERATED
-      ├─── Room Charges (if admitted) ────┤       │
-      └─── Other Charges ─────────────────┘       │
+      ├─── Room Charges (if admitted) ────┤        │
+      └─── Other Charges ─────────────────┘        │
                                                    ▼
                                           ┌─────────────────┐
                                           │ Calculate Total │
@@ -2311,15 +2315,15 @@ All significant actions in the system are logged for compliance and security mon
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│                          AUDIT LOGGING WORKFLOW                                │
+│                          AUDIT LOGGING WORKFLOW                               │
 └───────────────────────────────────────────────────────────────────────────────┘
 
      User Action                 AuditLogService                    Database
           │                            │                               │
           │ Any CRUD operation         │                               │
-          │───────────────────────────▶│                               │
+          │───────────────────────────▶│                              │
           │                            │                               │
-          │                            │ Create AuditLog entity:      │
+          │                            │ Create AuditLog entity:       │
           │                            │ - userId                      │
           │                            │ - userEmail                   │
           │                            │ - userRole                    │
@@ -2334,7 +2338,7 @@ All significant actions in the system are logged for compliance and security mon
           │                            │ Save to audit_log table       │
           │                            │──────────────────────────────▶│
           │                            │                               │
-          │◀───────────────────────────│                               │
+          │◀───────────────────────────│                              │
           │   Original response        │                               │
 
 Admin can view all audit logs via /api/audit-logs endpoint
@@ -2812,7 +2816,7 @@ The database consists of 22+ interconnected tables representing the core entitie
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                           DATABASE ENTITY RELATIONSHIPS                                  │
+│                           DATABASE ENTITY RELATIONSHIPS                                 │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 
                                     ┌──────────────┐
@@ -3261,8 +3265,8 @@ The backend implements a RESTful API following industry best practices:
 
     Client                                              Server
        │                                                   │
-       │  1. POST /api/auth/login                         │
-       │      {email, password}                           │
+       │  1. POST /api/auth/login                          │
+       │      {email, password}                            │
        │──────────────────────────────────────────────────▶│
        │                                                   │
        │                                    2. Validate credentials
@@ -3273,11 +3277,11 @@ The backend implements a RESTful API following industry best practices:
        │                                       - Sign with HS256
        │                                                   │
        │◀──────────────────────────────────────────────────│
-       │  {token, userId, email, role, ...}               │
+       │  {token, userId, email, role, ...}                │
        │                                                   │
-       │  4. Store token in localStorage                  │
+       │  4. Store token in localStorage                   │
        │                                                   │
-       │  5. GET /api/patients                            │
+       │  5. GET /api/patients                             │
        │     Authorization: Bearer <token>                 │
        │──────────────────────────────────────────────────▶│
        │                                                   │
