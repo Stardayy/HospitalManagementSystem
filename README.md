@@ -240,7 +240,7 @@ HospitalManagementSystem/
 ├── 📂 database/
 │   └── hospital_management_system.sql
 │
-├── 📄 ACADEMIC_REPORT.md       # Full project documentation
+├── 📄 REPORT.md       # Full project documentation
 └── 📄 README.md
 ```
 
