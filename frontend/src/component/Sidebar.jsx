@@ -73,7 +73,7 @@ const Sidebar = () => {
     <div className="sidebar" ref={sidebarRef}>
       <div className="logo">
         <div className="logo-icon">+</div>
-        <h2>WellNest</h2>
+        <h2>MEDS</h2>
       </div>
 
       <ul className="nav-links" ref={navLinksRef}>

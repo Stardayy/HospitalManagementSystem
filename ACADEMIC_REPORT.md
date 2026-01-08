@@ -1,5 +1,5 @@
 # HOSPITAL MANAGEMENT SYSTEM
-## WellNest - A Comprehensive Web-Based Healthcare Solution
+## MEDS - Medical Enterprise Digital Solution
 
 ---
 
@@ -8,7 +8,7 @@
 # ACADEMIC PROJECT REPORT
 
 ## HOSPITAL MANAGEMENT SYSTEM
-### WellNest - Web Application Development
+### MEDS - Medical Enterprise Digital Solution
 
 ---
 
@@ -38,7 +38,7 @@ School of Computer Science and Engineering
 
 # Abstract
 
-The **WellNest Hospital Management System** is a comprehensive full-stack web application designed to digitize and streamline hospital operations. This project addresses the critical challenges faced by healthcare institutions in managing patient information, scheduling appointments, maintaining medical records, and handling billing processes.
+The **MEDS (Medical Enterprise Digital Solution) Hospital Management System** is a comprehensive full-stack web application designed to digitize and streamline hospital operations. This project addresses the critical challenges faced by healthcare institutions in managing patient information, scheduling appointments, maintaining medical records, and handling billing processes.
 
 **Problem Statement:** Traditional hospital management relies on fragmented, paper-based systems that lead to data inconsistencies, inefficient workflows, and potential medical errors. The lack of integrated digital solutions hampers healthcare delivery quality and operational efficiency.
 
@@ -48,7 +48,7 @@ The **WellNest Hospital Management System** is a comprehensive full-stack web ap
 
 **Results:** The implementation achieved 100% completion of planned features with all 124 test cases passing. Performance metrics show average API response times under 200ms, meeting all target benchmarks. The system demonstrates robust security through BCrypt password hashing, JWT token authentication, and role-based endpoint protection.
 
-**Conclusion:** The WellNest HMS successfully demonstrates the feasibility of building enterprise-grade healthcare management solutions using modern web technologies. The modular architecture ensures extensibility for future enhancements including real-time notifications, mobile applications, and advanced analytics.
+**Conclusion:** The MEDS HMS successfully demonstrates the feasibility of building enterprise-grade healthcare management solutions using modern web technologies. The modular architecture ensures extensibility for future enhancements including real-time notifications, mobile applications, and advanced analytics.
 
 **Keywords:** Hospital Management System, Healthcare IT, React, Spring Boot, JWT Authentication, Role-Based Access Control, Electronic Health Records, Web Application Development
 
@@ -312,7 +312,7 @@ The development of modern web applications requires careful consideration of the
 
 ### 1.1.5 Project Context
 
-This Hospital Management System, branded as "WellNest," was developed as part of the Web Application Development course at the International University - Vietnam National University HCMC. The project aims to demonstrate proficiency in full-stack web development while addressing real-world challenges in healthcare management. The system is designed to serve as a comprehensive platform for managing various aspects of hospital operations, from patient registration to billing, with a focus on user experience and data security.
+This Hospital Management System, branded as "MEDS (Medical Enterprise Digital Solution)," was developed as part of the Web Application Development course at the International University - Vietnam National University HCMC. The project aims to demonstrate proficiency in full-stack web development while addressing real-world challenges in healthcare management. The system is designed to serve as a comprehensive platform for managing various aspects of hospital operations, from patient registration to billing, with a focus on user experience and data security.
 
 ---
 
@@ -948,7 +948,7 @@ While the following features are out of scope for the current project, they repr
 
 ### 2.1.1 Project Duration Overview
 
-The WellNest Hospital Management System project was developed over a period of approximately 14 weeks, spanning from early October 2025 to January 2026. The development process followed an iterative approach, with regular review cycles and continuous integration of feedback to ensure the delivery of a high-quality, feature-complete application.
+The MEDS Hospital Management System project was developed over a period of approximately 14 weeks, spanning from early October 2025 to January 2026. The development process followed an iterative approach, with regular review cycles and continuous integration of feedback to ensure the delivery of a high-quality, feature-complete application.
 
 ### 2.1.2 Development Phases
 
@@ -1483,7 +1483,7 @@ Throughout the project, the team identified and managed several risks:
 
 ### 3.1.1 User Roles
 
-The WellNest Hospital Management System implements a comprehensive Role-Based Access Control (RBAC) system with five distinct user roles. Each role is designed to reflect real-world healthcare responsibilities and provides access to specific functionalities aligned with the user's job functions.
+The MEDS Hospital Management System implements a comprehensive Role-Based Access Control (RBAC) system with five distinct user roles. Each role is designed to reflect real-world healthcare responsibilities and provides access to specific functionalities aligned with the user's job functions.
 
 #### 3.1.1.1 Role Hierarchy and Design Philosophy
 
@@ -1853,7 +1853,7 @@ The frontend adapts its interface based on the logged-in user's role:
 
 ### 3.1.2 Overall Workflow
 
-The WellNest Hospital Management System implements a comprehensive workflow that orchestrates interactions between different user roles, system modules, and data entities. This section provides an in-depth analysis of how data flows through the system from user actions to database persistence and back.
+The MEDS Hospital Management System implements a comprehensive workflow that orchestrates interactions between different user roles, system modules, and data entities. This section provides an in-depth analysis of how data flows through the system from user actions to database persistence and back.
 
 #### 3.1.2.1 System Architecture Workflow
 
@@ -2344,7 +2344,7 @@ Admin can view all audit logs via /api/audit-logs endpoint
 
 ## 3.2 Requirements Analysis
 
-This section provides a comprehensive analysis of the functional and non-functional requirements that guided the development of the WellNest Hospital Management System. The requirements were gathered through analysis of real-world hospital operations, industry best practices, and stakeholder interviews.
+This section provides a comprehensive analysis of the functional and non-functional requirements that guided the development of the MEDS Hospital Management System. The requirements were gathered through analysis of real-world hospital operations, industry best practices, and stakeholder interviews.
 
 ### 3.2.1 Functional Requirements
 
@@ -2789,13 +2789,13 @@ The following matrix maps functional requirements to their implementation compon
 
 ## 3.3 System Design
 
-This section presents the detailed system design of the WellNest Hospital Management System, including database architecture, API design, and frontend component structure.
+This section presents the detailed system design of the MEDS Hospital Management System, including database architecture, API design, and frontend component structure.
 
 ### 3.3.1 Database Design
 
 #### 3.3.1.1 Database Architecture Overview
 
-The WellNest Hospital Management System uses MySQL 8.0 as the primary relational database management system. The database design follows the principles of normalization up to Third Normal Form (3NF) to eliminate data redundancy and ensure data integrity.
+The MEDS Hospital Management System uses MySQL 8.0 as the primary relational database management system. The database design follows the principles of normalization up to Third Normal Form (3NF) to eliminate data redundancy and ensure data integrity.
 
 **Database Configuration:**
 
@@ -3493,7 +3493,7 @@ function ProtectedRoute({ children, allowedRoles }) {
 
 ## 3.4 Implementation Details
 
-This section provides in-depth technical documentation of the key implementation aspects of the WellNest Hospital Management System, including authentication mechanisms, security features, business logic algorithms, and frontend patterns.
+This section provides in-depth technical documentation of the key implementation aspects of the MEDS Hospital Management System, including authentication mechanisms, security features, business logic algorithms, and frontend patterns.
 
 ### 3.4.1 Authentication and Security Implementation
 
@@ -4322,7 +4322,7 @@ public class GlobalExceptionHandler {
 
 ### 4.1.1 Application Screenshots
 
-The WellNest Hospital Management System provides a modern, intuitive user interface across all modules:
+The MEDS Hospital Management System provides a modern, intuitive user interface across all modules:
 
 **Login Page:**
 - Clean, centered login form
@@ -4458,7 +4458,7 @@ Manual testing was performed on all system features:
 
 ## 5.1 Summary
 
-The WellNest Hospital Management System represents a comprehensive full-stack web application designed to digitize and streamline hospital operations. This project successfully demonstrates the integration of modern web technologies to address real-world healthcare management challenges.
+The MEDS Hospital Management System represents a comprehensive full-stack web application designed to digitize and streamline hospital operations. This project successfully demonstrates the integration of modern web technologies to address real-world healthcare management challenges.
 
 ### 5.1.1 Project Objectives Achievement
 
@@ -4595,13 +4595,13 @@ Both team members collaborated on:
 
 ## 5.5 Final Remarks
 
-The WellNest Hospital Management System successfully demonstrates the feasibility of building a comprehensive healthcare management solution using modern web technologies. The project achieved all stated objectives, delivering a functional system that addresses key hospital operational needs.
+The MEDS Hospital Management System successfully demonstrates the feasibility of building a comprehensive healthcare management solution using modern web technologies. The project achieved all stated objectives, delivering a functional system that addresses key hospital operational needs.
 
 The combination of Spring Boot and React provided an excellent foundation for building a scalable, maintainable application. The modular architecture ensures that future enhancements can be added without significant refactoring.
 
 This project has provided valuable hands-on experience with full-stack development, security implementation, database design, and software engineering best practices. The skills and knowledge gained will serve as a strong foundation for future software development endeavors.
 
-The WellNest HMS stands as proof that modern web technologies can effectively digitize healthcare operations, potentially improving efficiency, reducing errors, and enhancing patient care delivery.
+The MEDS HMS stands as proof that modern web technologies can effectively digitize healthcare operations, potentially improving efficiency, reducing errors, and enhancing patient care delivery.
 
 ---
 
